@@ -406,8 +406,20 @@
     </div>
     <label>Agencia</label>
     <select id="reagAgenciaSolicitud"></select>
-    <label>Motivo del cambio de cita</label>
-    <textarea id="reagMotivo" rows="3"></textarea>
+    <label>Motivo informado por el paciente</label>
+    <select id="reagMotivo">
+      <option value="">Selecciona un motivo</option>
+      <option value="Enfermedad">Enfermedad</option>
+      <option value="Hospitalización o urgencia">Hospitalización o urgencia</option>
+      <option value="Fallecimiento de familiar directo o indirecto pero cercano">Fallecimiento de familiar directo o indirecto pero cercano</option>
+      <option value="Cuidado de otra persona">Cuidado de otra persona</option>
+      <option value="Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio">Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
+      <option value="Constancia de Carabineros">Constancia de Carabineros</option>
+      <option value="Problema de transporte ACHS">Problema de transporte ACHS</option>
+      <option value="Trámite personal urgente">Trámite personal urgente</option>
+      <option value="Error de agendamiento/información">Error de agendamiento/información</option>
+      <option value="Viaje, vacaciones o salida fuera de la ciudad">Viaje, vacaciones o salida fuera de la ciudad</option>
+    </select>
     <div class="acciones">
       <button class="btn secundario" onclick="cerrarModal('modalReagSolicitud')">Cancelar</button>
       <button class="btn" onclick="guardarReagSolicitud()">Enviar solicitud</button>
@@ -2293,3 +2305,5 @@ if (token && usuarioActual) mostrarApp();
 
 </body>
 </html>
+
+  
