@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROGRESYS OUTBOUND</title>
+<style>
+  :root {
+    --azul-marino: #0b1f3a;
+    --azul-corp: #123a6b;
+    --turquesa: #17b6a7;
+    --blanco: #ffffff;
+    --gris-oscuro: #2b2f36;
+    --gris-claro: #f4f6f8;
+    --rojo: #d9534f;
+    --amarillo: #f0ad4e;
+    --verde: #2ecc71;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--gris-claro);
+    color: var(--gris-oscuro);
+  }
+
+  /* ---------- LOGIN ---------- */
+  #pantallaLogin {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--azul-marino), var(--azul-corp));
+  }
+  .caja-login {
+    background: var(--blanco);
+    padding: 40px;
+    border-radius: 12px;
+    width: 340px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .caja-login h1 {
+    font-size: 20px;
+    color: var(--azul-marino);
+    margin-bottom: 4px;
+  }
+  .caja-login p.subtitulo {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .caja-login label {
+    font-size: 13px;
+    font-weight: 600;
+    display: block;
+    margin: 12px 0 4px;
+  }
+  .caja-login input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .caja-login button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--turquesa);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .caja-login button:hover { opacity: 0.9; }
+  #errorLogin {
+    color: var(--rojo);
+    font-size: 13px;
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* ---------- APP ---------- */
+  #app { display: none; height: 100vh; }
+  .layout { display: flex; height: 100%; }
+
+  .sidebar {
+    width: 220px;
+    background: var(--azul-marino);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar .logo {
+    padding: 20px;
+    font-weight: 700;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar .logo span { color: var(--turquesa); }
+  .sidebar nav { flex: 1; padding: 10px 0; }
+  .sidebar nav button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.75);
+    padding: 12px 20px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .sidebar nav button:hover { background: rgba(255,255,255,0.06); color: white; }
+  .sidebar nav button.activo { background: var(--azul-corp); color: white; border-left: 3px solid var(--turquesa); }
+  .sidebar nav button.modulo-reag {
+    color: #ffe9b3;
+    border-left: 3px solid #f0ad4e;
+    font-weight: 600;
+  }
+  .sidebar nav button.modulo-reag:hover { background: rgba(240,173,78,0.12); }
+  .sidebar nav button.modulo-reag.activo { background: #7a4e12; border-left: 3px solid #f0ad4e; color: white; }
+  .sidebar .usuario {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+  }
+  .sidebar .usuario button {
+    margin-top: 8px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .main { flex: 1; overflow-y: auto; }
+  header.topbar {
+    background: white;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header.topbar h2 { margin: 0; font-size: 18px; color: var(--azul-marino); }
+  .contenido { padding: 24px; }
+
+  /* KPI cards */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-left: 4px solid var(--turquesa);
+  }
+  .kpi-card .valor { font-size: 28px; font-weight: 700; color: var(--azul-marino); }
+  .kpi-card .etiqueta { font-size: 12px; color: #888; margin-top: 4px; }
+  .kpi-card.alerta { border-left-color: var(--rojo); }
+  .kpi-card.alerta .valor { color: var(--rojo); }
+
+  /* Tabla */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  thead { background: var(--azul-marino); color: white; }
+  th, td { padding: 10px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #eee; }
+  tbody tr:hover { background: #fafafa; }
+
+  .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; }
+  .badge.pendiente { background: var(--amarillo); }
+  .badge.gestion { background: var(--azul-corp); }
+  .badge.cerrado { background: #888; }
+  .badge.gestionado { background: var(--verde); }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .toolbar select, .toolbar input {
+    padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;
+  }
+  .btn {
+    padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer;
+    background: var(--turquesa); color: white; font-size: 13px; font-weight: 600;
+  }
+  .btn.secundario { background: #eee; color: var(--gris-oscuro); }
+  .btn:hover { opacity: 0.9; }
+
+  .cargando { text-align: center; padding: 40px; color: #999; }
+
+  /* Campanita de alertas */
+  .campana-wrap { position: relative; }
+  .campana-btn {
+    background: rgba(255,255,255,0.08); border: none; color: #444; padding: 8px 10px;
+    border-radius: 8px; cursor: pointer; font-size: 16px; position: relative;
+  }
+  .campana-btn:hover { background: #f0f0f0; }
+  .badge-contador {
+    position: absolute; top: -2px; right: -2px; background: var(--rojo); color: white;
+    font-size: 10px; font-weight: 700; border-radius: 50%; width: 17px; height: 17px;
+    display: none; align-items: center; justify-content: center; border: 2px solid white;
+  }
+  .panel-alertas {
+    display: none; position: absolute; top: 44px; right: 0; width: 360px; max-height: 440px; overflow-y: auto;
+    background: white; color: var(--gris-oscuro); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 500;
+  }
+  .panel-alertas.abierto { display: block; }
+  .panel-header { padding: 12px 16px; border-bottom: 1px solid #eee; }
+  .panel-header h3 { margin: 0; font-size: 14px; color: var(--azul-marino); }
+  .item-alerta { padding: 11px 16px; border-bottom: 1px solid #f2f2f2; display: flex; gap: 10px; cursor: pointer; }
+  .item-alerta:hover { background: #fafafa; }
+  .item-alerta .icono { font-size: 17px; flex-shrink: 0; }
+  .item-alerta .titulo { font-size: 12px; font-weight: 600; color: var(--azul-marino); }
+  .item-alerta .detalle { font-size: 11.5px; color: #777; margin-top: 2px; }
+  .item-alerta .origen { font-size: 10px; color: var(--turquesa); font-weight: 700; margin-top:3px; }
+  .sin-alertas { padding: 26px; text-align: center; color: #999; font-size: 13px; }
+
+  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+  .toast {
+    background: white; border-left: 5px solid var(--turquesa); border-radius: 8px; padding: 12px 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18); width: 320px; display: flex; gap: 10px; align-items: flex-start;
+    animation: entrarToast 0.25s ease-out;
+  }
+  .toast.rojo { border-left-color: var(--rojo); }
+  .toast .icono { font-size: 20px; }
+  .toast .titulo { font-size: 13px; font-weight: 600; color: var(--azul-marino); }
+  .toast .detalle { font-size: 12px; color: #777; margin-top: 2px; }
+  .toast .cerrar { margin-left: auto; border: none; background: none; color: #aaa; cursor: pointer; font-size: 14px; }
+  @keyframes entrarToast { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* Modal simple */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    align-items: center; justify-content: center; z-index: 1000;
+  }
+  .modal-overlay.activo { display: flex; }
+  .modal {
+    background: white; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw;
+  }
+  .modal h3 { margin-top: 0; color: var(--azul-marino); }
+  .modal label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;
+  }
+  .modal .acciones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="pantallaLogin">
+  <div class="caja-login">
+    <h1>PROGRESYS OUTBOUND</h1>
+    <p class="subtitulo">Control operacional de gestiones outbound</p>
+    <form id="formLogin">
+      <label>Correo</label>
+      <input type="email" id="loginEmail" required placeholder="usuario@dominio.cl">
+      <label>Contraseña</label>
+      <input type="password" id="loginPassword" required placeholder="••••••••">
+      <button type="submit">Ingresar</button>
+      <div id="errorLogin"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div id="app">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">PROGRESYS <span>OUTBOUND</span></div>
+      <nav>
+        <button data-vista="dashboard" id="btnDashboard" class="activo">Dashboard</button>
+        <button data-vista="correos" id="btnCorreos">Correos</button>
+        <button data-vista="casos" id="btnCasos">Casos</button>
+        <button data-vista="reagendamiento" id="btnReagendamiento" class="modulo-reag">🗓️ Reagendamiento</button>
+        <button data-vista="reagConfiguracion" id="btnReagConfiguracion" class="modulo-reag" style="display:none;">🗓️ Config. SLA Reagend.</button>
+        <button data-vista="alertas" id="btnAlertas">Alertas</button>
+        <button data-vista="auditoria" id="btnAuditoria" style="display:none;">Auditoría</button>
+        <button data-vista="reportes" id="btnReportes" style="display:none;">Reportes</button>
+        <button data-vista="importar" id="btnImportar" style="display:none;">Importar Excel</button>
+        <button data-vista="ejecutivos" id="btnEjecutivos" style="display:none;">Ejecutivos</button>
+        <button data-vista="configuracion" id="btnConfiguracion" style="display:none;">Configuración</button>
+        <button data-vista="usuarios" id="btnUsuarios" style="display:none;">Usuarios</button>
+      </nav>
+      <div class="usuario">
+        <div id="usuarioNombre">—</div>
+        <div id="usuarioRol" style="opacity:0.6;"></div>
+        <button id="btnLogout">Cerrar sesión</button>
+        <a href="https://manuelmc1979.github.io/suite-callcenter/" target="_blank" rel="noopener"
+           style="display:block; margin-top:8px; background:var(--turquesa); color:white; padding:6px 10px; border-radius:4px; font-size:12px; text-align:center; text-decoration:none;">
+          Portal
+        </a>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <h2 id="tituloVista">Dashboard</h2>
+        <div class="campana-wrap">
+          <button class="campana-btn" onclick="alternarPanelAlertas()">
+            🔔
+            <span class="badge-contador" id="contadorBadgeAlertas">0</span>
+          </button>
+          <div class="panel-alertas" id="panelAlertasGlobal">
+            <div class="panel-header"><h3>Alertas activas</h3></div>
+            <div id="listaAlertasGlobal"></div>
+          </div>
+        </div>
+      </header>
+      <div class="contenido" id="contenido">
+        <div class="cargando">Cargando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Registrar llamada ==================== -->
+<div class="modal-overlay" id="modalGestion">
+  <div class="modal">
+    <h3>Registrar llamada</h3>
+    <input type="hidden" id="gestionIdCaso">
+    <label>Fecha</label>
+    <input type="date" id="gestionFecha">
+    <label>Hora inicio</label>
+    <input type="time" id="gestionHoraInicio">
+    <label>Hora término (opcional)</label>
+    <input type="time" id="gestionHoraTermino">
+    <label>Resultado</label>
+    <select id="gestionResultado"></select>
+    <label>Observación</label>
+    <textarea id="gestionObservacion" rows="3"></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalGestion')">Cancelar</button>
+      <button class="btn" onclick="guardarGestion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Cerrar caso ==================== -->
+<div class="modal-overlay" id="modalCierre">
+  <div class="modal">
+    <h3>Cerrar caso</h3>
+    <input type="hidden" id="cierreIdCaso">
+    <label>Resultado final</label>
+    <input type="text" id="cierreResultado" placeholder="Ej: CONTACTADO - CITA REAGENDADA">
+    <label>Observaciones</label>
+    <textarea id="cierreObservaciones" rows="3"></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalCierre')">Cancelar</button>
+      <button class="btn" onclick="guardarCierre()">Cerrar caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Nuevo correo ==================== -->
+<div class="modal-overlay" id="modalNuevoCorreo">
+  <div class="modal" style="width:520px;">
+    <h3>Registrar correo recibido</h3>
+    <label>Fecha y hora de recepción</label>
+    <input type="datetime-local" id="ncFechaHora">
+    <label>Área solicitante</label>
+    <select id="ncArea"></select>
+    <label>Tipo de gestión</label>
+    <select id="ncTipoGestion"></select>
+    <label>Prioridad</label>
+    <select id="ncPrioridad"></select>
+    <label>Remitente</label>
+    <input type="text" id="ncRemitente" placeholder="correo@ejemplo.cl">
+    <label>Asunto</label>
+    <input type="text" id="ncAsunto">
+    <label>Observaciones</label>
+    <textarea id="ncObservaciones" rows="2"></textarea>
+
+    <hr style="margin:16px 0;">
+    <label style="margin-bottom:8px;">Casos (RUT a gestionar)</label>
+    <div id="ncListaCasos"></div>
+    <button type="button" class="btn secundario" style="margin-top:8px;" onclick="agregarFilaCaso()">+ Agregar otro RUT</button>
+
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalNuevoCorreo')">Cancelar</button>
+      <button class="btn" onclick="guardarNuevoCorreo()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REAGENDAMIENTO: Modales ==================== -->
+<div class="modal-overlay" id="modalReagSolicitud">
+  <div class="modal">
+    <h3>Solicitud de reagendamiento (sin cita disponible)</h3>
+    <input type="hidden" id="reagRutOculto">
+    <label>Nombre del paciente</label>
+    <input type="text" id="reagNombre">
+    <div class="fila2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div><label>Correo</label><input type="email" id="reagCorreo"></div>
+      <div><label>Teléfono</label><input type="text" id="reagTelefono"></div>
+    </div>
+    <label>Agencia</label>
+    <select id="reagAgenciaSolicitud"></select>
+    <label>Motivo informado por el paciente</label>
+    <select id="reagMotivo">
+      <option value="">Selecciona un motivo</option>
+      <option value="Enfermedad">Enfermedad</option>
+      <option value="Hospitalización o urgencia">Hospitalización o urgencia</option>
+      <option value="Fallecimiento de familiar directo o indirecto pero cercano">Fallecimiento de familiar directo o indirecto pero cercano</option>
+      <option value="Cuidado de otra persona">Cuidado de otra persona</option>
+      <option value="Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio">Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
+      <option value="Constancia de Carabineros">Constancia de Carabineros</option>
+      <option value="Problema de transporte ACHS">Problema de transporte ACHS</option>
+      <option value="Trámite personal urgente">Trámite personal urgente</option>
+      <option value="Error de agendamiento/información">Error de agendamiento/información</option>
+      <option value="Viaje, vacaciones o salida fuera de la ciudad">Viaje, vacaciones o salida fuera de la ciudad</option>
+    </select>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagSolicitud')">Cancelar</button>
+      <button class="btn" onclick="guardarReagSolicitud()">Enviar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReagRechazar">
+  <div class="modal">
+    <h3>Rechazar solicitud — Agendar directamente</h3>
+    <input type="hidden" id="reagRechazarId">
+    <p style="font-size:12px; color:#888;">Confirmaste que sí había cita disponible. Agenda tú mismo la hora; el ejecutivo solo verá el resultado.</p>
+    <label>Hora agendada para el paciente</label>
+    <input type="datetime-local" id="reagRechazarHora">
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagRechazar')">Cancelar</button>
+      <button class="btn peligro" onclick="guardarReagRechazo()" style="background:var(--rojo);">Rechazar y agendar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReagEscalar">
+  <div class="modal">
+    <h3>Escalar a agencia</h3>
+    <input type="hidden" id="reagEscalarId">
+    <p style="font-size:12px; color:#888;">Al escalar, corre un SLA de 24 horas para que la agencia responda.</p>
+    <label>Agencia responsable</label>
+    <select id="reagEscalarAgencia"></select>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagEscalar')">Cancelar</button>
+      <button class="btn" onclick="guardarReagEscalar()">Escalar (SLA 24h)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReagRespuesta">
+  <div class="modal">
+    <h3>Registrar respuesta de la agencia</h3>
+    <input type="hidden" id="reagRespuestaId">
+    <label>Respuesta / solución entregada</label>
+    <textarea id="reagRespuestaTexto" rows="3"></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagRespuesta')">Cancelar</button>
+      <button class="btn" onclick="guardarReagRespuesta()">Registrar y cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Nuevo ejecutivo ==================== -->
+<div class="modal-overlay" id="modalNuevoEjecutivo">
+  <div class="modal">
+    <h3>Nuevo ejecutivo</h3>
+    <label>Nombre completo</label>
+    <input type="text" id="neNombre" placeholder="Ej: Camila Torres">
+    <label>RUT (opcional)</label>
+    <input type="text" id="neRut" placeholder="Ej: 12345678-9">
+    <label>Correo (opcional)</label>
+    <input type="email" id="neEmail">
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalNuevoEjecutivo')">Cancelar</button>
+      <button class="btn" onclick="guardarNuevoEjecutivo()">Crear ejecutivo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Nuevo usuario ==================== -->
+<div class="modal-overlay" id="modalNuevoUsuario">
+  <div class="modal">
+    <h3>Nuevo usuario</h3>
+    <label>Nombre</label>
+    <input type="text" id="nuNombre">
+    <label>Apellido</label>
+    <input type="text" id="nuApellido">
+    <label>Correo</label>
+    <input type="email" id="nuEmail">
+    <label>Contraseña inicial</label>
+    <input type="password" id="nuPassword" placeholder="Mínimo 6 caracteres">
+    <label>Rol</label>
+    <select id="nuRol" onchange="mostrarSelectEjecutivoSiCorresponde()">
+      <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+      <option value="SUPERVISOR">SUPERVISOR</option>
+      <option value="EJECUTIVO">EJECUTIVO</option>
+      <option value="CONSULTA">CONSULTA</option>
+    </select>
+    <div id="filaEjecutivoVinculado" style="display:none;">
+      <label>Ejecutivo a vincular</label>
+      <select id="nuIdEjecutivo"></select>
+    </div>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalNuevoUsuario')">Cancelar</button>
+      <button class="btn" onclick="guardarNuevoUsuario()">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Resetear contraseña ==================== -->
+<div class="modal-overlay" id="modalResetPassword">
+  <div class="modal">
+    <h3>Resetear contraseña</h3>
+    <input type="hidden" id="resetIdUsuario">
+    <label>Nueva contraseña</label>
+    <input type="password" id="resetPassword" placeholder="Mínimo 6 caracteres">
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalResetPassword')">Cancelar</button>
+      <button class="btn" onclick="guardarResetPassword()">Actualizar contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Reabrir caso ==================== -->
+<div class="modal-overlay" id="modalReapertura">
+  <div class="modal">
+    <h3>Reabrir caso</h3>
+    <input type="hidden" id="reaperturaIdCaso">
+    <p style="font-size:13px; color:#888;">Esta acción requiere un motivo y queda registrada en auditoría.</p>
+    <label>Motivo de la reapertura</label>
+    <textarea id="reaperturaMotivo" rows="3" placeholder="Ej: El paciente llamó de vuelta solicitando cambiar la cita"></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReapertura')">Cancelar</button>
+      <button class="btn" onclick="guardarReapertura()">Reabrir caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Asignar correo ==================== -->
+<div class="modal-overlay" id="modalAsignar">
+  <div class="modal">
+    <h3>Asignar correo</h3>
+    <input type="hidden" id="asignarIdCorreo">
+    <label>Ejecutivo</label>
+    <select id="asignarIdEjecutivo"></select>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalAsignar')">Cancelar</button>
+      <button class="btn" onclick="guardarAsignacion()">Asignar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN
+   ============================================================ */
+// Reemplaza esto por la URL real de tu backend en Render
+const API_BASE = 'https://progresys-outbound-api.onrender.com/api';
+
+let token = localStorage.getItem('progresys_token') || null;
+let usuarioActual = JSON.parse(localStorage.getItem('progresys_usuario') || 'null');
+let resultadosCache = null;
+let catalogos = null;
+let idCasoDetalleActual = null;
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+document.getElementById('formLogin').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const errorDiv = document.getElementById('errorLogin');
+  errorDiv.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errorDiv.textContent = data.error || 'Error al iniciar sesión';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    token = data.token;
+    usuarioActual = data.usuario;
+    localStorage.setItem('progresys_token', token);
+    localStorage.setItem('progresys_usuario', JSON.stringify(usuarioActual));
+    mostrarApp();
+  } catch (err) {
+    errorDiv.textContent = 'No se pudo conectar con el servidor. El backend gratuito de Render puede tardar ~30-60s en despertar si estaba inactivo — intenta de nuevo en un momento.';
+    errorDiv.style.display = 'block';
+  }
+});
+
+document.getElementById('btnLogout').addEventListener('click', () => {
+  localStorage.removeItem('progresys_token');
+  localStorage.removeItem('progresys_usuario');
+  token = null;
+  usuarioActual = null;
+  if (intervalPollingAlertas) clearInterval(intervalPollingAlertas);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pantallaLogin').style.display = 'flex';
+});
+
+function mostrarApp() {
+  document.getElementById('pantallaLogin').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('usuarioNombre').textContent = `${usuarioActual.nombre} ${usuarioActual.apellido}`;
+  document.getElementById('usuarioRol').textContent = usuarioActual.rol;
+
+  if (usuarioActual.rol === 'EJECUTIVO') {
+    // El Ejecutivo solo gestiona sus propios casos: se ocultan el resto de los módulos
+    document.getElementById('btnDashboard').style.display = 'none';
+    document.getElementById('btnCorreos').style.display = 'none';
+    document.getElementById('btnAlertas').style.display = 'none';
+    document.getElementById('btnEjecutivos').style.display = 'none';
+    document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
+    document.getElementById('btnCasos').classList.add('activo');
+    cargarCatalogos();
+    cargarCatalogoAgencias();
+    cargarVista('casos');
+    iniciarPollingAlertas();
+    return;
+  }
+
+  if (usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR') {
+    document.getElementById('btnAuditoria').style.display = 'block';
+    document.getElementById('btnReportes').style.display = 'block';
+    document.getElementById('btnImportar').style.display = 'block';
+  }
+  document.getElementById('btnEjecutivos').style.display = 'block';
+  if (usuarioActual.rol === 'ADMINISTRADOR') {
+    document.getElementById('btnConfiguracion').style.display = 'block';
+    document.getElementById('btnUsuarios').style.display = 'block';
+    document.getElementById('btnReagConfiguracion').style.display = 'block';
+  }
+  cargarCatalogos();
+  cargarCatalogoAgencias();
+  cargarVista('dashboard');
+  iniciarPollingAlertas();
+}
+
+async function cargarCatalogos() {
+  try {
+    catalogos = await api('/catalogos');
+  } catch (err) {
+    console.error('No se pudieron cargar los catálogos', err);
+  }
+}
+
+// (autologin movido al final del script — ver más abajo)
+
+/* ============================================================
+   HELPER: fetch autenticado
+   ============================================================ */
+async function api(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...(options.headers || {})
+    }
+  });
+  if (res.status === 401) {
+    alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+    document.getElementById('btnLogout').click();
+    throw new Error('No autorizado');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error en la solicitud');
+  return data;
+}
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+document.querySelectorAll('.sidebar nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    cargarVista(btn.dataset.vista);
+  });
+});
+
+const titulos = { dashboard: 'Dashboard', correos: 'Correos', casos: 'Casos', alertas: 'Centro de Alertas', auditoria: 'Auditoría', reportes: 'Reportes', importar: 'Importar desde Excel', ejecutivos: 'Ejecutivos', configuracion: 'Configuración del sistema', usuarios: 'Gestión de usuarios', reagendamiento: 'Reagendamiento', reagConfiguracion: 'Configuración SLA — Reagendamiento' };
+
+async function cargarVista(vista) {
+  document.getElementById('tituloVista').textContent = titulos[vista];
+  const contenido = document.getElementById('contenido');
+  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+  try {
+    if (vista === 'dashboard') await renderDashboard();
+    if (vista === 'correos') await renderCorreos();
+    if (vista === 'casos') await renderCasos();
+    if (vista === 'alertas') await renderAlertas();
+    if (vista === 'auditoria') await renderAuditoria();
+    if (vista === 'reportes') await renderReportes();
+    if (vista === 'importar') await renderImportar();
+    if (vista === 'ejecutivos') await renderEjecutivos();
+    if (vista === 'configuracion') await renderConfiguracion();
+    if (vista === 'usuarios') await renderUsuarios();
+    if (vista === 'reagendamiento') await renderReagendamiento();
+    if (vista === 'reagConfiguracion') await renderReagConfiguracion();
+  } catch (err) {
+    contenido.innerHTML = `<div class="cargando">Error: ${err.message}</div>`;
+  }
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function renderDashboard() {
+  const kpi = await api('/dashboard');
+  const contenido = document.getElementById('contenido');
+  contenido.innerHTML = `
+    <div class="kpis">
+      <div class="kpi-card"><div class="valor">${kpi.casos_recibidos}</div><div class="etiqueta">Casos recibidos</div></div>
+      <div class="kpi-card"><div class="valor">${kpi.casos_pendientes}</div><div class="etiqueta">Casos pendientes</div></div>
+      <div class="kpi-card"><div class="valor">${kpi.casos_gestionados}</div><div class="etiqueta">Casos gestionados</div></div>
+      <div class="kpi-card"><div class="valor">${kpi.casos_cerrados}</div><div class="etiqueta">Casos cerrados</div></div>
+      <div class="kpi-card"><div class="valor">${(kpi.contactabilidad_pct * 100).toFixed(0)}%</div><div class="etiqueta">Contactabilidad</div></div>
+      <div class="kpi-card alerta"><div class="valor">${kpi.sla_vencidos}</div><div class="etiqueta">SLA vencidos</div></div>
+      <div class="kpi-card alerta"><div class="valor">${kpi.alertas_activas}</div><div class="etiqueta">Alertas activas</div></div>
+      <div class="kpi-card"><div class="valor">${kpi.tiempo_prom_primera_gestion_min ?? '—'}</div><div class="etiqueta">Min. prom. 1ª gestión</div></div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   CORREOS
+   ============================================================ */
+async function renderCorreos() {
+  const correos = await api('/correos');
+  const contenido = document.getElementById('contenido');
+  const puedeAsignar = usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
+  const puedeCrear = puedeAsignar;
+
+  contenido.innerHTML = `
+    ${puedeCrear ? `<div class="toolbar"><button class="btn" onclick="abrirModalNuevoCorreo()">+ Nuevo correo</button></div>` : ''}
+    <table>
+      <thead><tr>
+        <th>Folio</th><th>Recepción</th><th>Área</th><th>Tipo</th><th>Casos</th>
+        <th>Ejecutivo</th><th>Fecha límite</th><th>Estado</th>${puedeAsignar ? '<th></th>' : ''}
+      </tr></thead>
+      <tbody>
+        ${correos.map(c => `
+          <tr>
+            <td>${c.folio || '—'}</td>
+            <td>${formatFecha(c.fecha_hora_recepcion)}</td>
+            <td>${c.area || '—'}</td>
+            <td>${c.tipo_gestion || '—'}</td>
+            <td>${c.cantidad_casos}</td>
+            <td>${c.ejecutivo_asignado || '<em>Sin asignar</em>'}</td>
+            <td>${formatFecha(c.fecha_limite_gestion)}</td>
+            <td>${badgeEstado(c.estado)}</td>
+            ${puedeAsignar ? `<td><button class="btn secundario" onclick="abrirModalAsignar('${c.id_correo}')">Asignar</button></td>` : ''}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ${correos.length === 0 ? '<p style="margin-top:16px;color:#999;">No hay correos registrados aún.</p>' : ''}
+  `;
+}
+
+function abrirModalAsignar(idCorreo) {
+  document.getElementById('asignarIdCorreo').value = idCorreo;
+  const select = document.getElementById('asignarIdEjecutivo');
+  const ejecutivos = catalogos?.ejecutivos || [];
+  select.innerHTML = ejecutivos.length
+    ? ejecutivos.map(e => `<option value="${e.id_ejecutivo}">${e.nombre}</option>`).join('')
+    : '<option value="">No hay ejecutivos disponibles</option>';
+  document.getElementById('modalAsignar').classList.add('activo');
+}
+
+async function guardarAsignacion() {
+  const idCorreo = document.getElementById('asignarIdCorreo').value;
+  const idEjecutivo = document.getElementById('asignarIdEjecutivo').value;
+  if (!idEjecutivo) { alert('Selecciona un ejecutivo'); return; }
+  try {
+    await api(`/correos/${idCorreo}/asignar`, {
+      method: 'POST',
+      body: JSON.stringify({ id_ejecutivo: idEjecutivo })
+    });
+    cerrarModal('modalAsignar');
+    renderCorreos();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   NUEVO CORREO + CASOS
+   ============================================================ */
+function abrirModalNuevoCorreo() {
+  if (!catalogos) { alert('Aún se están cargando los catálogos, intenta de nuevo en un segundo.'); return; }
+
+  document.getElementById('ncFechaHora').value = new Date().toISOString().slice(0,16);
+  document.getElementById('ncArea').innerHTML = catalogos.areas.map(a => `<option value="${a.id_area}">${a.nombre}</option>`).join('');
+  document.getElementById('ncTipoGestion').innerHTML = catalogos.tipos_gestion.map(t => `<option value="${t.id_tipo_gestion}">${t.nombre}</option>`).join('');
+  document.getElementById('ncPrioridad').innerHTML = catalogos.prioridades.map(p => `<option value="${p.id_prioridad}">${p.nombre}</option>`).join('');
+  document.getElementById('ncRemitente').value = '';
+  document.getElementById('ncAsunto').value = '';
+  document.getElementById('ncObservaciones').value = '';
+
+  document.getElementById('ncListaCasos').innerHTML = '';
+  agregarFilaCaso();
+
+  document.getElementById('modalNuevoCorreo').classList.add('activo');
+}
+
+function agregarFilaCaso() {
+  const lista = document.getElementById('ncListaCasos');
+  const fila = document.createElement('div');
+  fila.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; align-items:center;';
+  fila.innerHTML = `
+    <input type="text" class="rut-caso" placeholder="RUT (ej: 12.345.678-9)" style="flex:1;">
+    <button type="button" class="btn secundario" onclick="this.parentElement.remove()" style="padding:6px 10px;">✕</button>
+  `;
+  lista.appendChild(fila);
+}
+
+async function guardarNuevoCorreo() {
+  const ruts = Array.from(document.querySelectorAll('.rut-caso'))
+    .map(i => i.value.trim())
+    .filter(Boolean);
+
+  if (ruts.length === 0) { alert('Agrega al menos un RUT'); return; }
+
+  const body = {
+    fecha_hora_recepcion: new Date(document.getElementById('ncFechaHora').value).toISOString(),
+    id_area: Number(document.getElementById('ncArea').value),
+    id_tipo_gestion: Number(document.getElementById('ncTipoGestion').value),
+    id_prioridad: Number(document.getElementById('ncPrioridad').value),
+    remitente: document.getElementById('ncRemitente').value,
+    asunto: document.getElementById('ncAsunto').value,
+    observaciones: document.getElementById('ncObservaciones').value,
+    casos: ruts.map(rut => ({ rut_paciente: rut }))
+  };
+
+  try {
+    await api('/correos', { method: 'POST', body: JSON.stringify(body) });
+    cerrarModal('modalNuevoCorreo');
+    renderCorreos();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   CASOS
+   ============================================================ */
+async function renderCasos() {
+  const casos = await api('/casos');
+  const contenido = document.getElementById('contenido');
+
+  contenido.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Folio</th><th>RUT</th><th>Ejecutivo</th><th>Área</th><th>Intentos</th>
+        <th>Estado</th><th>SLA</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+        ${casos.map(c => `
+          <tr>
+            <td><a href="#" onclick="abrirDetalleCaso('${c.id_caso}'); return false;" style="color:var(--azul-corp); font-weight:600;">${c.folio || c.id_caso.slice(0,8)}</a></td>
+            <td>${c.rut_paciente}</td>
+            <td>${c.ejecutivo || '—'}</td>
+            <td>${c.area || '—'}</td>
+            <td>${c.numero_intentos}</td>
+            <td>${badgeEstado(c.estado)}</td>
+            <td>${c.estado_sla || '—'}</td>
+            <td>
+              ${!c.caso_cerrado ? `
+                <button class="btn secundario" onclick="abrirModalGestion('${c.id_caso}')">+ Llamada</button>
+                <button class="btn secundario" onclick="abrirModalCierre('${c.id_caso}')">Cerrar</button>
+              ` : (usuarioActual.rol === 'ADMINISTRADOR' ? `
+                <button class="btn secundario" onclick="abrirModalReapertura('${c.id_caso}')">Reabrir</button>
+              ` : '<em>Cerrado</em>')}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ${casos.length === 0 ? '<p style="margin-top:16px;color:#999;">No hay casos registrados aún.</p>' : ''}
+  `;
+}
+
+/* ============================================================
+   DETALLE DE CASO — LÍNEA DE TIEMPO
+   ============================================================ */
+async function abrirDetalleCaso(idCaso) {
+  idCasoDetalleActual = idCaso;
+  const contenido = document.getElementById('contenido');
+  document.getElementById('tituloVista').textContent = 'Detalle del caso';
+  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+
+  try {
+    const caso = await api(`/casos/${idCaso}`);
+    renderDetalleCaso(caso);
+  } catch (err) {
+    contenido.innerHTML = `<div class="cargando">Error: ${err.message}</div>`;
+  }
+}
+
+function renderDetalleCaso(caso) {
+  const contenido = document.getElementById('contenido');
+
+  // Construir los eventos de la línea de tiempo en orden cronológico
+  const eventos = [];
+  eventos.push({ titulo: 'Correo recibido', fecha: caso.fecha_recepcion, detalle: `Área: ${caso.area || '—'} · Tipo: ${caso.tipo_gestion || '—'}` });
+  if (caso.fecha_asignacion) {
+    eventos.push({ titulo: 'Asignación', fecha: caso.fecha_asignacion, detalle: `Ejecutivo: ${caso.ejecutivo || '—'}` });
+  }
+  (caso.gestiones || []).forEach(g => {
+    eventos.push({
+      titulo: `Gestión (intento ${g.numero_intento})`,
+      fecha: `${g.fecha}T${g.hora_inicio}`,
+      detalle: `Resultado: ${g.resultado}${g.observacion ? ' — ' + g.observacion : ''}`
+    });
+  });
+  if (caso.caso_cerrado) {
+    eventos.push({ titulo: 'Cierre', fecha: caso.fecha_cierre, detalle: `Resultado final: ${caso.resultado_final || '—'}` });
+  }
+
+  contenido.innerHTML = `
+    <button class="btn secundario" onclick="idCasoDetalleActual = null; cargarVista('casos')" style="margin-bottom:16px;">← Volver a Casos</button>
+
+    <div class="kpis" style="margin-bottom:24px;">
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.rut_paciente}</div><div class="etiqueta">RUT paciente</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.ejecutivo || '—'}</div><div class="etiqueta">Ejecutivo</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstado(caso.estado)}</div><div class="etiqueta">Estado</div></div>
+      <div class="kpi-card ${caso.estado_sla && caso.estado_sla.includes('VENCIDO') ? 'alerta' : ''}"><div class="valor" style="font-size:16px;">${caso.estado_sla || '—'}</div><div class="etiqueta">SLA</div></div>
+    </div>
+
+    <div style="display:flex; gap:24px; flex-wrap:wrap;">
+      <div style="flex:2; min-width:320px;">
+        <h3 style="color:var(--azul-marino); font-size:15px;">Línea de tiempo</h3>
+        <div style="position:relative; padding-left:24px; border-left:2px solid #ddd; margin-top:16px;">
+          ${eventos.map(ev => `
+            <div style="position:relative; margin-bottom:22px;">
+              <div style="position:absolute; left:-31px; top:2px; width:12px; height:12px; border-radius:50%; background:var(--turquesa); border:2px solid white; box-shadow:0 0 0 2px var(--turquesa);"></div>
+              <div style="font-weight:600; font-size:13px; color:var(--azul-marino);">${ev.titulo}</div>
+              <div style="font-size:12px; color:#888; margin:2px 0;">${formatFecha(ev.fecha)}</div>
+              <div style="font-size:13px;">${ev.detalle}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:260px;">
+        <h3 style="color:var(--azul-marino); font-size:15px;">Datos del caso</h3>
+        <table style="margin-top:12px;">
+          <tbody>
+            <tr><td><b>Folio</b></td><td>${caso.folio || '—'}</td></tr>
+            <tr><td><b>Área</b></td><td>${caso.area || '—'}</td></tr>
+            <tr><td><b>Tipo de gestión</b></td><td>${caso.tipo_gestion || '—'}</td></tr>
+            <tr><td><b>Prioridad</b></td><td>${caso.prioridad || '—'}</td></tr>
+            <tr><td><b>Fecha límite SLA</b></td><td>${formatFecha(caso.fecha_limite_caso)}</td></tr>
+            <tr><td><b>Resultado final</b></td><td>${caso.resultado_final || '—'}</td></tr>
+            <tr><td><b>Observaciones</b></td><td>${caso.observaciones || '—'}</td></tr>
+          </tbody>
+        </table>
+
+        ${!caso.caso_cerrado ? `
+          <div style="margin-top:20px; display:flex; gap:8px;">
+            <button class="btn secundario" onclick="abrirModalGestion('${caso.id_caso}')">+ Llamada</button>
+            <button class="btn secundario" onclick="abrirModalCierre('${caso.id_caso}')">Cerrar caso</button>
+          </div>
+        ` : (usuarioActual.rol === 'ADMINISTRADOR' ? `
+          <div style="margin-top:20px;">
+            <button class="btn secundario" onclick="abrirModalReapertura('${caso.id_caso}')">Reabrir caso</button>
+          </div>
+        ` : '')}
+      </div>
+    </div>
+  `;
+}
+
+async function cargarResultadosGestion() {
+  // Nota: no existe endpoint de catálogos de resultados todavía; si se agrega
+  // /api/catalogos (ya trae resultados_gestion), se puede leer catalogos.resultados_gestion
+  // y filtrar por nombre en vez de mantener esta lista fija con ids.
+  return {
+    'CONTACTADO': [
+      { id: 9, nombre: 'CONFIRMA CITA' },
+      { id: 10, nombre: 'NO CONFIRMA CITA' }
+    ],
+    'NO CONTACTADO': [
+      { id: 2, nombre: 'NO CONTESTA' },
+      { id: 3, nombre: 'OCUPADO' },
+      { id: 4, nombre: 'BUZÓN DE VOZ' },
+      { id: 5, nombre: 'TELÉFONO APAGADO' },
+      { id: 6, nombre: 'NÚMERO ERRÓNEO' },
+      { id: 7, nombre: 'RECHAZA GESTIÓN' },
+      { id: 8, nombre: 'VOLVER A LLAMAR' }
+    ]
+  };
+}
+
+async function abrirModalGestion(idCaso) {
+  document.getElementById('gestionIdCaso').value = idCaso;
+  document.getElementById('gestionFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('gestionHoraInicio').value = new Date().toTimeString().slice(0,5);
+  document.getElementById('gestionHoraTermino').value = '';
+  document.getElementById('gestionObservacion').value = '';
+
+  if (!resultadosCache) resultadosCache = await cargarResultadosGestion();
+  const select = document.getElementById('gestionResultado');
+  select.innerHTML = Object.entries(resultadosCache).map(([grupo, opciones]) => `
+    <optgroup label="${grupo}">
+      ${opciones.map(r => `<option value="${r.id}">${r.nombre}</option>`).join('')}
+    </optgroup>
+  `).join('');
+
+  document.getElementById('modalGestion').classList.add('activo');
+}
+
+async function guardarGestion() {
+  const body = {
+    id_caso: document.getElementById('gestionIdCaso').value,
+    fecha: document.getElementById('gestionFecha').value,
+    hora_inicio: document.getElementById('gestionHoraInicio').value,
+    hora_termino: document.getElementById('gestionHoraTermino').value || undefined,
+    id_resultado: Number(document.getElementById('gestionResultado').value),
+    observacion: document.getElementById('gestionObservacion').value
+  };
+  try {
+    await api('/gestiones', { method: 'POST', body: JSON.stringify(body) });
+    cerrarModal('modalGestion');
+    if (idCasoDetalleActual) { abrirDetalleCaso(idCasoDetalleActual); } else { renderCasos(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirModalCierre(idCaso) {
+  document.getElementById('cierreIdCaso').value = idCaso;
+  document.getElementById('cierreResultado').value = '';
+  document.getElementById('cierreObservaciones').value = '';
+  document.getElementById('modalCierre').classList.add('activo');
+}
+
+async function guardarCierre() {
+  const idCaso = document.getElementById('cierreIdCaso').value;
+  const body = {
+    resultado_final: document.getElementById('cierreResultado').value,
+    observaciones: document.getElementById('cierreObservaciones').value
+  };
+  if (!body.resultado_final) { alert('Ingresa el resultado final'); return; }
+  try {
+    await api(`/casos/${idCaso}/cerrar`, { method: 'POST', body: JSON.stringify(body) });
+    cerrarModal('modalCierre');
+    if (idCasoDetalleActual) { abrirDetalleCaso(idCasoDetalleActual); } else { renderCasos(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirModalReapertura(idCaso) {
+  document.getElementById('reaperturaIdCaso').value = idCaso;
+  document.getElementById('reaperturaMotivo').value = '';
+  document.getElementById('modalReapertura').classList.add('activo');
+}
+
+async function guardarReapertura() {
+  const idCaso = document.getElementById('reaperturaIdCaso').value;
+  const motivo = document.getElementById('reaperturaMotivo').value.trim();
+  if (motivo.length < 5) { alert('Ingresa un motivo de al menos 5 caracteres'); return; }
+  try {
+    await api(`/casos/${idCaso}/reabrir`, { method: 'POST', body: JSON.stringify({ motivo }) });
+    cerrarModal('modalReapertura');
+    if (idCasoDetalleActual) { abrirDetalleCaso(idCasoDetalleActual); } else { renderCasos(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   ALERTAS
+   ============================================================ */
+let filtroEstadoAlertas = 'ACTIVA';
+
+async function renderAlertas() {
+  const alertas = await api(`/alertas?estado=${filtroEstadoAlertas}`);
+  const contenido = document.getElementById('contenido');
+
+  contenido.innerHTML = `
+    <div class="toolbar">
+      <select id="filtroAlertas" onchange="cambiarFiltroAlertas(this.value)">
+        <option value="ACTIVA" ${filtroEstadoAlertas === 'ACTIVA' ? 'selected' : ''}>Activas</option>
+        <option value="RESUELTA" ${filtroEstadoAlertas === 'RESUELTA' ? 'selected' : ''}>Resueltas</option>
+      </select>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Tipo</th><th>Prioridad</th><th>Mensaje</th><th>Caso</th><th>Ejecutivo</th>
+        <th>Fecha</th>${filtroEstadoAlertas === 'ACTIVA' ? '<th></th>' : ''}
+      </tr></thead>
+      <tbody>
+        ${alertas.map(a => `
+          <tr>
+            <td>${a.tipo}</td>
+            <td>${a.prioridad}</td>
+            <td>${a.mensaje}</td>
+            <td>${a.folio_caso || a.rut_paciente || '—'}</td>
+            <td>${a.ejecutivo || '—'}</td>
+            <td>${formatFecha(a.fecha_creacion)}</td>
+            ${filtroEstadoAlertas === 'ACTIVA' ? `<td><button class="btn secundario" onclick="resolverAlerta('${a.id_alerta}')">Resolver</button></td>` : ''}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ${alertas.length === 0 ? `<p style="margin-top:16px;color:#999;">No hay alertas ${filtroEstadoAlertas === 'ACTIVA' ? 'activas' : 'resueltas'}.</p>` : ''}
+  `;
+}
+
+function cambiarFiltroAlertas(valor) {
+  filtroEstadoAlertas = valor;
+  renderAlertas();
+}
+
+async function resolverAlerta(idAlerta) {
+  try {
+    await api(`/alertas/${idAlerta}/resolver`, { method: 'POST' });
+    renderAlertas();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   AUDITORÍA
+   ============================================================ */
+let filtroModuloAuditoria = '';
+
+async function renderAuditoria() {
+  const modulos = await api('/auditoria/modulos');
+  const registros = await api(`/auditoria${filtroModuloAuditoria ? '?modulo=' + filtroModuloAuditoria : ''}`);
+  const contenido = document.getElementById('contenido');
+
+  contenido.innerHTML = `
+    <div class="toolbar">
+      <select id="filtroModuloAuditoria" onchange="cambiarFiltroAuditoria(this.value)">
+        <option value="">Todos los módulos</option>
+        ${modulos.map(m => `<option value="${m}" ${filtroModuloAuditoria === m ? 'selected' : ''}>${m}</option>`).join('')}
+      </select>
+      <span style="color:#999; font-size:12px;">Mostrando los últimos ${registros.length} registros</span>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Fecha/Hora</th><th>Usuario</th><th>Módulo</th><th>Acción</th><th>Registro afectado</th>
+      </tr></thead>
+      <tbody>
+        ${registros.map(r => `
+          <tr>
+            <td>${formatFecha(r.fecha_hora)}</td>
+            <td>${r.usuario_nombre ? `${r.usuario_nombre} ${r.usuario_apellido}` : '—'}</td>
+            <td>${r.modulo}</td>
+            <td>${r.accion}</td>
+            <td style="font-family:monospace; font-size:11px;">${(r.id_registro_afectado || '—').toString().slice(0,8)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ${registros.length === 0 ? '<p style="margin-top:16px;color:#999;">No hay registros de auditoría.</p>' : ''}
+  `;
+}
+
+function cambiarFiltroAuditoria(valor) {
+  filtroModuloAuditoria = valor;
+  renderAuditoria();
+}
+
+/* ============================================================
+   REPORTES
+   ============================================================ */
+let filtroReporte = { tipo: 'diario', desde: '', hasta: '' };
+let reporteActual = null;
+
+async function renderReportes() {
+  const contenido = document.getElementById('contenido');
+  contenido.innerHTML = `
+    <div class="toolbar">
+      <select id="repTipo" onchange="cambiarTipoReporte(this.value)">
+        <option value="diario" ${filtroReporte.tipo === 'diario' ? 'selected' : ''}>Diario</option>
+        <option value="semanal" ${filtroReporte.tipo === 'semanal' ? 'selected' : ''}>Semanal</option>
+        <option value="ejecutivo" ${filtroReporte.tipo === 'ejecutivo' ? 'selected' : ''}>Por ejecutivo</option>
+        <option value="area" ${filtroReporte.tipo === 'area' ? 'selected' : ''}>Por área</option>
+      </select>
+      <input type="date" id="repDesde" value="${filtroReporte.desde}">
+      <input type="date" id="repHasta" value="${filtroReporte.hasta}">
+      <button class="btn secundario" onclick="aplicarFiltroReporte()">Filtrar</button>
+      <button class="btn" onclick="exportarReporteCSV()">Exportar CSV</button>
+    </div>
+    <div id="tablaReporte"><div class="cargando">Cargando...</div></div>
+  `;
+  await cargarReporte();
+}
+
+function cambiarTipoReporte(valor) {
+  filtroReporte.tipo = valor;
+  cargarReporte();
+}
+
+function aplicarFiltroReporte() {
+  filtroReporte.desde = document.getElementById('repDesde').value;
+  filtroReporte.hasta = document.getElementById('repHasta').value;
+  cargarReporte();
+}
+
+async function cargarReporte() {
+  const params = new URLSearchParams({ tipo: filtroReporte.tipo });
+  if (filtroReporte.desde) params.set('desde', filtroReporte.desde);
+  if (filtroReporte.hasta) params.set('hasta', filtroReporte.hasta);
+
+  const data = await api(`/reportes?${params.toString()}`);
+  reporteActual = data;
+
+  const etiquetaPeriodo = { diario: 'Día', semanal: 'Semana', ejecutivo: 'Ejecutivo', area: 'Área' }[data.tipo];
+  const mostrarLlamadas = data.tipo === 'ejecutivo';
+
+  document.getElementById('tablaReporte').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>${etiquetaPeriodo}</th><th>Casos recibidos</th><th>Cerrados</th>
+        <th>Contactados</th><th>Contactabilidad</th>
+        ${mostrarLlamadas ? '<th>Llamadas totales</th>' : ''}
+        <th>Min. prom. 1ª gestión</th>
+      </tr></thead>
+      <tbody>
+        ${data.filas.map(f => `
+          <tr>
+            <td>${f.periodo}</td>
+            <td>${f.casos_recibidos}</td>
+            <td>${f.casos_cerrados}</td>
+            <td>${f.contactados}</td>
+            <td>${(f.contactabilidad_pct * 100).toFixed(0)}%</td>
+            ${mostrarLlamadas ? `<td>${f.total_llamadas ?? '—'}</td>` : ''}
+            <td>${f.tiempo_prom_primera_gestion_min ?? '—'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ${data.filas.length === 0 ? '<p style="margin-top:16px;color:#999;">No hay datos para este período.</p>' : ''}
+  `;
+}
+
+function exportarReporteCSV() {
+  if (!reporteActual || reporteActual.filas.length === 0) { alert('No hay datos para exportar'); return; }
+
+  const mostrarLlamadas = reporteActual.tipo === 'ejecutivo';
+  const encabezados = ['Periodo', 'Casos recibidos', 'Cerrados', 'Contactados', 'Contactabilidad %']
+    .concat(mostrarLlamadas ? ['Llamadas totales'] : [])
+    .concat(['Min prom 1a gestion']);
+
+  const filasCSV = reporteActual.filas.map(f => [
+    f.periodo, f.casos_recibidos, f.casos_cerrados, f.contactados,
+    (f.contactabilidad_pct * 100).toFixed(0),
+    ...(mostrarLlamadas ? [f.total_llamadas ?? ''] : []),
+    f.tiempo_prom_primera_gestion_min ?? ''
+  ]);
+
+  const csv = [encabezados, ...filasCSV]
+    .map(fila => fila.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reporte_${reporteActual.tipo}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   IMPORTAR DESDE EXCEL (Checklist_Diario Out.xlsx → BASE OUTBOUND)
+   ============================================================ */
+let filasImportacion = []; // filas parseadas y validadas, listas para revisar/confirmar
+
+function renderImportarInicial() {
+  const contenido = document.getElementById('contenido');
+  contenido.innerHTML = `
+    <p style="color:#555; max-width:640px;">
+      Selecciona tu archivo <b>Checklist_Diario Out.xlsx</b>. Se leerá la hoja <b>BASE OUTBOUND</b>
+      (columnas: ID CORREO, RUT PACIENTE, ÁREA SOLICITANTE, TIPO DE GESTIÓN, PRIORIDAD, EJECUTIVO,
+      FECHA/HORA RECEPCIÓN CORREO). Solo se importan correos y casos — el historial de intentos
+      de llamada ya registrados en el Excel no se importa en esta versión.
+    </p>
+    <input type="file" id="archivoExcel" accept=".xlsx,.xls">
+    <div id="resultadoImportacion" style="margin-top:20px;"></div>
+  `;
+  document.getElementById('archivoExcel').addEventListener('change', manejarArchivoExcel);
+}
+
+async function renderImportar() {
+  if (!catalogos) await cargarCatalogos();
+  renderImportarInicial();
+}
+
+function validarRut(rut) {
+  if (!rut) return false;
+  const limpio = rut.toString().replace(/\./g, '').replace(/\s/g, '').toUpperCase();
+  return /^\d{6,9}-[0-9K]$/.test(limpio);
+}
+
+async function manejarArchivoExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const resultadoDiv = document.getElementById('resultadoImportacion');
+  resultadoDiv.innerHTML = '<div class="cargando">Leyendo y validando archivo...</div>';
+
+  const buffer = await file.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+
+  const hoja = workbook.Sheets['BASE OUTBOUND'];
+  if (!hoja) {
+    resultadoDiv.innerHTML = '<p style="color:#d9534f;">No se encontró la hoja "BASE OUTBOUND" en el archivo.</p>';
+    return;
+  }
+
+  // Los encabezados reales están en la fila 4 (índice 3), los datos parten en la fila 5
+  const filas = XLSX.utils.sheet_to_json(hoja, { range: 3, defval: null });
+
+  // Traer casos existentes para detectar duplicados por RUT
+  const casosExistentes = await api('/casos');
+  const rutsExistentes = new Set(casosExistentes.map(c => c.rut_paciente?.toUpperCase()));
+
+  const nombresEjecutivos = new Set((catalogos.ejecutivos || []).map(e => e.nombre.toUpperCase()));
+  const nombresAreas = new Set((catalogos.areas || []).map(a => a.nombre.toUpperCase()));
+  const nombresTipos = new Set((catalogos.tipos_gestion || []).map(t => t.nombre.toUpperCase()));
+
+  const rutsVistosEnArchivo = new Set();
+
+  filasImportacion = filas
+    .filter(f => f['RUT PACIENTE']) // ignorar filas vacías / sin RUT (ej. filas de ejemplo incompletas)
+    .map((f, i) => {
+      const rut = (f['RUT PACIENTE'] || '').toString().trim();
+      const rutUpper = rut.toUpperCase();
+      const ejecutivo = (f['EJECUTIVO'] || '').toString().trim();
+      const area = (f['ÁREA SOLICITANTE'] || '').toString().trim();
+      const tipoGestion = (f['TIPO DE GESTIÓN'] || '').toString().trim();
+
+      const errores = [];
+      if (!validarRut(rut)) errores.push('RUT con formato inválido');
+      if (rutsExistentes.has(rutUpper)) errores.push('Ya existe un caso con este RUT en el sistema');
+      if (rutsVistosEnArchivo.has(rutUpper)) errores.push('RUT duplicado dentro del mismo archivo');
+      if (ejecutivo && !nombresEjecutivos.has(ejecutivo.toUpperCase())) errores.push(`Ejecutivo "${ejecutivo}" no existe en el sistema`);
+      if (area && !nombresAreas.has(area.toUpperCase())) errores.push(`Área "${area}" no existe en el sistema`);
+      if (tipoGestion && !nombresTipos.has(tipoGestion.toUpperCase())) errores.push(`Tipo de gestión "${tipoGestion}" no existe en el sistema`);
+
+      rutsVistosEnArchivo.add(rutUpper);
+
+      return {
+        fila: i + 5,
+        id_correo_excel: f['ID CORREO'] || null,
+        rut_paciente: rut,
+        area,
+        tipo_gestion: tipoGestion,
+        prioridad: (f['PRIORIDAD'] || '').toString().trim(),
+        ejecutivo,
+        fecha_hora_recepcion: f['FECHA/HORA RECEPCIÓN CORREO'] || null,
+        observaciones: (f['OBSERVACIONES'] || '').toString().trim(),
+        errores,
+        incluir: errores.length === 0
+      };
+    });
+
+  renderPreviewImportacion();
+}
+
+function renderPreviewImportacion() {
+  const resultadoDiv = document.getElementById('resultadoImportacion');
+  const validas = filasImportacion.filter(f => f.errores.length === 0).length;
+  const conError = filasImportacion.length - validas;
+
+  resultadoDiv.innerHTML = `
+    <div class="kpis" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="valor">${filasImportacion.length}</div><div class="etiqueta">Filas leídas</div></div>
+      <div class="kpi-card"><div class="valor" style="color:var(--verde);">${validas}</div><div class="etiqueta">Válidas para importar</div></div>
+      <div class="kpi-card alerta"><div class="valor">${conError}</div><div class="etiqueta">Con errores (se excluyen)</div></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" onclick="confirmarImportacion()">Confirmar importación (${validas} filas)</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th></th><th>Fila</th><th>RUT</th><th>Área</th><th>Tipo gestión</th><th>Ejecutivo</th><th>Errores</th>
+      </tr></thead>
+      <tbody>
+        ${filasImportacion.map((f, idx) => `
+          <tr style="${f.errores.length ? 'background:#fff3f3;' : ''}">
+            <td><input type="checkbox" ${f.incluir ? 'checked' : ''} ${f.errores.length ? 'disabled' : ''} onchange="filasImportacion[${idx}].incluir = this.checked"></td>
+            <td>${f.fila}</td>
+            <td>${f.rut_paciente}</td>
+            <td>${f.area || '—'}</td>
+            <td>${f.tipo_gestion || '—'}</td>
+            <td>${f.ejecutivo || '—'}</td>
+            <td style="color:var(--rojo); font-size:11px;">${f.errores.join('; ') || '—'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function confirmarImportacion() {
+  const filasValidas = filasImportacion.filter(f => f.incluir && f.errores.length === 0);
+  if (filasValidas.length === 0) { alert('No hay filas válidas seleccionadas para importar'); return; }
+
+  if (!confirm(`Se importarán ${filasValidas.length} correos/casos nuevos. ¿Continuar?`)) return;
+
+  const resultadoDiv = document.getElementById('resultadoImportacion');
+  resultadoDiv.innerHTML = '<div class="cargando">Importando, por favor espera...</div>';
+
+  const mapaArea = Object.fromEntries((catalogos.areas || []).map(a => [a.nombre.toUpperCase(), a.id_area]));
+  const mapaTipo = Object.fromEntries((catalogos.tipos_gestion || []).map(t => [t.nombre.toUpperCase(), t.id_tipo_gestion]));
+  const mapaPrioridad = Object.fromEntries((catalogos.prioridades || []).map(p => [p.nombre.toUpperCase(), p.id_prioridad]));
+
+  let exitosos = 0;
+  let fallidos = 0;
+
+  for (const f of filasValidas) {
+    try {
+      const fechaRecepcion = f.fecha_hora_recepcion instanceof Date
+        ? f.fecha_hora_recepcion.toISOString()
+        : new Date().toISOString();
+
+      await api('/correos', {
+        method: 'POST',
+        body: JSON.stringify({
+          fecha_hora_recepcion: fechaRecepcion,
+          id_area: mapaArea[f.area.toUpperCase()],
+          id_tipo_gestion: mapaTipo[f.tipo_gestion.toUpperCase()],
+          id_prioridad: mapaPrioridad[(f.prioridad || 'MEDIA').toUpperCase()] || mapaPrioridad['MEDIA'],
+          observaciones: f.observaciones,
+          casos: [{ rut_paciente: f.rut_paciente }]
+        })
+      });
+      exitosos++;
+    } catch (err) {
+      fallidos++;
+    }
+  }
+
+  resultadoDiv.innerHTML = `
+    <p style="color:var(--verde); font-weight:600;">${exitosos} correos/casos importados correctamente.</p>
+    ${fallidos > 0 ? `<p style="color:var(--rojo);">${fallidos} fallaron al importar (revisa la auditoría o intenta de nuevo).</p>` : ''}
+    <button class="btn secundario" onclick="renderImportarInicial()">Importar otro archivo</button>
+  `;
+}
+
+/* ============================================================
+   EJECUTIVOS — LISTA Y FICHA INDIVIDUAL
+   ============================================================ */
+let filtroAgrupacionEjecutivo = 'diario';
+
+async function renderEjecutivos() {
+  const ejecutivos = await api('/ejecutivos');
+  const contenido = document.getElementById('contenido');
+
+  // Si el usuario es EJECUTIVO, va directo a su propia ficha
+  if (usuarioActual.rol === 'EJECUTIVO' && ejecutivos.length === 1) {
+    return abrirFichaEjecutivo(ejecutivos[0].id_ejecutivo, ejecutivos[0].nombre);
+  }
+
+  contenido.innerHTML = `
+    ${usuarioActual.rol === 'ADMINISTRADOR' ? `<div class="toolbar"><button class="btn" onclick="abrirModalNuevoEjecutivo()">+ Nuevo ejecutivo</button></div>` : ''}
+    <table>
+      <thead><tr><th>Ejecutivo</th><th></th></tr></thead>
+      <tbody>
+        ${ejecutivos.map(e => `
+          <tr>
+            <td>${e.nombre}</td>
+            <td><button class="btn secundario" onclick="abrirFichaEjecutivo('${e.id_ejecutivo}', '${e.nombre.replace(/'/g, "\\'")}')">Ver ficha</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function abrirFichaEjecutivo(idEjecutivo, nombre) {
+  document.getElementById('tituloVista').textContent = `Ejecutivo: ${nombre}`;
+  const contenido = document.getElementById('contenido');
+  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+
+  const puedeVolver = !(usuarioActual.rol === 'EJECUTIVO');
+
+  try {
+    const params = new URLSearchParams({ agrupacion: filtroAgrupacionEjecutivo });
+    const data = await api(`/ejecutivos/${idEjecutivo}/resumen?${params.toString()}`);
+    const r = data.resumen;
+
+    contenido.innerHTML = `
+      ${puedeVolver ? `<button class="btn secundario" onclick="cargarVista('ejecutivos')" style="margin-bottom:16px;">← Volver</button>` : ''}
+
+      <div class="kpis" style="margin-bottom:24px;">
+        <div class="kpi-card"><div class="valor">${r.casos_asignados}</div><div class="etiqueta">Casos asignados</div></div>
+        <div class="kpi-card"><div class="valor">${r.casos_cerrados}</div><div class="etiqueta">Casos cerrados</div></div>
+        <div class="kpi-card"><div class="valor">${(r.contactabilidad_pct * 100).toFixed(0)}%</div><div class="etiqueta">Contactabilidad</div></div>
+        <div class="kpi-card"><div class="valor">${r.total_llamadas}</div><div class="etiqueta">Llamadas totales</div></div>
+        <div class="kpi-card"><div class="valor">${r.tiempo_prom_primera_gestion_min ?? '—'}</div><div class="etiqueta">Min. prom. 1ª gestión</div></div>
+      </div>
+
+      <div class="toolbar">
+        <select id="selectAgrupacionEjecutivo" onchange="cambiarAgrupacionEjecutivo('${idEjecutivo}', '${nombre.replace(/'/g, "\\'")}', this.value)">
+          <option value="diario" ${filtroAgrupacionEjecutivo === 'diario' ? 'selected' : ''}>Evolución diaria</option>
+          <option value="semanal" ${filtroAgrupacionEjecutivo === 'semanal' ? 'selected' : ''}>Evolución semanal</option>
+          <option value="mensual" ${filtroAgrupacionEjecutivo === 'mensual' ? 'selected' : ''}>Evolución mensual</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Período</th><th>Casos recibidos</th><th>Cerrados</th><th>Contactados</th></tr></thead>
+        <tbody>
+          ${data.evolucion.map(e => `
+            <tr><td>${e.periodo}</td><td>${e.casos_recibidos}</td><td>${e.casos_cerrados}</td><td>${e.contactados}</td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+      ${data.evolucion.length === 0 ? '<p style="margin-top:16px;color:#999;">Sin datos para este ejecutivo aún.</p>' : ''}
+    `;
+  } catch (err) {
+    contenido.innerHTML = `<div class="cargando">Error: ${err.message}</div>`;
+  }
+}
+
+function cambiarAgrupacionEjecutivo(idEjecutivo, nombre, valor) {
+  filtroAgrupacionEjecutivo = valor;
+  abrirFichaEjecutivo(idEjecutivo, nombre);
+}
+
+/* ============================================================
+   CONFIGURACIÓN DE PARÁMETROS SLA
+   ============================================================ */
+const etiquetasParametros = {
+  jornada_inicio: 'Hora de inicio de jornada',
+  jornada_fin: 'Hora de término de jornada',
+  sla_1_rut_minutos: 'SLA primera gestión — casos de 1 RUT (minutos)',
+  umbral_proximo_vencer_min: 'Umbral de aviso "próximo a vencer" (minutos)',
+  intentos_minimos: 'Cantidad mínima de intentos antes de generar alerta',
+  avance_minimo_multi_rut: '% de avance mínimo esperado (correos multi-RUT)',
+  corte_ultima_hora: 'Corte de "última hora" de recepción'
+};
+
+async function renderConfiguracion() {
+  const parametros = await api('/parametros');
+  const contenido = document.getElementById('contenido');
+
+  contenido.innerHTML = `
+    <p style="color:#555; max-width:600px; margin-bottom:16px;">
+      Estos parámetros controlan el cálculo automático de SLA y las alertas del sistema.
+      Solo el Administrador puede modificarlos.
+    </p>
+    <table>
+      <thead><tr><th>Parámetro</th><th>Valor actual</th><th>Última actualización</th><th></th></tr></thead>
+      <tbody>
+        ${parametros.map(p => `
+          <tr>
+            <td>${etiquetasParametros[p.clave] || p.clave}</td>
+            <td><input type="text" id="param_${p.clave}" value="${p.valor}" style="width:100px; padding:4px 8px; border:1px solid #ccc; border-radius:4px;"></td>
+            <td style="font-size:12px; color:#888;">${formatFecha(p.fecha_actualizacion)}</td>
+            <td><button class="btn secundario" onclick="guardarParametro('${p.clave}')">Guardar</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function guardarParametro(clave) {
+  const valor = document.getElementById(`param_${clave}`).value.trim();
+  if (!valor) { alert('El valor no puede estar vacío'); return; }
+  try {
+    await api(`/parametros/${clave}`, { method: 'PUT', body: JSON.stringify({ valor }) });
+    renderConfiguracion();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirModalNuevoEjecutivo() {
+  document.getElementById('neNombre').value = '';
+  document.getElementById('neRut').value = '';
+  document.getElementById('neEmail').value = '';
+  document.getElementById('modalNuevoEjecutivo').classList.add('activo');
+}
+
+async function guardarNuevoEjecutivo() {
+  const body = {
+    nombre: document.getElementById('neNombre').value.trim(),
+    rut: document.getElementById('neRut').value.trim() || undefined,
+    email: document.getElementById('neEmail').value.trim() || undefined
+  };
+  if (!body.nombre) { alert('El nombre es obligatorio'); return; }
+  try {
+    await api('/ejecutivos', { method: 'POST', body: JSON.stringify(body) });
+    cerrarModal('modalNuevoEjecutivo');
+    await cargarCatalogos(); // refresca la lista de ejecutivos disponible en toda la app
+    renderEjecutivos();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   CONFIGURACIÓN SLA — REAGENDAMIENTO (independiente de Outbound)
+   ============================================================ */
+const etiquetasParamsReag = {
+  corte_hora_am_pm: 'Hora de corte AM/PM (0-23) — tramo Ejecutivo → Administrador',
+  hora_limite_mismo_dia_pm: 'Hora límite mismo día (si ingresó antes del corte)',
+  hora_limite_dia_siguiente_am: 'Hora límite día siguiente (si ingresó en o después del corte)',
+  sla_administrador_agencia_horas: 'Horas para que la agencia responda — tramo Administrador → Agencia',
+  sla_agencia_administrador_horas: 'Horas para que Administración cierre tras la respuesta — tramo Agencia → Administrador'
+};
+
+async function renderReagConfiguracion() {
+  const parametros = await api('/reagendamiento/parametros');
+  const contenido = document.getElementById('contenido');
+
+  contenido.innerHTML = `
+    <p style="color:#555; max-width:640px; margin-bottom:16px;">
+      Estos parámetros son propios del módulo Reagendamiento y no afectan el SLA de Outbound.
+      Controlan los 3 tramos de tiempo: <b>Ejecutivo → Administrador</b>, <b>Administrador → Agencia</b>
+      y <b>Agencia → Administrador</b>. Solo el Administrador puede modificarlos.
+    </p>
+    <table>
+      <thead><tr><th>Parámetro</th><th>Valor actual</th><th>Última actualización</th><th></th></tr></thead>
+      <tbody>
+        ${parametros.map(p => `
+          <tr>
+            <td style="max-width:320px;">${etiquetasParamsReag[p.clave] || p.clave}</td>
+            <td><input type="text" id="reagParam_${p.clave}" value="${p.valor}" style="width:90px; padding:4px 8px; border:1px solid #ccc; border-radius:4px;"></td>
+            <td style="font-size:12px; color:#888;">${formatFecha(p.fecha_actualizacion)}</td>
+            <td><button class="btn secundario" onclick="guardarParametroReag('${p.clave}')">Guardar</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function guardarParametroReag(clave) {
+  const valor = document.getElementById(`reagParam_${clave}`).value.trim();
+  if (!valor) { alert('El valor no puede estar vacío'); return; }
+  try {
+    await api(`/reagendamiento/parametros/${clave}`, { method: 'PUT', body: JSON.stringify({ valor }) });
+    renderReagConfiguracion();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   GESTIÓN DE USUARIOS
+   ============================================================ */
+async function renderUsuarios() {
+  const usuarios = await api('/usuarios');
+  const contenido = document.getElementById('contenido');
+
+  contenido.innerHTML = `
+    <div class="toolbar">
+      <button class="btn" onclick="abrirModalNuevoUsuario()">+ Nuevo usuario</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Nombre</th><th>Correo</th><th>Rol</th><th>Ejecutivo vinculado</th>
+        <th>Estado</th><th>Último acceso</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+        ${usuarios.map(u => `
+          <tr>
+            <td>${u.nombre} ${u.apellido}</td>
+            <td>${u.email}</td>
+            <td>${u.rol}</td>
+            <td>${u.ejecutivo_vinculado || '—'}</td>
+            <td>${estadoUsuarioBadge(u.estado)}</td>
+            <td>${formatFecha(u.ultimo_acceso)}</td>
+            <td>
+              <button class="btn secundario" onclick="abrirModalResetPassword('${u.id_usuario}')">Resetear clave</button>
+              ${u.estado === 'ACTIVO'
+                ? `<button class="btn secundario" onclick="cambiarEstadoUsuario('${u.id_usuario}', 'INACTIVO')">Desactivar</button>`
+                : `<button class="btn secundario" onclick="cambiarEstadoUsuario('${u.id_usuario}', 'ACTIVO')">Activar</button>`}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function estadoUsuarioBadge(estado) {
+  const colores = { ACTIVO: 'gestionado', INACTIVO: 'cerrado', BLOQUEADO: 'pendiente' };
+  return `<span class="badge ${colores[estado] || 'pendiente'}">${estado}</span>`;
+}
+
+async function abrirModalNuevoUsuario() {
+  if (!catalogos) await cargarCatalogos();
+  document.getElementById('nuNombre').value = '';
+  document.getElementById('nuApellido').value = '';
+  document.getElementById('nuEmail').value = '';
+  document.getElementById('nuPassword').value = '';
+  document.getElementById('nuRol').value = 'EJECUTIVO';
+  document.getElementById('nuIdEjecutivo').innerHTML = (catalogos.ejecutivos || [])
+    .map(e => `<option value="${e.id_ejecutivo}">${e.nombre}</option>`).join('');
+  mostrarSelectEjecutivoSiCorresponde();
+  document.getElementById('modalNuevoUsuario').classList.add('activo');
+}
+
+function mostrarSelectEjecutivoSiCorresponde() {
+  const rol = document.getElementById('nuRol').value;
+  document.getElementById('filaEjecutivoVinculado').style.display = rol === 'EJECUTIVO' ? 'block' : 'none';
+}
+
+async function guardarNuevoUsuario() {
+  const body = {
+    nombre: document.getElementById('nuNombre').value.trim(),
+    apellido: document.getElementById('nuApellido').value.trim(),
+    email: document.getElementById('nuEmail').value.trim(),
+    password: document.getElementById('nuPassword').value,
+    rol: document.getElementById('nuRol').value,
+    id_ejecutivo: document.getElementById('nuRol').value === 'EJECUTIVO' ? document.getElementById('nuIdEjecutivo').value : null
+  };
+  if (!body.nombre || !body.apellido || !body.email || body.password.length < 6) {
+    alert('Completa todos los campos (contraseña mínimo 6 caracteres)');
+    return;
+  }
+  try {
+    await api('/usuarios', { method: 'POST', body: JSON.stringify(body) });
+    cerrarModal('modalNuevoUsuario');
+    renderUsuarios();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function cambiarEstadoUsuario(idUsuario, nuevoEstado) {
+  if (!confirm(`¿Confirmas cambiar el estado a ${nuevoEstado}?`)) return;
+  try {
+    await api(`/usuarios/${idUsuario}/estado`, { method: 'PUT', body: JSON.stringify({ estado: nuevoEstado }) });
+    renderUsuarios();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirModalResetPassword(idUsuario) {
+  document.getElementById('resetIdUsuario').value = idUsuario;
+  document.getElementById('resetPassword').value = '';
+  document.getElementById('modalResetPassword').classList.add('activo');
+}
+
+async function guardarResetPassword() {
+  const idUsuario = document.getElementById('resetIdUsuario').value;
+  const password = document.getElementById('resetPassword').value;
+  if (password.length < 6) { alert('La contraseña debe tener al menos 6 caracteres'); return; }
+  try {
+    await api(`/usuarios/${idUsuario}/resetear-password`, { method: 'POST', body: JSON.stringify({ password }) });
+    cerrarModal('modalResetPassword');
+    alert('Contraseña actualizada. Comunícasela de forma segura al usuario.');
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   REAGENDAMIENTO
+   ============================================================ */
+let catalogoAgencias = [];
+let idReagDetalleActual = null;
+
+async function cargarCatalogoAgencias() {
+  try { catalogoAgencias = await api('/reagendamiento/agencias'); } catch (e) { catalogoAgencias = []; }
+}
+
+function badgeEstadoReag(estado) {
+  const map = {
+    CERRADO: ['Cerrado', 'cerrado'],
+    PENDIENTE_ADMIN: ['Pendiente revisión Admin', 'pendiente'],
+    RECHAZADO: ['Rechazado — agendado por Admin', 'gestion'],
+    ESCALADO_AGENCIA: ['Escalado a agencia', 'gestion'],
+    RESUELTO: ['Resuelto por agencia', 'gestionado']
+  };
+  const [txt, clase] = map[estado] || [estado, 'pendiente'];
+  return `<span class="badge ${clase}">${txt}</span>`;
+}
+
+async function renderReagendamiento() {
+  if (!catalogoAgencias.length) await cargarCatalogoAgencias();
+  const contenido = document.getElementById('contenido');
+  const esEjecutivo = usuarioActual.rol === 'EJECUTIVO';
+  const esAdmin = usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
+
+  const casosReag = await api('/reagendamiento');
+
+  const bannerSap = `
+    <div style="background:#fff3cd; border:1px solid #f0ad4e; border-left:5px solid #f0ad4e; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
+      <div style="font-size:20px;">⚠️</div>
+      <div style="font-size:13px; color:#7a5c00; line-height:1.5;">
+        <b>Recordatorio importante — Nota externa en SAP:</b><br>
+        Al dejar la nota externa en SAP, debe quedar registrada como:<br>
+        <b>Gpo. prof.:</b> Administrativo &nbsp;·&nbsp; <b>Categoría:</b> MED:23 Alerta inasistencia control
+      </div>
+    </div>
+  `;
+
+  let bloqueFormulario = '';
+  if (esEjecutivo) {
+    bloqueFormulario = `
+      <div class="card" style="background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:20px;">
+        <h3 style="color:var(--azul-marino); font-size:15px;">Registrar llamada de cambio de cita</h3>
+        <label>RUT del paciente</label>
+        <input type="text" id="reagRut" placeholder="Ej: 12.345.678-9">
+        <label>Tipo de atención</label>
+        <select id="reagTipoAtencion">
+          <option value="CONTROL">Control</option>
+          <option value="CURACIÓN">Curación</option>
+        </select>
+        <label>¿Se logró reagendar en el momento? (Reagendamiento Ley)</label>
+        <select id="reagLey" onchange="mostrarBloqueReagSegunLey()">
+          <option value="">Selecciona una opción</option>
+          <option value="SI">Reagendamiento Ley - Sí</option>
+          <option value="NO">Reagendamiento Ley - No</option>
+        </select>
+        <div id="reagBloqueSi" style="display:none; margin-top:10px;">
+          <label>Hora agendada para el paciente</label>
+          <input type="datetime-local" id="reagHoraAgendada">
+          <button class="btn" onclick="guardarReagLeySi()">Cerrar caso (cita agendada)</button>
+        </div>
+        <div id="reagBloqueNo" style="display:none; margin-top:10px;">
+          <p style="font-size:12px; color:#888;">No hay cita disponible. Ingresa la solicitud completa para escalarla a Administración.</p>
+          <button class="btn" onclick="abrirReagModalSolicitud()">Ingresar solicitud completa</button>
+        </div>
+      </div>
+    `;
+  }
+
+  let bloquesAdmin = '';
+  if (esAdmin) {
+    const pendientes = casosReag.filter(c => c.estado === 'PENDIENTE_ADMIN');
+    const escalados = casosReag.filter(c => c.estado === 'ESCALADO_AGENCIA');
+    const dashReag = await api('/reagendamiento/reportes/dashboard');
+    bloquesAdmin = `
+      <div class="toolbar">
+        <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
+        <button class="btn" onclick="exportarReagExcel()">Exportar a Excel</button>
+      </div>
+
+      <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>
+      <div class="kpis" style="margin-bottom:20px;">
+        <div class="kpi-card"><div class="valor">${dashReag.total}</div><div class="etiqueta">Total solicitudes</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.ley_si}</div><div class="etiqueta">Ley - Sí</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.ley_no}</div><div class="etiqueta">Ley - No</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.pendientes}</div><div class="etiqueta">Pendientes revisión</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.escalados}</div><div class="etiqueta">Escalados a agencia</div></div>
+        <div class="kpi-card alerta"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia}</div><div class="etiqueta">SLA vencidos</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.rechazados}</div><div class="etiqueta">Rechazados</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resueltos</div></div>
+      </div>
+
+      <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:24px;">
+        <div style="flex:1; min-width:260px; background:white; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <h4 style="margin:0 0 12px; color:var(--azul-marino); font-size:13px;">Reagendamiento Ley — Sí vs No</h4>
+          ${barraProporcion(dashReag.ley_si, dashReag.ley_no, 'Sí', 'No')}
+        </div>
+        <div style="flex:2; min-width:300px; background:white; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <h4 style="margin:0 0 12px; color:var(--azul-marino); font-size:13px;">Casos por agencia</h4>
+          ${graficoBarrasAgencias(dashReag.por_agencia)}
+        </div>
+      </div>
+
+      <h3 style="color:var(--azul-marino);">Pendientes de revisión (${pendientes.length})</h3>
+      ${tablaReag(pendientes, 'admin_pendiente')}
+      <h3 style="color:var(--azul-marino); margin-top:24px;">Escalados a agencia (${escalados.length})</h3>
+      ${tablaReag(escalados, 'admin_escalado')}
+      <h3 style="color:var(--azul-marino); margin-top:24px;">Historial</h3>
+      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RESUELTO'].includes(c.estado)), 'historial')}
+    `;
+  }
+
+  const bloqueMisCasos = esEjecutivo ? `<h3 style="color:var(--azul-marino); margin-top:24px;">Mis casos de Reagendamiento</h3>${tablaReag(casosReag, 'ejecutivo')}` : '';
+
+  contenido.innerHTML = bannerSap + bloqueFormulario + bloquesAdmin + bloqueMisCasos;
+}
+
+function tablaReag(lista, contexto) {
+  if (lista.length === 0) return '<p style="color:#999;">Sin casos en esta sección.</p>';
+  return `
+    <table>
+      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>Ley</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
+      <tbody>
+        ${lista.map(c => `
+          <tr>
+            <td><b>${c.folio}</b></td>
+            <td>${c.rut_paciente}</td>
+            <td>${c.tipo_atencion}</td>
+            <td>${c.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</td>
+            <td>${badgeEstadoReag(c.estado)}</td>
+            <td>${c.estado_sla || '—'}</td>
+            <td>
+              <button class="btn secundario" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>Ver detalle</button>
+              ${contexto === 'admin_pendiente' ? `
+                <button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>
+                <button class="btn" onclick="abrirReagModalEscalar('${c.id_caso}')">Confirmar sin cita → Escalar</button>
+              ` : ''}
+              ${contexto === 'admin_escalado' ? `<button class="btn" onclick="abrirReagModalRespuesta('${c.id_caso}')">Registrar respuesta agencia</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function abrirReagDetalle(idCaso) {
+  idReagDetalleActual = idCaso;
+  document.getElementById('tituloVista').textContent = 'Detalle del caso — Reagendamiento';
+  const contenido = document.getElementById('contenido');
+  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+  try {
+    const caso = await api(`/reagendamiento/${idCaso}`);
+    renderReagDetalle(caso);
+  } catch (err) {
+    contenido.innerHTML = `<div class="cargando">Error: ${err.message}</div>`;
+  }
+}
+
+function renderReagDetalle(caso) {
+  const contenido = document.getElementById('contenido');
+  const esAdmin = usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
+
+  const eventos = (caso.eventos || []).map(e => ({ titulo: e.titulo, detalle: e.detalle, fecha: e.fecha }));
+
+  let acciones = '';
+  if (caso.estado === 'PENDIENTE_ADMIN' && esAdmin) {
+    acciones = `
+      <button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>
+      <button class="btn" onclick="abrirReagModalEscalar('${caso.id_caso}')">Confirmar sin cita → Escalar</button>
+    `;
+  } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
+    acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta agencia</button>`;
+  }
+
+  contenido.innerHTML = `
+    <button class="btn secundario" onclick="idReagDetalleActual = null; cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
+
+    <div class="kpis" style="margin-bottom:24px;">
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.rut_paciente}</div><div class="etiqueta">RUT paciente</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.ejecutivo || '—'}</div><div class="etiqueta">Ejecutivo</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstadoReag(caso.estado)}</div><div class="etiqueta">Estado</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</div><div class="etiqueta">Reagendamiento Ley</div></div>
+    </div>
+
+    <div style="display:flex; gap:24px; flex-wrap:wrap;">
+      <div style="flex:2; min-width:320px;">
+        <h3 style="color:var(--azul-marino); font-size:15px;">Línea de tiempo</h3>
+        <div style="position:relative; padding-left:24px; border-left:2px solid #ddd; margin-top:16px;">
+          ${eventos.map(ev => `
+            <div style="position:relative; margin-bottom:22px;">
+              <div style="position:absolute; left:-31px; top:2px; width:12px; height:12px; border-radius:50%; background:var(--turquesa); border:2px solid white; box-shadow:0 0 0 2px var(--turquesa);"></div>
+              <div style="font-weight:600; font-size:13px; color:var(--azul-marino);">${ev.titulo}</div>
+              <div style="font-size:12px; color:#888; margin:2px 0;">${formatFecha(ev.fecha)}</div>
+              <div style="font-size:13px;">${ev.detalle || ''}</div>
+            </div>
+          `).join('')}
+          ${eventos.length === 0 ? '<p style="color:#999;">Sin eventos registrados.</p>' : ''}
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:260px;">
+        <h3 style="color:var(--azul-marino); font-size:15px;">Datos del caso</h3>
+        <table style="margin-top:12px;">
+          <tbody>
+            <tr><td><b>Folio</b></td><td>${caso.folio || '—'}</td></tr>
+            <tr><td><b>Nombre paciente</b></td><td>${caso.nombre_paciente || '—'}</td></tr>
+            <tr><td><b>Correo</b></td><td>${caso.correo || '—'}</td></tr>
+            <tr><td><b>Teléfono</b></td><td>${caso.telefono || '—'}</td></tr>
+            <tr><td><b>Tipo de atención</b></td><td>${caso.tipo_atencion || '—'}</td></tr>
+            <tr><td><b>Agencia</b></td><td>${caso.agencia || '—'}</td></tr>
+            <tr><td><b>Fecha límite Admin</b></td><td>${formatFecha(caso.fecha_limite_admin)}</td></tr>
+            <tr><td><b>Fecha límite Agencia</b></td><td>${formatFecha(caso.fecha_limite_agencia)}</td></tr>
+            <tr><td><b>Hora agendada</b></td><td>${formatFecha(caso.hora_agendada)}</td></tr>
+            <tr><td><b>Motivo</b></td><td>${caso.motivo || '—'}</td></tr>
+            <tr><td><b>Resultado</b></td><td>${caso.resultado || '—'}</td></tr>
+          </tbody>
+        </table>
+        ${acciones ? `<div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">${acciones}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function mostrarBloqueReagSegunLey() {
+  const v = document.getElementById('reagLey').value;
+  document.getElementById('reagBloqueSi').style.display = v === 'SI' ? 'block' : 'none';
+  document.getElementById('reagBloqueNo').style.display = v === 'NO' ? 'block' : 'none';
+}
+
+async function guardarReagLeySi() {
+  const rut = document.getElementById('reagRut').value.trim();
+  const tipo = document.getElementById('reagTipoAtencion').value;
+  const hora = document.getElementById('reagHoraAgendada').value;
+  if (!rut || !hora) { alert('Ingresa el RUT y la hora agendada'); return; }
+  try {
+    const caso = await api('/reagendamiento', {
+      method: 'POST',
+      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora })
+    });
+    alert(`Caso ${caso.folio} cerrado correctamente.`);
+    renderReagendamiento();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalSolicitud() {
+  const rut = document.getElementById('reagRut').value.trim();
+  if (!rut) { alert('Ingresa primero el RUT del paciente'); return; }
+  document.getElementById('reagRutOculto').value = rut;
+  document.getElementById('reagNombre').value = '';
+  document.getElementById('reagCorreo').value = '';
+  document.getElementById('reagTelefono').value = '';
+  document.getElementById('reagAgenciaSolicitud').innerHTML = '<option value="">Selecciona una agencia</option>' +
+    catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('');
+  document.getElementById('reagMotivo').value = '';
+  document.getElementById('modalReagSolicitud').classList.add('activo');
+}
+
+async function guardarReagSolicitud() {
+  const body = {
+    rut_paciente: document.getElementById('reagRutOculto').value,
+    tipo_atencion: document.getElementById('reagTipoAtencion').value,
+    reagendamiento_ley: 'NO',
+    nombre_paciente: document.getElementById('reagNombre').value.trim(),
+    correo: document.getElementById('reagCorreo').value.trim(),
+    telefono: document.getElementById('reagTelefono').value.trim(),
+    id_agencia: Number(document.getElementById('reagAgenciaSolicitud').value) || undefined,
+    motivo: document.getElementById('reagMotivo').value.trim()
+  };
+  if (!body.nombre_paciente || !body.id_agencia || !body.motivo) { alert('Completa nombre, agencia y motivo'); return; }
+  try {
+    const caso = await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
+    cerrarModal('modalReagSolicitud');
+    alert(`Solicitud enviada. Folio: ${caso.folio}`);
+    renderReagendamiento();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalRechazar(idCaso) {
+  document.getElementById('reagRechazarId').value = idCaso;
+  document.getElementById('reagRechazarHora').value = '';
+  document.getElementById('modalReagRechazar').classList.add('activo');
+}
+
+async function guardarReagRechazo() {
+  const id = document.getElementById('reagRechazarId').value;
+  const hora = document.getElementById('reagRechazarHora').value;
+  if (!hora) { alert('Ingresa la hora agendada'); return; }
+  try {
+    await api(`/reagendamiento/${id}/rechazar`, { method: 'POST', body: JSON.stringify({ hora_agendada: hora }) });
+    cerrarModal('modalReagRechazar');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalEscalar(idCaso) {
+  document.getElementById('reagEscalarId').value = idCaso;
+  document.getElementById('reagEscalarAgencia').innerHTML = catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('');
+  document.getElementById('modalReagEscalar').classList.add('activo');
+}
+
+async function guardarReagEscalar() {
+  const id = document.getElementById('reagEscalarId').value;
+  const idAgencia = Number(document.getElementById('reagEscalarAgencia').value);
+  try {
+    await api(`/reagendamiento/${id}/escalar`, { method: 'POST', body: JSON.stringify({ id_agencia: idAgencia }) });
+    cerrarModal('modalReagEscalar');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalRespuesta(idCaso) {
+  document.getElementById('reagRespuestaId').value = idCaso;
+  document.getElementById('reagRespuestaTexto').value = '';
+  document.getElementById('modalReagRespuesta').classList.add('activo');
+}
+
+async function guardarReagRespuesta() {
+  const id = document.getElementById('reagRespuestaId').value;
+  const resultado = document.getElementById('reagRespuestaTexto').value.trim();
+  if (!resultado) { alert('Ingresa la respuesta de la agencia'); return; }
+  try {
+    await api(`/reagendamiento/${id}/respuesta-agencia`, { method: 'POST', body: JSON.stringify({ resultado }) });
+    cerrarModal('modalReagRespuesta');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function barraProporcion(valorA, valorB, etiquetaA, etiquetaB) {
+  const total = valorA + valorB || 1;
+  const pctA = ((valorA / total) * 100).toFixed(0);
+  const pctB = ((valorB / total) * 100).toFixed(0);
+  return `
+    <div style="display:flex; height:28px; border-radius:6px; overflow:hidden; margin-bottom:10px;">
+      <div style="width:${pctA}%; background:var(--verde); display:flex; align-items:center; justify-content:center; color:white; font-size:11px;">${pctA}%</div>
+      <div style="width:${pctB}%; background:var(--amarillo); display:flex; align-items:center; justify-content:center; color:white; font-size:11px;">${pctB}%</div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:12px;">
+      <span><span style="display:inline-block; width:10px; height:10px; background:var(--verde); border-radius:2px; margin-right:4px;"></span>${etiquetaA} (${valorA})</span>
+      <span><span style="display:inline-block; width:10px; height:10px; background:var(--amarillo); border-radius:2px; margin-right:4px;"></span>${etiquetaB} (${valorB})</span>
+    </div>
+  `;
+}
+
+function graficoBarrasAgencias(porAgencia) {
+  if (!porAgencia || porAgencia.length === 0) return '<p style="color:#999; font-size:12px;">Sin datos aún.</p>';
+  const max = Math.max(...porAgencia.map(a => a.total), 1);
+  return porAgencia.map(a => `
+    <div style="margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
+        <span>${a.agencia}</span><span><b>${a.total}</b></span>
+      </div>
+      <div style="background:#eee; border-radius:4px; height:12px;">
+        <div style="width:${(a.total / max) * 100}%; background:var(--turquesa); height:12px; border-radius:4px;"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function exportarReagExcel() {
+  try {
+    const res = await fetch(`${API_BASE}/reagendamiento/reportes/exportar-excel`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('No se pudo generar el Excel');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Reagendamiento_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Error al exportar: ' + err.message);
+  }
+}
+
+function abrirReagModalNuevaAgencia() {
+  const nombre = prompt('Nombre de la nueva agencia:');
+  if (!nombre) return;
+  api('/reagendamiento/agencias', { method: 'POST', body: JSON.stringify({ nombre }) })
+    .then(() => { cargarCatalogoAgencias().then(renderReagendamiento); })
+    .catch(err => alert('Error: ' + err.message));
+}
+
+/* ============================================================
+   CAMPANITA DE ALERTAS (combina Outbound + Reagendamiento)
+   ============================================================ */
+let idsAlertasVistas = new Set();
+let intervalPollingAlertas = null;
+
+async function cargarAlertasCombinadas() {
+  try {
+    const [outbound, reag] = await Promise.all([
+      api('/alertas?estado=ACTIVA'),
+      api('/reagendamiento/alertas')
+    ]);
+
+    const iconoTipo = {
+      SLA_VENCIDO: '🔴', SLA_PROXIMO: '🟡', EXCESO_INTENTOS: '📞'
+    };
+
+    const combinadas = [
+      ...outbound.map(a => ({
+        id: `out-${a.id_alerta}`, origen: 'OUTBOUND', tipo: a.tipo,
+        titulo: a.tipo.replace('_', ' '), detalle: a.mensaje, fecha: a.fecha_creacion,
+        icono: iconoTipo[a.tipo] || '⚠️'
+      })),
+      ...reag.map(a => ({
+        id: `reag-${a.id_referencia}-${a.tipo}`, origen: 'REAGENDAMIENTO', tipo: a.tipo,
+        titulo: a.tipo.replace('_', ' '), detalle: a.mensaje, fecha: a.fecha,
+        icono: iconoTipo[a.tipo] || '⚠️', id_referencia: a.id_referencia
+      }))
+    ];
+
+    // Detectar alertas nuevas (no vistas en el ciclo anterior) para mostrar toast
+    combinadas.forEach(a => {
+      if (!idsAlertasVistas.has(a.id)) {
+        mostrarToast(a);
+      }
+    });
+    idsAlertasVistas = new Set(combinadas.map(a => a.id));
+
+    renderPanelAlertasGlobal(combinadas);
+  } catch (err) {
+    console.error('No se pudieron cargar las alertas', err);
+  }
+}
+
+function renderPanelAlertasGlobal(alertas) {
+  const badge = document.getElementById('contadorBadgeAlertas');
+  badge.textContent = alertas.length;
+  badge.style.display = alertas.length > 0 ? 'flex' : 'none';
+
+  const lista = document.getElementById('listaAlertasGlobal');
+  if (alertas.length === 0) {
+    lista.innerHTML = '<div class="sin-alertas">No tienes alertas activas 🎉</div>';
+    return;
+  }
+  lista.innerHTML = alertas.map(a => `
+    <div class="item-alerta" onclick='irAAlerta(${JSON.stringify(a)})'>
+      <div class="icono">${a.icono}</div>
+      <div>
+        <div class="titulo">${a.titulo}</div>
+        <div class="detalle">${a.detalle}</div>
+        <div class="origen">${a.origen}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function alternarPanelAlertas() {
+  document.getElementById('panelAlertasGlobal').classList.toggle('abierto');
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.campana-wrap');
+  const panel = document.getElementById('panelAlertasGlobal');
+  if (wrap && panel && !wrap.contains(e.target)) panel.classList.remove('abierto');
+});
+
+function mostrarToast(alerta) {
+  const container = document.getElementById('toastContainer');
+  const clase = alerta.tipo === 'SLA_VENCIDO' ? 'rojo' : '';
+  const toast = document.createElement('div');
+  toast.className = `toast ${clase}`;
+  toast.innerHTML = `
+    <div class="icono">${alerta.icono}</div>
+    <div>
+      <div class="titulo">${alerta.titulo} <span style="color:var(--turquesa); font-size:10px;">· ${alerta.origen}</span></div>
+      <div class="detalle">${alerta.detalle}</div>
+    </div>
+    <button class="cerrar" onclick="this.closest('.toast').remove()">✕</button>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 7000);
+}
+
+function irAAlerta(alerta) {
+  document.getElementById('panelAlertasGlobal').classList.remove('abierto');
+  document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
+  if (alerta.origen === 'REAGENDAMIENTO' && alerta.id_referencia) {
+    document.getElementById('btnReagendamiento').classList.add('activo');
+    abrirReagDetalle(alerta.id_referencia);
+  } else {
+    document.getElementById('btnAlertas').classList.add('activo');
+    cargarVista('alertas');
+  }
+}
+
+function iniciarPollingAlertas() {
+  cargarAlertasCombinadas();
+  if (intervalPollingAlertas) clearInterval(intervalPollingAlertas);
+  intervalPollingAlertas = setInterval(cargarAlertasCombinadas, 30000); // cada 30 segundos
+}
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('activo');
+}
+
+function formatFecha(f) {
+  if (!f) return '—';
+  const d = new Date(f);
+  return d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function badgeEstado(estado) {
+  if (!estado) return '—';
+  const e = estado.toUpperCase();
+  let clase = 'pendiente';
+  if (e.includes('GESTIONADO')) clase = 'gestionado';
+  else if (e.includes('GESTIÓN')) clase = 'gestion';
+  else if (e.includes('CERRADO')) clase = 'cerrado';
+  return `<span class="badge ${clase}">${estado}</span>`;
+}
+
+// Si ya había sesión guardada, entra directo (al final del script, cuando todo ya está definido)
+if (token && usuarioActual) mostrarApp();
+</script>
+<div class="toast-container" id="toastContainer"></div>
+
+</body>
+</html>
