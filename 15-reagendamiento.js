@@ -360,21 +360,17 @@ async function guardarReagSolicitud() {
 }
 
 /* ============================================================
-   INGRESO BOT — paso 1: datos → guardar → paso 2: gestión
+   INGRESO BOT — un solo paso, queda en PENDIENTE_ADMIN
    ============================================================ */
 function abrirFormBot() {
   const contenido = document.getElementById('contenido');
   document.getElementById('tituloVista').textContent = 'Ingresar folio BOT';
-  renderBotPaso1(contenido);
-}
-
-function renderBotPaso1(contenido) {
   contenido.innerHTML = `
     <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
 
     <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
       <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
-      <span><b>Paso 1 de 2</b> — Ingresa los datos del paciente y guarda para continuar con la gestión.</span>
+      <span>El folio quedará en <b>Pendiente de revisión</b> para ser gestionado desde la lista principal.</span>
     </div>
 
     <div style="background:white; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:560px;">
@@ -414,118 +410,30 @@ function renderBotPaso1(contenido) {
 
       <div style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid #eee; padding-top:14px;">
         <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
-        <button class="btn" style="background:#534AB7;" onclick="guardarBotPaso1()">Guardar y continuar →</button>
+        <button class="btn" style="background:#534AB7;" onclick="guardarBotPendiente()">Guardar</button>
       </div>
     </div>
   `;
 }
 
-function guardarBotPaso1() {
+async function guardarBotPendiente() {
   const rut = document.getElementById('botRut').value.trim();
   if (!rut) { alert('Ingresa el RUT del paciente'); return; }
-  const datos = {
+  const body = {
     rut_paciente: rut,
     nombre_paciente: document.getElementById('botNombre').value.trim(),
     telefono: document.getElementById('botTel').value.trim(),
     correo: document.getElementById('botCorreo').value.trim(),
     tipo_atencion: document.getElementById('botTipo').value,
     id_agencia: Number(document.getElementById('botAgenciaPaso1').value) || undefined,
-    observaciones: document.getElementById('botObs').value.trim() || undefined
+    observaciones: document.getElementById('botObs').value.trim() || undefined,
+    reagendamiento_ley: 'NO',
+    origen: 'BOT',
+    ingresado_bot: true
   };
-  const contenido = document.getElementById('contenido');
-  renderBotPaso2(contenido, datos);
-}
-
-function renderBotPaso2(contenido, datos) {
-  const agenciaOpts = catalogoAgencias.map(a =>
-    `<option value="${a.id_agencia}" ${datos.id_agencia === a.id_agencia ? 'selected' : ''}>${a.nombre}</option>`
-  ).join('');
-
-  contenido.innerHTML = `
-    <button class="btn secundario" onclick="renderBotPaso1(document.getElementById('contenido'))" style="margin-bottom:16px;">← Volver al paso 1</button>
-
-    <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
-      <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
-      <span><b>Paso 2 de 2</b> — Paciente: <b>${datos.nombre_paciente || datos.rut_paciente}</b> · RUT: ${datos.rut_paciente}</span>
-    </div>
-
-    <div style="background:white; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:560px;">
-      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:16px; border-bottom:2px solid #534AB7; padding-bottom:8px;">Gestión inmediata</h3>
-
-      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">¿Se logró agendar?</label>
-      <select id="botLey" onchange="mostrarBloqueBotSegunLey()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:14px;">
-        <option value="">— Selecciona una opción —</option>
-        <option value="SI">Sí — se agendó</option>
-        <option value="NO">No — derivar a agencia</option>
-      </select>
-
-      <div id="botBloqueSi" style="display:none;">
-        <div style="background:#e8f6f4; border-left:4px solid #17b6a7; border-radius:0; padding:10px 12px; font-size:12px; color:#0b5c52; margin-bottom:12px; line-height:1.5;">
-          El folio se cerrará con la cita agendada.
-        </div>
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Fecha y hora agendada</label>
-        <input type="datetime-local" id="botHoraAgendada" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:16px;">
-        <button class="btn" style="width:100%;" onclick="guardarBotLeySi(${JSON.stringify(datos).replace(/'/g, '\'')})">Cerrar caso — cita agendada</button>
-      </div>
-
-      <div id="botBloqueNo" style="display:none;">
-        <div style="background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:0; padding:10px 12px; font-size:12px; color:#7a5c00; margin-bottom:12px; line-height:1.5;">
-          El folio se derivará a la agencia indicada con SLA de 72 horas hábiles.
-        </div>
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
-        <select id="botAgencia" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:16px;">
-          <option value="">— Selecciona una agencia —</option>
-          ${agenciaOpts}
-        </select>
-        <button class="btn" style="background:#534AB7; width:100%;" onclick="guardarBotDerivar(${JSON.stringify(datos).replace(/'/g, '\'')})">Derivar a agencia</button>
-      </div>
-
-      <div id="botBloqueVacio" style="color:#aaa; font-size:12px; margin-top:4px;">Selecciona una opción para continuar.</div>
-    </div>
-  `;
-}
-
-function mostrarBloqueBotSegunLey() {
-  const v = document.getElementById('botLey').value;
-  document.getElementById('botBloqueSi').style.display = v === 'SI' ? 'block' : 'none';
-  document.getElementById('botBloqueNo').style.display = v === 'NO' ? 'block' : 'none';
-  document.getElementById('botBloqueVacio').style.display = v ? 'none' : 'block';
-}
-
-async function guardarBotLeySi(datos) {
-  const hora = document.getElementById('botHoraAgendada').value;
-  if (!hora) { alert('Ingresa la fecha y hora agendada'); return; }
   try {
-    const caso = await api('/reagendamiento', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...datos,
-        reagendamiento_ley: 'SI',
-        hora_agendada: hora,
-        origen: 'BOT',
-        ingresado_bot: true
-      })
-    });
-    alert(`Folio ${caso.folio} cerrado correctamente.`);
-    cargarVista('reagendamiento');
-  } catch (err) { alert('Error: ' + err.message); }
-}
-
-async function guardarBotDerivar(datos) {
-  const idAgencia = Number(document.getElementById('botAgencia').value) || datos.id_agencia;
-  if (!idAgencia) { alert('Selecciona una agencia'); return; }
-  try {
-    const caso = await api('/reagendamiento', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...datos,
-        id_agencia: idAgencia,
-        reagendamiento_ley: 'NO',
-        origen: 'BOT',
-        ingresado_bot: true
-      })
-    });
-    alert(`Folio ${caso.folio} creado y derivado a agencia.`);
+    const caso = await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
+    alert(`Folio ${caso.folio} creado. Quedó en Pendiente de revisión.`);
     cargarVista('reagendamiento');
   } catch (err) { alert('Error: ' + err.message); }
 }
