@@ -334,6 +334,10 @@ function abrirReagModalSolicitud() {
   document.getElementById('reagAgenciaSolicitud').innerHTML = '<option value="">Selecciona una agencia</option>' +
     catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('');
   document.getElementById('reagMotivo').value = '';
+  // Restaurar visibilidad motivo en flujo normal ejecutivo
+  const labelMotivoNorm = document.getElementById('reagMotivo').previousElementSibling;
+  if (labelMotivoNorm && labelMotivoNorm.tagName === 'LABEL') labelMotivoNorm.style.display = '';
+  document.getElementById('reagMotivo').style.display = '';
   document.getElementById('modalReagSolicitud').classList.add('activo');
 }
 
