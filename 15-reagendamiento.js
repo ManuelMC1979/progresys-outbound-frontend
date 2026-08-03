@@ -26,6 +26,15 @@ function badgeEstadoReag(estado) {
   return `<span class="badge ${clase}">${txt}</span>`;
 }
 
+function badgeBot() {
+  return `<span style="background:#534AB7; color:white; font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; letter-spacing:0.5px;">BOT</span>`;
+}
+
+function celdaFolio(c) {
+  const esBot = c.origen === 'BOT' || c.ingresado_bot;
+  return `<b>${c.folio}</b>${esBot ? badgeBot() : ''}`;
+}
+
 async function renderReagendamiento() {
   if (!catalogoAgencias.length) await cargarCatalogoAgencias();
   const contenido = document.getElementById('contenido');
@@ -97,6 +106,7 @@ async function renderReagendamiento() {
     bloquesAdmin = `
       <div class="toolbar">
         <button class="btn" onclick="abrirFormAdminDirecto()">+ Ingresar caso directo</button>
+        <button class="btn" style="background:#534AB7;" onclick="abrirFormBot()">+ Ingresar folio BOT</button>
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
         <button class="btn secundario" onclick="exportarReagExcel()">Exportar a Excel</button>
         <button class="btn secundario" onclick="exportarReagCSV()">Descargar reporte CSV</button>
@@ -150,7 +160,7 @@ function tablaReag(lista, contexto) {
       <tbody>
         ${lista.map(c => `
           <tr>
-            <td><b>${c.folio}</b></td>
+            <td>${celdaFolio(c)}</td>
             <td>${c.rut_paciente}</td>
             <td>${etiquetaTipoAtencion(c.tipo_atencion)}</td>
             <td>${c.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</td>
@@ -347,6 +357,136 @@ async function guardarReagSolicitud() {
   } catch (err) {
     alert('Error: ' + err.message);
   }
+}
+
+/* ============================================================
+   INGRESO BOT — flujo ejecutivo sin botón rechazo, con badge BOT
+   ============================================================ */
+function abrirFormBot() {
+  const contenido = document.getElementById('contenido');
+  document.getElementById('tituloVista').textContent = 'Ingresar folio BOT';
+  contenido.innerHTML = `
+    <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
+
+    <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
+      <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
+      <span>Caso ingresado desde canal Bot. Se marcará con badge BOT en todas las vistas y reportes.</span>
+    </div>
+
+    <div style="background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:560px;">
+      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:14px;">Datos del caso</h3>
+
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">RUT del paciente</label>
+      <input type="text" id="botRut" placeholder="12.345.678-9" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Tipo de atención</label>
+      <select id="botTipo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+        <option value="CONTROL">Atención Primaria</option>
+        <option value="CURACIÓN">Curación</option>
+      </select>
+
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">¿Se logró agendar en el momento?</label>
+      <select id="botLey" onchange="mostrarBloqueBotSegunLey()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+        <option value="">Selecciona una opción</option>
+        <option value="SI">Sí — se agendó</option>
+        <option value="NO">No — derivar a agencia</option>
+      </select>
+
+      <div id="botBloqueSi" style="display:none; margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Fecha y hora agendada</label>
+        <input type="datetime-local" id="botHoraAgendada" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:8px;">
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones (opcional)</label>
+        <textarea id="botObsSi" rows="2" placeholder="Observaciones del caso..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:8px;"></textarea>
+        <button class="btn" onclick="guardarBotLeySi()">Cerrar caso (cita agendada)</button>
+      </div>
+
+      <div id="botBloqueNo" style="display:none; margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre del paciente</label>
+        <input type="text" id="botNombre" placeholder="Nombre completo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:8px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Teléfono</label>
+            <input type="text" id="botTel" placeholder="+56 9 1234 5678" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Correo paciente</label>
+            <input type="email" id="botCorreo" placeholder="paciente@correo.cl" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+        </div>
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
+        <select id="botAgencia" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:8px;">
+          <option value="">— Selecciona una agencia —</option>
+          ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
+        </select>
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Motivo</label>
+        <select id="botMotivo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:8px;">
+          <option>Enfermedad</option>
+          <option>Hospitalización o urgencia</option>
+          <option>Fallecimiento de familiar directo o indirecto pero cercano</option>
+          <option>Cuidado de otra persona</option>
+          <option>Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
+          <option>Constancia de Carabineros</option>
+          <option>Problema de transporte ACHS</option>
+          <option>Trámite personal urgente</option>
+          <option>Error de agendamiento/información</option>
+        </select>
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones (opcional)</label>
+        <textarea id="botObsNo" rows="2" placeholder="Contexto adicional..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:8px;"></textarea>
+        <button class="btn" style="background:#534AB7;" onclick="guardarBotDerivar()">Derivar a agencia</button>
+      </div>
+
+      <div style="margin-top:10px;">
+        <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
+      </div>
+    </div>
+  `;
+}
+
+function mostrarBloqueBotSegunLey() {
+  const v = document.getElementById('botLey').value;
+  document.getElementById('botBloqueSi').style.display = v === 'SI' ? 'block' : 'none';
+  document.getElementById('botBloqueNo').style.display = v === 'NO' ? 'block' : 'none';
+}
+
+async function guardarBotLeySi() {
+  const rut = document.getElementById('botRut').value.trim();
+  const tipo = document.getElementById('botTipo').value;
+  const hora = document.getElementById('botHoraAgendada').value;
+  const obs = document.getElementById('botObsSi').value.trim();
+  if (!rut || !hora) { alert('Ingresa el RUT y la hora agendada'); return; }
+  try {
+    const caso = await api('/reagendamiento', {
+      method: 'POST',
+      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora, observaciones: obs || undefined, origen: 'BOT', ingresado_bot: true })
+    });
+    alert(`Caso ${caso.folio} cerrado correctamente.`);
+    cargarVista('reagendamiento');
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function guardarBotDerivar() {
+  const rut = document.getElementById('botRut').value.trim();
+  const idAgencia = Number(document.getElementById('botAgencia').value);
+  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
+  if (!idAgencia) { alert('Selecciona una agencia'); return; }
+  const body = {
+    rut_paciente: rut,
+    tipo_atencion: document.getElementById('botTipo').value,
+    reagendamiento_ley: 'NO',
+    nombre_paciente: document.getElementById('botNombre').value.trim(),
+    correo: document.getElementById('botCorreo').value.trim(),
+    telefono: document.getElementById('botTel').value.trim(),
+    id_agencia: idAgencia,
+    motivo: document.getElementById('botMotivo').value.trim(),
+    observaciones: document.getElementById('botObsNo').value.trim() || undefined,
+    origen: 'BOT',
+    ingresado_bot: true
+  };
+  try {
+    const caso = await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
+    alert(`Caso ${caso.folio} creado y derivado a agencia.`);
+    cargarVista('reagendamiento');
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
 /* ============================================================
