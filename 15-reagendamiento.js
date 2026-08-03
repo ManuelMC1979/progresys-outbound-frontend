@@ -694,15 +694,17 @@ async function guardarCasoAdminDirecto() {
 function abrirReagModalRechazar(idCaso) {
   document.getElementById('reagRechazarId').value = idCaso;
   document.getElementById('reagRechazarHora').value = '';
+  document.getElementById('reagRechazarObservacion').value = '';
   document.getElementById('modalReagRechazar').classList.add('activo');
 }
 
 async function guardarReagRechazo() {
   const id = document.getElementById('reagRechazarId').value;
   const hora = document.getElementById('reagRechazarHora').value;
+  const obs = document.getElementById('reagRechazarObservacion').value.trim();
   if (!hora) { alert('Ingresa la hora agendada'); return; }
   try {
-    await api(`/reagendamiento/${id}/rechazar`, { method: 'POST', body: JSON.stringify({ hora_agendada: hora }) });
+    await api(`/reagendamiento/${id}/rechazar`, { method: 'POST', body: JSON.stringify({ hora_agendada: hora, observacion: obs || undefined }) });
     cerrarModal('modalReagRechazar');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
   } catch (err) {
