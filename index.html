@@ -201,6 +201,8 @@
     <p style="font-size:12px; color:#888;">Confirmaste que sí había cita disponible. Agenda tú mismo la hora; el ejecutivo solo verá el resultado.</p>
     <label>Hora agendada para el paciente</label>
     <input type="datetime-local" id="reagRechazarHora">
+    <label>Motivo del rechazo (observación)</label>
+    <textarea id="reagRechazarObservacion" rows="3" placeholder="Ej: Se encontró disponibilidad para el 15/08 a las 10:00..."></textarea>
     <div class="acciones">
       <button class="btn secundario" onclick="cerrarModal('modalReagRechazar')">Cancelar</button>
       <button class="btn peligro" onclick="guardarReagRechazo()" style="background:var(--rojo);">Rechazar y agendar</button>
