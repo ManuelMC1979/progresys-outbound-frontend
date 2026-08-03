@@ -8,6 +8,11 @@ async function cargarCatalogoAgencias() {
   try { catalogoAgencias = await api('/reagendamiento/agencias'); } catch (e) { catalogoAgencias = []; }
 }
 
+function etiquetaTipoAtencion(valor) {
+  const mapa = { CONTROL: 'Atención Primaria', 'CURACIÓN': 'Curación' };
+  return mapa[valor] || valor;
+}
+
 function badgeEstadoReag(estado) {
   const map = {
     CERRADO: ['Cerrado', 'cerrado'],
@@ -42,14 +47,24 @@ async function renderReagendamiento() {
 
   let bloqueFormulario = '';
   if (esEjecutivo) {
+    const bannerAlcance = `
+      <div style="background:#e8f6f4; border:1px solid #17b6a7; border-left:5px solid #17b6a7; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
+        <div style="font-size:20px;">ℹ️</div>
+        <div style="font-size:13px; color:var(--azul-marino); line-height:1.5;">
+          <b>Recuerda:</b> solo gestionamos pacientes de la Red, no del Hospital.<br>
+          Plazo aproximado de respuesta: <b>72 horas hábiles</b>.
+        </div>
+      </div>
+    `;
     bloqueFormulario = `
+      ${bannerAlcance}
       <div class="card" style="background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:20px;">
         <h3 style="color:var(--azul-marino); font-size:15px;">Registrar llamada de cambio de cita</h3>
         <label>RUT del paciente</label>
         <input type="text" id="reagRut" placeholder="Ej: 12.345.678-9">
         <label>Tipo de atención</label>
         <select id="reagTipoAtencion">
-          <option value="CONTROL">Control</option>
+          <option value="CONTROL">Atención Primaria</option>
           <option value="CURACIÓN">Curación</option>
         </select>
         <label>¿Se logró reagendar en el momento? (Reagendamiento Ley)</label>
@@ -86,8 +101,8 @@ async function renderReagendamiento() {
       <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>
       <div class="kpis" style="margin-bottom:20px;">
         <div class="kpi-card"><div class="valor">${dashReag.total}</div><div class="etiqueta">Total solicitudes</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.ley_si}</div><div class="etiqueta">Ley - Sí</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.ley_no}</div><div class="etiqueta">Ley - No</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.ley_si}</div><div class="etiqueta">¿Se agendó? - Sí</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.ley_no}</div><div class="etiqueta">¿Se agendó? - No</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.pendientes}</div><div class="etiqueta">Pendientes revisión</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.escalados}</div><div class="etiqueta">Escalados a agencia</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.pendientes_cierre}</div><div class="etiqueta">Pendientes de cierre (Admin)</div></div>
@@ -98,7 +113,7 @@ async function renderReagendamiento() {
 
       <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:24px;">
         <div style="flex:1; min-width:260px; background:white; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-          <h4 style="margin:0 0 12px; color:var(--azul-marino); font-size:13px;">Reagendamiento Ley — Sí vs No</h4>
+          <h4 style="margin:0 0 12px; color:var(--azul-marino); font-size:13px;">¿Se agendó? — Sí vs No</h4>
           ${barraProporcion(dashReag.ley_si, dashReag.ley_no, 'Sí', 'No')}
         </div>
         <div style="flex:2; min-width:300px; background:white; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
@@ -127,13 +142,13 @@ function tablaReag(lista, contexto) {
   if (lista.length === 0) return '<p style="color:#999;">Sin casos en esta sección.</p>';
   return `
     <table>
-      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>Ley</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
+      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
       <tbody>
         ${lista.map(c => `
           <tr>
             <td><b>${c.folio}</b></td>
             <td>${c.rut_paciente}</td>
-            <td>${c.tipo_atencion}</td>
+            <td>${etiquetaTipoAtencion(c.tipo_atencion)}</td>
             <td>${c.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</td>
             <td>${badgeEstadoReag(c.estado)}</td>
             <td>${c.estado_sla || '—'}</td>
@@ -191,7 +206,7 @@ function renderReagDetalle(caso) {
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.rut_paciente}</div><div class="etiqueta">RUT paciente</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.ejecutivo || '—'}</div><div class="etiqueta">Ejecutivo</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstadoReag(caso.estado)}</div><div class="etiqueta">Estado</div></div>
-      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</div><div class="etiqueta">Reagendamiento Ley</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</div><div class="etiqueta">¿Se agendó?</div></div>
     </div>
 
     <div style="display:flex; gap:24px; flex-wrap:wrap;">
@@ -218,7 +233,7 @@ function renderReagDetalle(caso) {
             <tr><td><b>Nombre paciente</b></td><td>${caso.nombre_paciente || '—'}</td></tr>
             <tr><td><b>Correo</b></td><td>${caso.correo || '—'}</td></tr>
             <tr><td><b>Teléfono</b></td><td>${caso.telefono || '—'}</td></tr>
-            <tr><td><b>Tipo de atención</b></td><td>${caso.tipo_atencion || '—'}</td></tr>
+            <tr><td><b>Tipo de atención</b></td><td>${etiquetaTipoAtencion(caso.tipo_atencion) || '—'}</td></tr>
             <tr><td><b>Agencia</b></td><td>${caso.agencia || '—'}</td></tr>
             <tr><td><b>Fecha límite Admin</b></td><td>${formatFecha(caso.fecha_limite_admin)}</td></tr>
             <tr><td><b>Fecha límite Agencia</b></td><td>${formatFecha(caso.fecha_limite_agencia)}</td></tr>
