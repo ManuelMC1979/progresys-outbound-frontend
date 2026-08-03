@@ -74,9 +74,11 @@ async function renderReagendamiento() {
           <option value="NO">Reagendamiento Ley - No</option>
         </select>
         <div id="reagBloqueSi" style="display:none; margin-top:10px;">
-          <label>Hora agendada para el paciente</label>
+          <label>Fecha y hora agendada para el paciente</label>
           <input type="datetime-local" id="reagHoraAgendada">
-          <button class="btn" onclick="guardarReagLeySi()">Cerrar caso (cita agendada)</button>
+          <label>Observaciones (opcional)</label>
+          <textarea id="reagObsLeySi" rows="2" placeholder="Observaciones del caso..."></textarea>
+          <button class="btn" style="margin-top:8px;" onclick="guardarReagLeySi()">Cerrar caso (cita agendada)</button>
         </div>
         <div id="reagBloqueNo" style="display:none; margin-top:10px;">
           <p style="font-size:12px; color:#888;">No hay cita disponible. Ingresa la solicitud completa para escalarla a Administración.</p>
@@ -94,8 +96,10 @@ async function renderReagendamiento() {
     const dashReag = await api('/reagendamiento/reportes/dashboard');
     bloquesAdmin = `
       <div class="toolbar">
+        <button class="btn" onclick="abrirFormAdminDirecto()">+ Ingresar caso directo</button>
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
-        <button class="btn" onclick="exportarReagExcel()">Exportar a Excel</button>
+        <button class="btn secundario" onclick="exportarReagExcel()">Exportar a Excel</button>
+        <button class="btn secundario" onclick="exportarReagCSV()">Descargar reporte CSV</button>
       </div>
 
       <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>
@@ -142,7 +146,7 @@ function tablaReag(lista, contexto) {
   if (lista.length === 0) return '<p style="color:#999;">Sin casos en esta sección.</p>';
   return `
     <table>
-      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
+      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Fecha agendada</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
       <tbody>
         ${lista.map(c => `
           <tr>
@@ -150,10 +154,12 @@ function tablaReag(lista, contexto) {
             <td>${c.rut_paciente}</td>
             <td>${etiquetaTipoAtencion(c.tipo_atencion)}</td>
             <td>${c.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</td>
+            <td>${c.hora_agendada ? formatFecha(c.hora_agendada) : '—'}</td>
             <td>${badgeEstadoReag(c.estado)}</td>
             <td>${c.estado_sla || '—'}</td>
-            <td>
+            <td style="white-space:nowrap;">
               <button class="btn secundario" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>Ver detalle</button>
+              <button class="btn secundario" onclick='abrirModalObsReag(${JSON.stringify(c.id_caso)})'>+ Obs.</button>
               ${contexto === 'admin_pendiente' ? `
                 <button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>
                 <button class="btn" onclick="abrirReagModalEscalar('${c.id_caso}')">Confirmar sin cita → Escalar</button>
@@ -168,11 +174,27 @@ function tablaReag(lista, contexto) {
   `;
 }
 
+/* --- Observación rápida desde tabla --- */
+function abrirModalObsReag(idCaso) {
+  const obs = prompt('Ingresa la observación para este caso:');
+  if (!obs || !obs.trim()) return;
+  api(`/reagendamiento/${idCaso}/observacion`, {
+    method: 'POST',
+    body: JSON.stringify({ observacion: obs.trim() })
+  }).then(() => {
+    if (idReagDetalleActual === idCaso) {
+      abrirReagDetalle(idCaso);
+    } else {
+      renderReagendamiento();
+    }
+  }).catch(err => alert('Error: ' + err.message));
+}
+
 async function abrirReagDetalle(idCaso) {
   idReagDetalleActual = idCaso;
   document.getElementById('tituloVista').textContent = 'Detalle del caso — Reagendamiento';
   const contenido = document.getElementById('contenido');
-  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+  contenido.innerHTML = esqueletoFicha();
   try {
     const caso = await api(`/reagendamiento/${idCaso}`);
     renderReagDetalle(caso);
@@ -207,6 +229,7 @@ function renderReagDetalle(caso) {
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.ejecutivo || '—'}</div><div class="etiqueta">Ejecutivo</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstadoReag(caso.estado)}</div><div class="etiqueta">Estado</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</div><div class="etiqueta">¿Se agendó?</div></div>
+      ${caso.hora_agendada ? `<div class="kpi-card"><div class="valor" style="font-size:13px;">${formatFecha(caso.hora_agendada)}</div><div class="etiqueta">Fecha y hora agendada</div></div>` : ''}
     </div>
 
     <div style="display:flex; gap:24px; flex-wrap:wrap;">
@@ -237,15 +260,34 @@ function renderReagDetalle(caso) {
             <tr><td><b>Agencia</b></td><td>${caso.agencia || '—'}</td></tr>
             <tr><td><b>Fecha límite Admin</b></td><td>${formatFecha(caso.fecha_limite_admin)}</td></tr>
             <tr><td><b>Fecha límite Agencia</b></td><td>${formatFecha(caso.fecha_limite_agencia)}</td></tr>
-            <tr><td><b>Hora agendada</b></td><td>${formatFecha(caso.hora_agendada)}</td></tr>
+            <tr><td><b>Fecha y hora agendada</b></td><td>${caso.hora_agendada ? formatFecha(caso.hora_agendada) : '—'}</td></tr>
             <tr><td><b>Motivo</b></td><td>${caso.motivo || '—'}</td></tr>
             <tr><td><b>Resultado</b></td><td>${caso.resultado || '—'}</td></tr>
+            <tr><td><b>Observaciones</b></td><td>${caso.observaciones || '—'}</td></tr>
           </tbody>
         </table>
+
+        <div style="margin-top:16px;">
+          <label style="font-size:13px; font-weight:600; color:var(--azul-marino);">Agregar observación</label>
+          <textarea id="obsDetalleReag" rows="2" style="width:100%; margin-top:6px; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;" placeholder="Escribe una observación..."></textarea>
+          <button class="btn secundario" style="margin-top:6px;" onclick="guardarObsDesdeDetalle('${caso.id_caso}')">Guardar observación</button>
+        </div>
+
         ${acciones ? `<div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">${acciones}</div>` : ''}
       </div>
     </div>
   `;
+}
+
+async function guardarObsDesdeDetalle(idCaso) {
+  const obs = document.getElementById('obsDetalleReag').value.trim();
+  if (!obs) { alert('Escribe una observación antes de guardar'); return; }
+  try {
+    await api(`/reagendamiento/${idCaso}/observacion`, { method: 'POST', body: JSON.stringify({ observacion: obs }) });
+    abrirReagDetalle(idCaso);
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
 }
 
 function mostrarBloqueReagSegunLey() {
@@ -258,11 +300,12 @@ async function guardarReagLeySi() {
   const rut = document.getElementById('reagRut').value.trim();
   const tipo = document.getElementById('reagTipoAtencion').value;
   const hora = document.getElementById('reagHoraAgendada').value;
+  const obs = document.getElementById('reagObsLeySi').value.trim();
   if (!rut || !hora) { alert('Ingresa el RUT y la hora agendada'); return; }
   try {
     const caso = await api('/reagendamiento', {
       method: 'POST',
-      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora })
+      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora, observaciones: obs || undefined })
     });
     alert(`Caso ${caso.folio} cerrado correctamente.`);
     renderReagendamiento();
@@ -301,6 +344,199 @@ async function guardarReagSolicitud() {
     cerrarModal('modalReagSolicitud');
     alert(`Solicitud enviada. Folio: ${caso.folio}`);
     renderReagendamiento();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   INGRESO DIRECTO ADMIN — formulario inline + script de correo
+   ============================================================ */
+function abrirFormAdminDirecto() {
+  const contenido = document.getElementById('contenido');
+  document.getElementById('tituloVista').textContent = 'Ingresar caso directo — Administrador';
+  contenido.innerHTML = `
+    <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
+
+    <div style="background:#fff3cd; border-left:5px solid #f0ad4e; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#7a5c00; line-height:1.5;">
+      Este caso se ingresa directamente por el Administrador y se deriva de inmediato a la agencia indicada.
+    </div>
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:300px; background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
+        <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:14px;">Datos del caso</h3>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">RUT del paciente</label>
+            <input type="text" id="adRut" placeholder="12.345.678-9" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre del paciente</label>
+            <input type="text" id="adNombre" placeholder="Nombre completo" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Teléfono</label>
+            <input type="text" id="adTel" placeholder="+56 9 1234 5678" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Correo paciente</label>
+            <input type="email" id="adCorreo" placeholder="paciente@correo.cl" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Tipo de atención</label>
+            <select id="adTipo" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+              <option value="CONTROL">Atención Primaria</option>
+              <option value="CURACIÓN">Curación</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Fecha cita original</label>
+            <input type="date" id="adFecha" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Hora cita original</label>
+            <input type="time" id="adHoraCita" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Motivo</label>
+            <select id="adMotivo" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+              <option>Enfermedad</option>
+              <option>Hospitalización o urgencia</option>
+              <option>Fallecimiento de familiar directo o indirecto pero cercano</option>
+              <option>Cuidado de otra persona</option>
+              <option>Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
+              <option>Constancia de Carabineros</option>
+              <option>Problema de transporte ACHS</option>
+              <option>Trámite personal urgente</option>
+              <option>Error de agendamiento/información</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
+            <select id="adAgencia" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+              <option value="">— Selecciona una agencia —</option>
+              ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Ejecutivo/a Contact Center</label>
+            <input type="text" id="adEjecutivo" placeholder="Tu nombre" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre ejecutiva agencia (destinatario)</label>
+          <input type="text" id="adDest" placeholder="Nombre de quien recibe" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+        </div>
+
+        <div style="margin-top:10px;">
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones</label>
+          <textarea id="adObs" rows="2" placeholder="Contexto adicional del caso..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px; border-top:1px solid #eee; padding-top:14px;">
+          <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
+          <button class="btn" onclick="guardarCasoAdminDirecto()">Derivar a agencia</button>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:280px;">
+        <div style="background:white; border:1px solid #17b6a7; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
+          <h3 style="color:var(--azul-marino); font-size:14px; margin-bottom:10px;">✉ Script de correo</h3>
+          <div style="background:#f4f6f8; border-radius:6px; padding:8px 10px; font-size:12px; margin-bottom:8px;">
+            <span style="font-weight:700; color:var(--azul-marino);">Asunto:</span> Derivación reagendamiento paciente STP – gestión local
+          </div>
+          <div id="scriptCorreoReag" style="background:#f9f9f9; border:1px solid #e5e5e5; border-radius:6px; padding:10px 12px; font-size:12px; color:#333; line-height:1.6; white-space:pre-wrap; font-family:inherit;"></div>
+          <button class="btn secundario" style="margin-top:8px; width:100%;" onclick="copiarScriptCorreoReag()">Copiar correo</button>
+        </div>
+      </div>
+    </div>
+  `;
+  actualizarScriptCorreo();
+}
+
+function actualizarScriptCorreo() {
+  const el = document.getElementById('scriptCorreoReag');
+  if (!el) return;
+  const v = id => { const e = document.getElementById(id); return e ? e.value.trim() || '…' : '…'; };
+  const tipoEl = document.getElementById('adTipo');
+  const tipo = tipoEl ? etiquetaTipoAtencion(tipoEl.value) : '…';
+  const fechaRaw = document.getElementById('adFecha') ? document.getElementById('adFecha').value : '';
+  let fecha = '…';
+  if (fechaRaw) {
+    const d = new Date(fechaRaw + 'T12:00:00');
+    fecha = d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+  const hora = document.getElementById('adHoraCita') ? (document.getElementById('adHoraCita').value || '…') : '…';
+  const agenciaEl = document.getElementById('adAgencia');
+  const agencia = agenciaEl && agenciaEl.value ? agenciaEl.options[agenciaEl.selectedIndex].text : '…';
+
+  el.textContent = `Hola ${v('adDest')}:
+
+Derivamos solicitud de reagendamiento de paciente STP, ya que desde Contact Center no fue posible encontrar disponibilidad dentro de los próximos 3 días hábiles.
+
+Paciente: ${v('adNombre')}
+RUT: ${v('adRut')}
+Teléfono: ${v('adTel')}
+Cita original: ${tipo} – ${fecha} – ${hora}
+Centro / Agencia: ${agencia}
+Motivo informado: ${v('adMotivo')}
+
+Se solicita revisar alternativas de agenda de manera local y contactar al paciente directamente para informar la nueva fecha, priorizando la continuidad de su tratamiento.
+
+Saludos,
+${v('adEjecutivo')}`;
+}
+
+function copiarScriptCorreoReag() {
+  const el = document.getElementById('scriptCorreoReag');
+  if (!el) return;
+  const asunto = 'Asunto: Derivación reagendamiento paciente STP – gestión local';
+  const texto = asunto + '\n\n' + el.textContent;
+  navigator.clipboard.writeText(texto)
+    .then(() => { alert('Correo copiado al portapapeles.'); })
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = texto; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      alert('Correo copiado al portapapeles.');
+    });
+}
+
+async function guardarCasoAdminDirecto() {
+  const idAgencia = Number(document.getElementById('adAgencia').value);
+  if (!idAgencia) { alert('Selecciona una agencia'); return; }
+  const rut = document.getElementById('adRut').value.trim();
+  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
+  const body = {
+    rut_paciente: rut,
+    tipo_atencion: document.getElementById('adTipo').value,
+    reagendamiento_ley: 'NO',
+    nombre_paciente: document.getElementById('adNombre').value.trim(),
+    correo: document.getElementById('adCorreo').value.trim(),
+    telefono: document.getElementById('adTel').value.trim(),
+    id_agencia: idAgencia,
+    motivo: document.getElementById('adMotivo').value.trim(),
+    observaciones: document.getElementById('adObs').value.trim() || undefined,
+    ingresado_por_admin: true
+  };
+  try {
+    const caso = await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
+    alert(`Caso creado y derivado. Folio: ${caso.folio}`);
+    cargarVista('reagendamiento');
   } catch (err) {
     alert('Error: ' + err.message);
   }
@@ -411,6 +647,48 @@ async function exportarReagExcel() {
   }
 }
 
+async function exportarReagCSV() {
+  try {
+    const casos = await api('/reagendamiento');
+    const encabezados = [
+      'Folio','RUT','Nombre paciente','Teléfono','Correo','Tipo de atención',
+      '¿Se agendó?','Fecha y hora agendada','Estado','Agencia','Motivo','Resultado',
+      'Observaciones','SLA','Ejecutivo','Fecha límite Admin','Fecha límite Agencia'
+    ];
+    const filas = casos.map(c => [
+      c.folio || '',
+      c.rut_paciente || '',
+      c.nombre_paciente || '',
+      c.telefono || '',
+      c.correo || '',
+      etiquetaTipoAtencion(c.tipo_atencion) || '',
+      c.reagendamiento_ley === 'SI' ? 'Sí' : 'No',
+      c.hora_agendada ? formatFecha(c.hora_agendada) : '',
+      c.estado || '',
+      c.agencia || '',
+      c.motivo || '',
+      c.resultado || '',
+      c.observaciones || '',
+      c.estado_sla || '',
+      c.ejecutivo || '',
+      c.fecha_limite_admin ? formatFecha(c.fecha_limite_admin) : '',
+      c.fecha_limite_agencia ? formatFecha(c.fecha_limite_agencia) : ''
+    ]);
+    const csv = [encabezados, ...filas]
+      .map(fila => fila.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Reporte_Reagendamiento_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Error al generar el reporte: ' + err.message);
+  }
+}
+
 async function cerrarReagFinal(idCaso) {
   if (!confirm('¿Confirmas el cierre de este caso tras revisar la respuesta de la agencia?')) return;
   try {
@@ -428,4 +706,3 @@ function abrirReagModalNuevaAgencia() {
     .then(() => { cargarCatalogoAgencias().then(renderReagendamiento); })
     .catch(err => alert('Error: ' + err.message));
 }
-
