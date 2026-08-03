@@ -360,80 +360,135 @@ async function guardarReagSolicitud() {
 }
 
 /* ============================================================
-   INGRESO BOT — un solo paso, queda en PENDIENTE_ADMIN
+   INGRESO BOT — muestra el formulario del ejecutivo con badge BOT
    ============================================================ */
 function abrirFormBot() {
   const contenido = document.getElementById('contenido');
   document.getElementById('tituloVista').textContent = 'Ingresar folio BOT';
+  // Guardar sesion actual del admin
+  const tokenAdmin = token;
+  const usuarioAdmin = usuarioActual;
+
   contenido.innerHTML = `
     <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
 
     <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
       <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
-      <span>El folio quedará en <b>Pendiente de revisión</b> para ser gestionado desde la lista principal.</span>
+      <span>Ingresando como BOT. El folio quedará en <b>Pendiente de revisión</b>.</span>
     </div>
 
-    <div style="background:white; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:560px;">
-      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:16px; border-bottom:2px solid #534AB7; padding-bottom:8px;">Datos del paciente</h3>
-
-      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">RUT del paciente</label>
-      <input type="text" id="botRut" placeholder="12.345.678-9" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
-
-      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre del paciente</label>
-      <input type="text" id="botNombre" placeholder="Nombre completo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-        <div>
-          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Teléfono</label>
-          <input type="text" id="botTel" placeholder="+56 9 1234 5678" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-        </div>
-        <div>
-          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Correo</label>
-          <input type="email" id="botCorreo" placeholder="paciente@correo.cl" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-        </div>
-      </div>
-
-      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Tipo de atención</label>
-      <select id="botTipo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+    <div style="background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:20px;">
+      <h3 style="color:var(--azul-marino); font-size:15px;">Registrar llamada de cambio de cita</h3>
+      <label>RUT del paciente</label>
+      <input type="text" id="reagRut" placeholder="Ej: 12.345.678-9">
+      <label>Tipo de atención</label>
+      <select id="reagTipoAtencion">
         <option value="CONTROL">Atención Primaria</option>
         <option value="CURACIÓN">Curación</option>
       </select>
-
-      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia</label>
-      <select id="botAgenciaPaso1" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
-        <option value="">— Selecciona una agencia —</option>
-        ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
+      <label>¿Se logró reagendar en el momento? (Reagendamiento Ley)</label>
+      <select id="reagLey" onchange="mostrarBloqueReagSegunLey()">
+        <option value="">Selecciona una opción</option>
+        <option value="SI">Reagendamiento Ley - Sí</option>
+        <option value="NO">Reagendamiento Ley - No</option>
       </select>
-
-      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones (opcional)</label>
-      <textarea id="botObs" rows="3" placeholder="Contexto adicional del caso..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:16px;"></textarea>
-
-      <div style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid #eee; padding-top:14px;">
-        <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
-        <button class="btn" style="background:#534AB7;" onclick="guardarBotPendiente()">Guardar</button>
+      <div id="reagBloqueSi" style="display:none; margin-top:10px;">
+        <label>Fecha y hora agendada para el paciente</label>
+        <input type="datetime-local" id="reagHoraAgendada">
+        <label>Observaciones (opcional)</label>
+        <textarea id="reagObsLeySi" rows="2" placeholder="Observaciones del caso..."></textarea>
+        <button class="btn" style="margin-top:8px;" onclick="guardarReagLeySiBot('${tokenAdmin}', ${JSON.stringify(usuarioAdmin).replace(/'/g, "\'")})">Cerrar caso (cita agendada)</button>
+      </div>
+      <div id="reagBloqueNo" style="display:none; margin-top:10px;">
+        <p style="font-size:12px; color:#888;">No hay cita disponible. Ingresa la solicitud completa para escalarla a Administración.</p>
+        <button class="btn" onclick="abrirReagModalSolicitudBot('${tokenAdmin}', ${JSON.stringify(usuarioAdmin).replace(/'/g, "\'")})">Ingresar solicitud completa</button>
       </div>
     </div>
   `;
 }
 
-async function guardarBotPendiente() {
-  const rut = document.getElementById('botRut').value.trim();
-  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
-  const body = {
-    rut_paciente: rut,
-    nombre_paciente: document.getElementById('botNombre').value.trim(),
-    telefono: document.getElementById('botTel').value.trim(),
-    correo: document.getElementById('botCorreo').value.trim(),
-    tipo_atencion: document.getElementById('botTipo').value,
-    id_agencia: Number(document.getElementById('botAgenciaPaso1').value) || undefined,
-    observaciones: document.getElementById('botObs').value.trim() || undefined,
-    reagendamiento_ley: 'NO',
-    origen: 'BOT',
-    ingresado_bot: true
-  };
+async function autenticarBot() {
   try {
-    const caso = await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
-    alert(`Folio ${caso.folio} creado. Quedó en Pendiente de revisión.`);
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'bot.call@progesys.local', password: 'Progresys2026!' })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error autenticando BOT');
+    return { token: data.token, usuario: data.usuario };
+  } catch (err) {
+    throw new Error('No se pudo autenticar el usuario BOT: ' + err.message);
+  }
+}
+
+async function guardarReagLeySiBot(tokenAdmin, usuarioAdmin) {
+  const rut = document.getElementById('reagRut').value.trim();
+  const tipo = document.getElementById('reagTipoAtencion').value;
+  const hora = document.getElementById('reagHoraAgendada').value;
+  const obs = document.getElementById('reagObsLeySi').value.trim();
+  if (!rut || !hora) { alert('Ingresa el RUT y la hora agendada'); return; }
+  try {
+    const bot = await autenticarBot();
+    const res = await fetch(`${API_BASE}/reagendamiento`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${bot.token}` },
+      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora, observaciones: obs || undefined })
+    });
+    const caso = await res.json();
+    if (!res.ok) throw new Error(caso.error);
+    alert(`Caso \${caso.folio} cerrado correctamente.`);
+    // Restaurar sesión admin
+    token = tokenAdmin;
+    usuarioActual = usuarioAdmin;
+    cargarVista('reagendamiento');
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function abrirReagModalSolicitudBot(tokenAdmin, usuarioAdmin) {
+  const rut = document.getElementById('reagRut').value.trim();
+  if (!rut) { alert('Ingresa primero el RUT del paciente'); return; }
+  // Guardar para restaurar después
+  window._botTokenAdmin = tokenAdmin;
+  window._botUsuarioAdmin = usuarioAdmin;
+  document.getElementById('reagRutOculto').value = rut;
+  document.getElementById('reagNombre').value = '';
+  document.getElementById('reagCorreo').value = '';
+  document.getElementById('reagTelefono').value = '';
+  document.getElementById('reagAgenciaSolicitud').innerHTML = '<option value="">Selecciona una agencia</option>' +
+    catalogoAgencias.map(a => `<option value="\${a.id_agencia}">\${a.nombre}</option>`).join('');
+  document.getElementById('reagMotivo').value = '';
+  document.getElementById('modalReagSolicitud').classList.add('activo');
+}
+
+// Override temporal de guardarReagSolicitud para el flujo BOT
+const _guardarReagSolicitudOriginal = typeof guardarReagSolicitud === 'function' ? guardarReagSolicitud : null;
+
+async function guardarReagSolicitudBot() {
+  const body = {
+    rut_paciente: document.getElementById('reagRutOculto').value,
+    tipo_atencion: document.getElementById('reagTipoAtencion') ? document.getElementById('reagTipoAtencion').value : 'CONTROL',
+    reagendamiento_ley: 'NO',
+    nombre_paciente: document.getElementById('reagNombre').value.trim(),
+    correo: document.getElementById('reagCorreo').value.trim(),
+    telefono: document.getElementById('reagTelefono').value.trim(),
+    id_agencia: Number(document.getElementById('reagAgenciaSolicitud').value) || undefined,
+    motivo: document.getElementById('reagMotivo').value.trim()
+  };
+  if (!body.nombre_paciente || !body.id_agencia || !body.motivo) { alert('Completa nombre, agencia y motivo'); return; }
+  try {
+    const bot = await autenticarBot();
+    const res = await fetch(`${API_BASE}/reagendamiento`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${bot.token}` },
+      body: JSON.stringify(body)
+    });
+    const caso = await res.json();
+    if (!res.ok) throw new Error(caso.error);
+    cerrarModal('modalReagSolicitud');
+    alert(`Solicitud enviada. Folio: \${caso.folio}`);
+    token = window._botTokenAdmin;
+    usuarioActual = window._botUsuarioAdmin;
     cargarVista('reagendamiento');
   } catch (err) { alert('Error: ' + err.message); }
 }
