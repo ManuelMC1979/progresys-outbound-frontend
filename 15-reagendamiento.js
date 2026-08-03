@@ -360,110 +360,127 @@ async function guardarReagSolicitud() {
 }
 
 /* ============================================================
-   INGRESO BOT — crea el caso y gestiona en el mismo paso
-   El caso nace como PENDIENTE_ADMIN y se resuelve de inmediato:
-   Sí agendó → cierra | No agendó → deriva a agencia
+   INGRESO BOT — paso 1: datos → guardar → paso 2: gestión
    ============================================================ */
 function abrirFormBot() {
   const contenido = document.getElementById('contenido');
   document.getElementById('tituloVista').textContent = 'Ingresar folio BOT';
+  renderBotPaso1(contenido);
+}
+
+function renderBotPaso1(contenido) {
   contenido.innerHTML = `
     <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
 
     <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
       <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
-      <span>El folio se crea como <b>Pendiente de revisión</b> y se gestiona de inmediato en este mismo formulario.</span>
+      <span><b>Paso 1 de 2</b> — Ingresa los datos del paciente y guarda para continuar con la gestión.</span>
     </div>
 
-    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+    <div style="background:white; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:560px;">
+      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:16px; border-bottom:2px solid #534AB7; padding-bottom:8px;">Datos del paciente</h3>
 
-      <div style="flex:1; min-width:300px; background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
-        <h3 style="color:var(--azul-marino); font-size:14px; margin-bottom:14px; border-bottom:2px solid #534AB7; padding-bottom:8px;">Paso 1 — Datos del paciente</h3>
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">RUT del paciente</label>
+      <input type="text" id="botRut" placeholder="12.345.678-9" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
 
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">RUT del paciente</label>
-        <input type="text" id="botRut" placeholder="12.345.678-9" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre del paciente</label>
+      <input type="text" id="botNombre" placeholder="Nombre completo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
 
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre del paciente</label>
-        <input type="text" id="botNombre" placeholder="Nombre completo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Teléfono</label>
-            <input type="text" id="botTel" placeholder="+56 9 1234 5678" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Correo</label>
-            <input type="email" id="botCorreo" placeholder="paciente@correo.cl" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-          </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Teléfono</label>
+          <input type="text" id="botTel" placeholder="+56 9 1234 5678" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
         </div>
+        <div>
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Correo</label>
+          <input type="email" id="botCorreo" placeholder="paciente@correo.cl" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+        </div>
+      </div>
 
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Tipo de atención</label>
-        <select id="botTipo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
-          <option value="CONTROL">Atención Primaria</option>
-          <option value="CURACIÓN">Curación</option>
-        </select>
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Tipo de atención</label>
+      <select id="botTipo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+        <option value="CONTROL">Atención Primaria</option>
+        <option value="CURACIÓN">Curación</option>
+      </select>
 
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Motivo</label>
-        <select id="botMotivo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
-          <option>Enfermedad</option>
-          <option>Hospitalización o urgencia</option>
-          <option>Fallecimiento de familiar directo o indirecto pero cercano</option>
-          <option>Cuidado de otra persona</option>
-          <option>Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
-          <option>Constancia de Carabineros</option>
-          <option>Problema de transporte ACHS</option>
-          <option>Trámite personal urgente</option>
-          <option>Error de agendamiento/información</option>
-        </select>
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia</label>
+      <select id="botAgenciaPaso1" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+        <option value="">— Selecciona una agencia —</option>
+        ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
+      </select>
 
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia</label>
-        <select id="botAgenciaPaso1" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:10px;">
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones (opcional)</label>
+      <textarea id="botObs" rows="3" placeholder="Contexto adicional del caso..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:16px;"></textarea>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid #eee; padding-top:14px;">
+        <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
+        <button class="btn" style="background:#534AB7;" onclick="guardarBotPaso1()">Guardar y continuar →</button>
+      </div>
+    </div>
+  `;
+}
+
+function guardarBotPaso1() {
+  const rut = document.getElementById('botRut').value.trim();
+  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
+  const datos = {
+    rut_paciente: rut,
+    nombre_paciente: document.getElementById('botNombre').value.trim(),
+    telefono: document.getElementById('botTel').value.trim(),
+    correo: document.getElementById('botCorreo').value.trim(),
+    tipo_atencion: document.getElementById('botTipo').value,
+    id_agencia: Number(document.getElementById('botAgenciaPaso1').value) || undefined,
+    observaciones: document.getElementById('botObs').value.trim() || undefined
+  };
+  const contenido = document.getElementById('contenido');
+  renderBotPaso2(contenido, datos);
+}
+
+function renderBotPaso2(contenido, datos) {
+  const agenciaOpts = catalogoAgencias.map(a =>
+    `<option value="${a.id_agencia}" ${datos.id_agencia === a.id_agencia ? 'selected' : ''}>${a.nombre}</option>`
+  ).join('');
+
+  contenido.innerHTML = `
+    <button class="btn secundario" onclick="renderBotPaso1(document.getElementById('contenido'))" style="margin-bottom:16px;">← Volver al paso 1</button>
+
+    <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
+      <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
+      <span><b>Paso 2 de 2</b> — Paciente: <b>${datos.nombre_paciente || datos.rut_paciente}</b> · RUT: ${datos.rut_paciente}</span>
+    </div>
+
+    <div style="background:white; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:560px;">
+      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:16px; border-bottom:2px solid #534AB7; padding-bottom:8px;">Gestión inmediata</h3>
+
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">¿Se logró agendar?</label>
+      <select id="botLey" onchange="mostrarBloqueBotSegunLey()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:14px;">
+        <option value="">— Selecciona una opción —</option>
+        <option value="SI">Sí — se agendó</option>
+        <option value="NO">No — derivar a agencia</option>
+      </select>
+
+      <div id="botBloqueSi" style="display:none;">
+        <div style="background:#e8f6f4; border-left:4px solid #17b6a7; border-radius:0; padding:10px 12px; font-size:12px; color:#0b5c52; margin-bottom:12px; line-height:1.5;">
+          El folio se cerrará con la cita agendada.
+        </div>
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Fecha y hora agendada</label>
+        <input type="datetime-local" id="botHoraAgendada" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:16px;">
+        <button class="btn" style="width:100%;" onclick="guardarBotLeySi(${JSON.stringify(datos).replace(/'/g, '\'')})">Cerrar caso — cita agendada</button>
+      </div>
+
+      <div id="botBloqueNo" style="display:none;">
+        <div style="background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:0; padding:10px 12px; font-size:12px; color:#7a5c00; margin-bottom:12px; line-height:1.5;">
+          El folio se derivará a la agencia indicada con SLA de 72 horas hábiles.
+        </div>
+        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
+        <select id="botAgencia" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:16px;">
           <option value="">— Selecciona una agencia —</option>
-          ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
+          ${agenciaOpts}
         </select>
-
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones (opcional)</label>
-        <textarea id="botObs" rows="2" placeholder="Contexto adicional..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;"></textarea>
+        <button class="btn" style="background:#534AB7; width:100%;" onclick="guardarBotDerivar(${JSON.stringify(datos).replace(/'/g, '\'')})">Derivar a agencia</button>
       </div>
 
-      <div style="flex:1; min-width:300px; background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
-        <h3 style="color:var(--azul-marino); font-size:14px; margin-bottom:14px; border-bottom:2px solid #534AB7; padding-bottom:8px;">Paso 2 — Gestión inmediata</h3>
-
-        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">¿Se logró agendar?</label>
-        <select id="botLey" onchange="mostrarBloqueBotSegunLey()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:14px;">
-          <option value="">— Selecciona una opción —</option>
-          <option value="SI">Sí — se agendó</option>
-          <option value="NO">No — derivar a agencia</option>
-        </select>
-
-        <div id="botBloqueSi" style="display:none;">
-          <div style="background:#e8f6f4; border-left:4px solid #17b6a7; border-radius:0; padding:10px 12px; font-size:12px; color:#0b5c52; margin-bottom:12px; line-height:1.5;">
-            El caso se cerrará directamente con la cita agendada.
-          </div>
-          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Fecha y hora agendada</label>
-          <input type="datetime-local" id="botHoraAgendada" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:14px;">
-          <button class="btn" style="width:100%;" onclick="guardarBotLeySi()">Cerrar caso — cita agendada</button>
-        </div>
-
-        <div id="botBloqueNo" style="display:none;">
-          <div style="background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:0; padding:10px 12px; font-size:12px; color:#7a5c00; margin-bottom:12px; line-height:1.5;">
-            El caso se derivará a la agencia indicada con SLA de 72 horas hábiles.
-          </div>
-          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
-          <select id="botAgencia" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; margin-bottom:14px;">
-            <option value="">— Selecciona una agencia —</option>
-            ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
-          </select>
-          <button class="btn" style="background:#534AB7; width:100%;" onclick="guardarBotDerivar()">Derivar a agencia</button>
-        </div>
-
-        <div id="botBloqueVacio" style="color:#aaa; font-size:12px; margin-top:10px;">Selecciona una opción arriba para continuar.</div>
-      </div>
-
-    </div>
-
-    <div style="margin-top:16px;">
-      <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
+      <div id="botBloqueVacio" style="color:#aaa; font-size:12px; margin-top:4px;">Selecciona una opción para continuar.</div>
     </div>
   `;
 }
@@ -475,25 +492,16 @@ function mostrarBloqueBotSegunLey() {
   document.getElementById('botBloqueVacio').style.display = v ? 'none' : 'block';
 }
 
-async function guardarBotLeySi() {
-  const rut = document.getElementById('botRut').value.trim();
+async function guardarBotLeySi(datos) {
   const hora = document.getElementById('botHoraAgendada').value;
-  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
   if (!hora) { alert('Ingresa la fecha y hora agendada'); return; }
   try {
     const caso = await api('/reagendamiento', {
       method: 'POST',
       body: JSON.stringify({
-        rut_paciente: rut,
-        tipo_atencion: document.getElementById('botTipo').value,
+        ...datos,
         reagendamiento_ley: 'SI',
         hora_agendada: hora,
-        nombre_paciente: document.getElementById('botNombre').value.trim(),
-        correo: document.getElementById('botCorreo').value.trim(),
-        telefono: document.getElementById('botTel').value.trim(),
-        id_agencia: Number(document.getElementById('botAgenciaPaso1').value) || undefined,
-        motivo: document.getElementById('botMotivo').value.trim(),
-        observaciones: document.getElementById('botObs').value.trim() || undefined,
         origen: 'BOT',
         ingresado_bot: true
       })
@@ -503,26 +511,16 @@ async function guardarBotLeySi() {
   } catch (err) { alert('Error: ' + err.message); }
 }
 
-async function guardarBotDerivar() {
-  const rut = document.getElementById('botRut').value.trim();
-  const idAgenciaPaso2 = Number(document.getElementById('botAgencia').value);
-  const idAgenciaPaso1 = Number(document.getElementById('botAgenciaPaso1').value);
-  const idAgencia = idAgenciaPaso2 || idAgenciaPaso1;
-  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
+async function guardarBotDerivar(datos) {
+  const idAgencia = Number(document.getElementById('botAgencia').value) || datos.id_agencia;
   if (!idAgencia) { alert('Selecciona una agencia'); return; }
   try {
     const caso = await api('/reagendamiento', {
       method: 'POST',
       body: JSON.stringify({
-        rut_paciente: rut,
-        tipo_atencion: document.getElementById('botTipo').value,
-        reagendamiento_ley: 'NO',
-        nombre_paciente: document.getElementById('botNombre').value.trim(),
-        correo: document.getElementById('botCorreo').value.trim(),
-        telefono: document.getElementById('botTel').value.trim(),
+        ...datos,
         id_agencia: idAgencia,
-        motivo: document.getElementById('botMotivo').value.trim(),
-        observaciones: document.getElementById('botObs').value.trim() || undefined,
+        reagendamiento_ley: 'NO',
         origen: 'BOT',
         ingresado_bot: true
       })
@@ -531,6 +529,7 @@ async function guardarBotDerivar() {
     cargarVista('reagendamiento');
   } catch (err) { alert('Error: ' + err.message); }
 }
+
 
 /* ============================================================
    INGRESO DIRECTO ADMIN — formulario inline + script de correo
