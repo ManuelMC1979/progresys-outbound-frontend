@@ -618,15 +618,30 @@ async function guardarReagRechazo() {
 function abrirReagModalRespuesta(idCaso) {
   document.getElementById('reagRespuestaId').value = idCaso;
   document.getElementById('reagRespuestaTexto').value = '';
+  document.getElementById('reagRespuestaSeAgendo').value = '';
+  document.getElementById('reagRespuestaFechaHora').value = '';
+  document.getElementById('bloqueRespuestaFecha').style.display = 'none';
   document.getElementById('modalReagRespuesta').classList.add('activo');
+}
+
+function mostrarBloqueRespuestaSegunAgendo() {
+  const v = document.getElementById('reagRespuestaSeAgendo').value;
+  document.getElementById('bloqueRespuestaFecha').style.display = v === 'SI' ? 'block' : 'none';
 }
 
 async function guardarReagRespuesta() {
   const id = document.getElementById('reagRespuestaId').value;
   const resultado = document.getElementById('reagRespuestaTexto').value.trim();
-  if (!resultado) { alert('Ingresa la respuesta de la agencia'); return; }
+  const seAgendo = document.getElementById('reagRespuestaSeAgendo').value;
+  const fechaHora = document.getElementById('reagRespuestaFechaHora').value;
+  if (!seAgendo) { alert('Indica si se agendó la cita'); return; }
+  if (seAgendo === 'SI' && !fechaHora) { alert('Ingresa la fecha y hora del agendamiento'); return; }
+  if (!resultado) { alert('Ingresa el detalle entregado por la agencia'); return; }
   try {
-    await api(`/reagendamiento/${id}/respuesta-agencia`, { method: 'POST', body: JSON.stringify({ resultado }) });
+    await api(`/reagendamiento/${id}/respuesta-agencia`, {
+      method: 'POST',
+      body: JSON.stringify({ resultado, se_agendo: seAgendo, hora_agendada: seAgendo === 'SI' ? fechaHora : undefined })
+    });
     cerrarModal('modalReagRespuesta');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
   } catch (err) {
