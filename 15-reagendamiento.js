@@ -23,7 +23,9 @@ function badgeEstadoReag(estado) {
     RECHAZADO_MAL_INGRESO: ['Rechazado — mal ingreso', 'alerta'],
     ESCALADO_AGENCIA: ['Escalado a agencia', 'gestion'],
     PENDIENTE_CIERRE_ADMIN: ['Pendiente de cierre (Admin)', 'gestion'],
-    RESUELTO: ['Resuelto por agencia', 'gestionado']
+    RESUELTO: ['Resuelto por agencia', 'gestionado'],
+    RESUELTO_PRIMERA_LINEA: ['Resuelto — primera línea', 'gestionado'],
+    CERRADO_SIN_CONTACTO: ['Cerrado sin contacto', 'cerrado'],
   };
   const [txt, clase] = map[estado] || [estado, 'pendiente'];
   return `<span class="badge ${clase}">${txt}</span>`;
@@ -131,6 +133,8 @@ async function renderReagendamiento() {
         <div class="kpi-card alerta"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia + dashReag.vencidos_cierre}</div><div class="etiqueta">SLA vencidos</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.rechazados}</div><div class="etiqueta">Rechazados</div></div>
         <div class="kpi-card alerta"><div class="valor">${dashReag.rechazados_mal_ingreso}</div><div class="etiqueta">Mal ingreso (trazabilidad)</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.resueltos_primera_linea}</div><div class="etiqueta">Resueltos primera línea</div></div>
+        <div class="kpi-card"><div class="valor">${dashReag.cerrados_sin_contacto}</div><div class="etiqueta">Cerrados sin contacto</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resueltos</div></div>
       </div>
 
@@ -152,7 +156,7 @@ async function renderReagendamiento() {
       <h3 style="color:var(--azul-marino); margin-top:24px;">Pendientes de cierre — respuesta de agencia recibida (${pendientesCierre.length})</h3>
       ${tablaReag(pendientesCierre, 'admin_pendiente_cierre')}
       <h3 style="color:var(--azul-marino); margin-top:24px;">Historial</h3>
-      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO'].includes(c.estado)), 'historial')}
+      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','CERRADO_SIN_CONTACTO'].includes(c.estado)), 'historial')}
     `;
   }
 
@@ -169,8 +173,9 @@ function renderIntentosMini(intentos) {
     let clase = 'intento-dot-vacio';
     let titulo = `Intento ${i}: pendiente`;
     if (it) {
-      clase = it.estado === 'CONFIRMA' ? 'intento-dot-confirma' : 'intento-dot-nocontacto';
-      titulo = `Intento ${i}: ${it.estado === 'CONFIRMA' ? 'Contacto — confirma' : 'No contactado'}`;
+      if (it.estado === 'CONFIRMA') { clase = 'intento-dot-confirma'; titulo = `Intento ${i}: Contacto — confirma`; }
+      else if (it.estado === 'CONTACTO_NO_AGENDO') { clase = 'intento-dot-noagendo'; titulo = `Intento ${i}: Contacto — no agendó`; }
+      else { clase = 'intento-dot-nocontacto'; titulo = `Intento ${i}: No contactado`; }
     }
     html += `<span class="intento-dot ${clase}" title="${titulo}">${i}</span>`;
   }
@@ -324,31 +329,43 @@ function renderReagDetalle(caso) {
 function panelIntentos(caso) {
   const intentos = (caso.intentos || []).slice().sort((a, b) => a.numero_intento - b.numero_intento);
   const siguiente = intentos.length + 1;
-  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO'].includes(caso.estado);
+  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RESUELTO_PRIMERA_LINEA', 'CERRADO_SIN_CONTACTO'].includes(caso.estado);
 
-  const filas = intentos.map(it => `
-    <div class="intento-fila">
-      <div class="intento-num">${it.numero_intento}</div>
-      <div class="intento-info">
-        <div class="intento-estado ${it.estado === 'CONFIRMA' ? 'estado-confirma' : 'estado-nocontacto'}">
-          ${it.estado === 'CONFIRMA' ? 'Contacto — confirma' : 'No contactado'}
+  const etiquetaIntento = {
+    CONFIRMA: ['Contacto — confirma', 'estado-confirma'],
+    NO_CONTACTO: ['No contactado', 'estado-nocontacto'],
+    CONTACTO_NO_AGENDO: ['Contacto — no agendó', 'estado-noagendo'],
+  };
+
+  const filas = intentos.map(it => {
+    const [etiqueta, claseEstado] = etiquetaIntento[it.estado] || [it.estado, 'estado-nocontacto'];
+    return `
+      <div class="intento-fila">
+        <div class="intento-num">${it.numero_intento}</div>
+        <div class="intento-info">
+          <div class="intento-estado ${claseEstado}">${etiqueta}</div>
+          <div class="intento-fecha">${formatFecha(it.fecha)}</div>
+          ${it.observacion ? `<div class="intento-obs">${it.observacion}</div>` : ''}
         </div>
-        <div class="intento-fecha">${formatFecha(it.fecha)}</div>
-        ${it.observacion ? `<div class="intento-obs">${it.observacion}</div>` : ''}
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   const filaSiguiente = (siguiente <= 3 && casoAbierto) ? `
     <div class="intento-fila intento-fila-pendiente">
       <div class="intento-num intento-num-pendiente">${siguiente}</div>
       <div class="intento-info">
         <div style="font-size:12px; color:#888; margin-bottom:6px;">Intento ${siguiente} pendiente de registrar</div>
-        <textarea id="obsIntento${siguiente}" rows="1" placeholder="Observación (opcional)" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:12px; margin-bottom:6px;"></textarea>
-        <div style="display:flex; gap:8px;">
+        <textarea id="obsIntento${siguiente}" rows="2"
+          placeholder="Observación — obligatoria si el paciente no quiere agendar"
+          style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:12px; margin-bottom:6px;"></textarea>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn secundario" onclick="registrarIntento('${caso.id_caso}', 'CONFIRMA', ${siguiente})">Contacto — confirma</button>
           <button class="btn secundario" onclick="registrarIntento('${caso.id_caso}', 'NO_CONTACTO', ${siguiente})">No contactado</button>
+          <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);"
+            onclick="registrarIntento('${caso.id_caso}', 'CONTACTO_NO_AGENDO', ${siguiente})">Contacto — no agendó</button>
         </div>
+        ${siguiente === 3 ? `<div style="font-size:11px; color:var(--rojo); margin-top:6px;">⚠ Este es el 3er y último intento — si no hay contacto, el caso se cerrará automáticamente.</div>` : ''}
       </div>
     </div>
   ` : '';
@@ -365,6 +382,11 @@ function panelIntentos(caso) {
 async function registrarIntento(idCaso, estado, numero) {
   const campoObs = document.getElementById(`obsIntento${numero}`);
   const obs = campoObs ? campoObs.value.trim() : '';
+  if (estado === 'CONTACTO_NO_AGENDO' && !obs) {
+    alert('Debes indicar el motivo por el que el paciente no quiso agendar.');
+    if (campoObs) campoObs.focus();
+    return;
+  }
   try {
     await api(`/reagendamiento/${idCaso}/intentos`, {
       method: 'POST',
