@@ -32,6 +32,13 @@ function badgeBot() {
   return `<span style="background:#534AB7; color:white; font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; letter-spacing:0.5px;">BOT</span>`;
 }
 
+function textoSla(estadoSla) {
+  if (!estadoSla) return '<span style="color:#ccc;">—</span>';
+  const colores = { 'VENCIDO': '#d9534f', 'POR VENCER': '#f0ad4e', 'DENTRO DE PLAZO': '#2ecc71' };
+  const color = colores[estadoSla] || '#888';
+  return `<span style="color:${color}; font-weight:600;">${estadoSla}</span>`;
+}
+
 function celdaFolio(c) {
   const esBot = c.origen === 'BOT' || c.ingresado_bot;
   return `<b>${c.folio}</b>${esBot ? badgeBot() : ''}`;
@@ -182,7 +189,7 @@ function tablaReag(lista, contexto) {
             <td>${c.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</td>
             <td>${c.hora_agendada ? formatFecha(c.hora_agendada) : '—'}</td>
             <td>${badgeEstadoReag(c.estado)}</td>
-            <td>${c.estado_sla || '—'}</td>
+            <td>${textoSla(c.estado_sla)}</td>
             <td style="text-align:center;">${c.agencia ? renderIntentosMini(c.intentos) : '<span style="color:#ccc;">—</span>'}</td>
             <td style="white-space:nowrap;">
               <button class="btn secundario" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>Ver detalle</button>
