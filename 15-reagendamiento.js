@@ -20,6 +20,7 @@ function badgeEstadoReag(estado) {
     CERRADO: ['Cerrado', 'cerrado'],
     PENDIENTE_ADMIN: ['Pendiente revisión Admin', 'pendiente'],
     RECHAZADO: ['Rechazado — agendado por Admin', 'gestion'],
+    RECHAZADO_MAL_INGRESO: ['Rechazado — mal ingreso', 'alerta'],
     ESCALADO_AGENCIA: ['Escalado a agencia', 'gestion'],
     PENDIENTE_CIERRE_ADMIN: ['Pendiente de cierre (Admin)', 'gestion'],
     RESUELTO: ['Resuelto por agencia', 'gestionado']
@@ -129,6 +130,7 @@ async function renderReagendamiento() {
         <div class="kpi-card"><div class="valor">${dashReag.pendientes_cierre}</div><div class="etiqueta">Pendientes de cierre (Admin)</div></div>
         <div class="kpi-card alerta"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia + dashReag.vencidos_cierre}</div><div class="etiqueta">SLA vencidos</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.rechazados}</div><div class="etiqueta">Rechazados</div></div>
+        <div class="kpi-card alerta"><div class="valor">${dashReag.rechazados_mal_ingreso}</div><div class="etiqueta">Mal ingreso (trazabilidad)</div></div>
         <div class="kpi-card"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resueltos</div></div>
       </div>
 
@@ -150,7 +152,7 @@ async function renderReagendamiento() {
       <h3 style="color:var(--azul-marino); margin-top:24px;">Pendientes de cierre — respuesta de agencia recibida (${pendientesCierre.length})</h3>
       ${tablaReag(pendientesCierre, 'admin_pendiente_cierre')}
       <h3 style="color:var(--azul-marino); margin-top:24px;">Historial</h3>
-      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RESUELTO'].includes(c.estado)), 'historial')}
+      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO'].includes(c.estado)), 'historial')}
     `;
   }
 
@@ -197,6 +199,7 @@ function tablaReag(lista, contexto) {
               ${contexto === 'admin_pendiente' ? `
                 <button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>
                 <button class="btn" onclick="abrirEscalarConScript('${c.id_caso}')">Confirmar sin cita → Escalar</button>
+                ${(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${c.id_caso}')">Rechazar por mal ingreso</button>` : ''}
               ` : ''}
               ${contexto === 'admin_escalado' ? `<button class="btn" onclick="abrirReagModalRespuesta('${c.id_caso}')">Registrar respuesta agencia</button>` : ''}
               ${contexto === 'admin_pendiente_cierre' ? `<button class="btn" onclick="cerrarReagFinal('${c.id_caso}')">Cerrar caso</button>` : ''}
@@ -249,6 +252,7 @@ function renderReagDetalle(caso) {
     acciones = `
       <button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>
       <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Confirmar sin cita → Escalar</button>
+      ${(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Rechazar por mal ingreso</button>` : ''}
     `;
   } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
     acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta agencia</button>`;
@@ -320,7 +324,7 @@ function renderReagDetalle(caso) {
 function panelIntentos(caso) {
   const intentos = (caso.intentos || []).slice().sort((a, b) => a.numero_intento - b.numero_intento);
   const siguiente = intentos.length + 1;
-  const casoAbierto = !['RESUELTO', 'CERRADO'].includes(caso.estado);
+  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO'].includes(caso.estado);
 
   const filas = intentos.map(it => `
     <div class="intento-fila">
@@ -609,6 +613,25 @@ async function guardarReagRechazo() {
   try {
     await api(`/reagendamiento/${id}/rechazar`, { method: 'POST', body: JSON.stringify({ hora_agendada: hora, observacion: obs || undefined }) });
     cerrarModal('modalReagRechazar');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalRechazarMalIngreso(idCaso) {
+  document.getElementById('reagMalIngresoId').value = idCaso;
+  document.getElementById('reagMalIngresoMotivo').value = '';
+  document.getElementById('modalReagRechazarMalIngreso').classList.add('activo');
+}
+
+async function guardarReagRechazoMalIngreso() {
+  const id = document.getElementById('reagMalIngresoId').value;
+  const motivo = document.getElementById('reagMalIngresoMotivo').value;
+  if (!motivo) { alert('Selecciona el motivo del mal ingreso'); return; }
+  try {
+    await api(`/reagendamiento/${id}/rechazar-mal-ingreso`, { method: 'POST', body: JSON.stringify({ motivo_rechazo_mal_ingreso: motivo }) });
+    cerrarModal('modalReagRechazarMalIngreso');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
   } catch (err) {
     alert('Error: ' + err.message);

@@ -175,6 +175,7 @@
   .badge.gestion { background: var(--azul-corp); }
   .badge.cerrado { background: #888; }
   .badge.gestionado { background: var(--verde); }
+  .badge.alerta { background: var(--rojo); }
 
   .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .toolbar select, .toolbar input {

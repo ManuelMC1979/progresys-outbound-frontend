@@ -302,6 +302,25 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalReagRechazarMalIngreso">
+  <div class="modal">
+    <h3>Rechazar por mal ingreso</h3>
+    <input type="hidden" id="reagMalIngresoId">
+    <p style="font-size:12px; color:#888;">Usa esto cuando el folio no debió llegar a este flujo. El caso se cierra de inmediato y queda registrado para trazabilidad de folios mal derivados.</p>
+    <label>Motivo del mal ingreso</label>
+    <select id="reagMalIngresoMotivo">
+      <option value="">Selecciona un motivo</option>
+      <option value="Paciente de medicina del trabajo">Paciente de medicina del trabajo</option>
+      <option value="Paciente no ley">Paciente no ley</option>
+      <option value="Paciente ley con reposo">Paciente ley con reposo</option>
+    </select>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagRechazarMalIngreso')">Cancelar</button>
+      <button class="btn peligro" onclick="guardarReagRechazoMalIngreso()" style="background:var(--rojo);">Rechazar y cerrar caso</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalReagRespuesta">
   <div class="modal">
     <h3>Registrar respuesta de la agencia</h3>
