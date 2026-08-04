@@ -1,4 +1,4 @@
-  :root {
+:root {
     --azul-marino: #0b1f3a;
     --azul-corp: #123a6b;
     --turquesa: #17b6a7;
@@ -280,6 +280,7 @@
   .intento-dot-vacio { background: #e5e8eb; color: #999; }
   .intento-dot-confirma { background: var(--verde); }
   .intento-dot-nocontacto { background: var(--rojo); }
+  .intento-dot-noagendo { background: var(--amarillo); }
 
   .intento-fila {
     display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
@@ -296,6 +297,7 @@
   .intento-estado { font-size: 12px; font-weight: 700; }
   .intento-estado.estado-confirma { color: #0b5c52; }
   .intento-estado.estado-nocontacto { color: #a32d2d; }
+  .intento-estado.estado-noagendo { color: #7a5c00; }
   .intento-fecha { font-size: 11px; color: #888; margin-top: 1px; }
   .intento-obs { font-size: 12px; color: #555; margin-top: 3px; font-style: italic; }
 
