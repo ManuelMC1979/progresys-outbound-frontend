@@ -321,6 +321,24 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalReabrirFolio">
+  <div class="modal">
+    <h3>Reabrir folio</h3>
+    <input type="hidden" id="reabrirFolioId">
+    <div style="background:#fff3cd; border-left:4px solid #f0ad4e; padding:10px 12px; font-size:12px; color:#7a5c00; margin-bottom:14px; line-height:1.5;">
+      El folio volverá a <b>Pendiente de revisión</b>. Esta acción queda registrada en la línea de tiempo del caso.
+    </div>
+    <label>Tu contraseña (para confirmar)</label>
+    <input type="password" id="reabrirPassword" placeholder="Ingresa tu contraseña">
+    <label>Motivo de la reapertura</label>
+    <textarea id="reabrirMotivo" rows="3" placeholder="Ej: Error en tipificación, se debe corregir..."></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReabrirFolio')">Cancelar</button>
+      <button class="btn" onclick="guardarReabrirFolio()">Confirmar reapertura</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalReagRespuesta">
   <div class="modal">
     <h3>Registrar respuesta de la agencia</h3>
