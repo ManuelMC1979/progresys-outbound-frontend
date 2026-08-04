@@ -152,11 +152,27 @@ async function renderReagendamiento() {
   contenido.innerHTML = bannerSap + bloqueFormulario + bloquesAdmin + bloqueMisCasos;
 }
 
+function renderIntentosMini(intentos) {
+  const arr = intentos || [];
+  let html = '<div style="display:flex;gap:4px;justify-content:center;">';
+  for (let i = 1; i <= 3; i++) {
+    const it = arr.find(x => x.numero_intento === i);
+    let clase = 'intento-dot-vacio';
+    let titulo = `Intento ${i}: pendiente`;
+    if (it) {
+      clase = it.estado === 'CONFIRMA' ? 'intento-dot-confirma' : 'intento-dot-nocontacto';
+      titulo = `Intento ${i}: ${it.estado === 'CONFIRMA' ? 'Contacto — confirma' : 'No contactado'}`;
+    }
+    html += `<span class="intento-dot ${clase}" title="${titulo}">${i}</span>`;
+  }
+  return html + '</div>';
+}
+
 function tablaReag(lista, contexto) {
   if (lista.length === 0) return '<p style="color:#999;">Sin casos en esta sección.</p>';
   return `
     <table>
-      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Fecha agendada</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
+      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Fecha agendada</th><th>Estado</th><th>SLA</th><th style="text-align:center;">Intentos</th><th></th></tr></thead>
       <tbody>
         ${lista.map(c => `
           <tr>
@@ -167,6 +183,7 @@ function tablaReag(lista, contexto) {
             <td>${c.hora_agendada ? formatFecha(c.hora_agendada) : '—'}</td>
             <td>${badgeEstadoReag(c.estado)}</td>
             <td>${c.estado_sla || '—'}</td>
+            <td style="text-align:center;">${c.agencia ? renderIntentosMini(c.intentos) : '<span style="color:#ccc;">—</span>'}</td>
             <td style="white-space:nowrap;">
               <button class="btn secundario" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>Ver detalle</button>
               <button class="btn secundario" onclick='abrirModalObsReag(${JSON.stringify(c.id_caso)})'>+ Obs.</button>
@@ -240,6 +257,7 @@ function renderReagDetalle(caso) {
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstadoReag(caso.estado)}</div><div class="etiqueta">Estado</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</div><div class="etiqueta">¿Se agendó?</div></div>
       ${caso.hora_agendada ? `<div class="kpi-card"><div class="valor" style="font-size:13px;">${formatFecha(caso.hora_agendada)}</div><div class="etiqueta">Fecha y hora agendada</div></div>` : ''}
+      ${(caso.origen === 'BOT' || caso.ingresado_bot) ? `<div class="kpi-card" style="border-left-color:#534AB7;"><div class="valor" style="font-size:16px;color:#534AB7;">BOT</div><div class="etiqueta">Origen</div></div>` : ''}
     </div>
 
     <div style="display:flex; gap:24px; flex-wrap:wrap;">
@@ -286,7 +304,64 @@ function renderReagDetalle(caso) {
         ${acciones ? `<div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">${acciones}</div>` : ''}
       </div>
     </div>
+
+    ${caso.agencia ? panelIntentos(caso) : ''}
   `;
+}
+
+function panelIntentos(caso) {
+  const intentos = (caso.intentos || []).slice().sort((a, b) => a.numero_intento - b.numero_intento);
+  const siguiente = intentos.length + 1;
+  const casoAbierto = !['RESUELTO', 'CERRADO'].includes(caso.estado);
+
+  const filas = intentos.map(it => `
+    <div class="intento-fila">
+      <div class="intento-num">${it.numero_intento}</div>
+      <div class="intento-info">
+        <div class="intento-estado ${it.estado === 'CONFIRMA' ? 'estado-confirma' : 'estado-nocontacto'}">
+          ${it.estado === 'CONFIRMA' ? 'Contacto — confirma' : 'No contactado'}
+        </div>
+        <div class="intento-fecha">${formatFecha(it.fecha)}</div>
+        ${it.observacion ? `<div class="intento-obs">${it.observacion}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const filaSiguiente = (siguiente <= 3 && casoAbierto) ? `
+    <div class="intento-fila intento-fila-pendiente">
+      <div class="intento-num intento-num-pendiente">${siguiente}</div>
+      <div class="intento-info">
+        <div style="font-size:12px; color:#888; margin-bottom:6px;">Intento ${siguiente} pendiente de registrar</div>
+        <textarea id="obsIntento${siguiente}" rows="1" placeholder="Observación (opcional)" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:12px; margin-bottom:6px;"></textarea>
+        <div style="display:flex; gap:8px;">
+          <button class="btn secundario" onclick="registrarIntento('${caso.id_caso}', 'CONFIRMA', ${siguiente})">Contacto — confirma</button>
+          <button class="btn secundario" onclick="registrarIntento('${caso.id_caso}', 'NO_CONTACTO', ${siguiente})">No contactado</button>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  return `
+    <div style="background:white; border-radius:10px; border:1px solid #e0e0e0; padding:16px; margin-top:20px;">
+      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:12px;">Intentos de llamado — Agencia: ${caso.agencia}</h3>
+      ${filas}${filaSiguiente}
+      ${intentos.length === 0 && !casoAbierto ? '<p style="color:#999; font-size:13px;">No se registraron intentos.</p>' : ''}
+    </div>
+  `;
+}
+
+async function registrarIntento(idCaso, estado, numero) {
+  const campoObs = document.getElementById(`obsIntento${numero}`);
+  const obs = campoObs ? campoObs.value.trim() : '';
+  try {
+    await api(`/reagendamiento/${idCaso}/intentos`, {
+      method: 'POST',
+      body: JSON.stringify({ estado, observacion: obs || undefined })
+    });
+    abrirReagDetalle(idCaso);
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
 }
 
 async function guardarObsDesdeDetalle(idCaso) {
@@ -437,11 +512,11 @@ async function guardarReagLeySiBot(tokenAdmin, usuarioAdmin) {
     const res = await fetch(`${API_BASE}/reagendamiento`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${bot.token}` },
-      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora, observaciones: obs || undefined })
+      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora, observaciones: obs || undefined, origen: 'BOT', ingresado_bot: true })
     });
     const caso = await res.json();
     if (!res.ok) throw new Error(caso.error);
-    alert(`Caso \${caso.folio} cerrado correctamente.`);
+    alert(`Caso ${caso.folio} cerrado correctamente.`);
     // Restaurar sesión admin
     token = tokenAdmin;
     usuarioActual = usuarioAdmin;
@@ -460,7 +535,7 @@ async function abrirReagModalSolicitudBot(tokenAdmin, usuarioAdmin) {
   document.getElementById('reagCorreo').value = '';
   document.getElementById('reagTelefono').value = '';
   document.getElementById('reagAgenciaSolicitud').innerHTML = '<option value="">Selecciona una agencia</option>' +
-    catalogoAgencias.map(a => `<option value="\${a.id_agencia}">\${a.nombre}</option>`).join('');
+    catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('');
   document.getElementById('reagMotivo').value = '';
   document.getElementById('modalReagSolicitud').classList.add('activo');
 }
@@ -477,7 +552,9 @@ async function guardarReagSolicitudBot() {
     correo: document.getElementById('reagCorreo').value.trim(),
     telefono: document.getElementById('reagTelefono').value.trim(),
     id_agencia: Number(document.getElementById('reagAgenciaSolicitud').value) || undefined,
-    motivo: document.getElementById('reagMotivo').value.trim()
+    motivo: document.getElementById('reagMotivo').value.trim(),
+    origen: 'BOT',
+    ingresado_bot: true
   };
   if (!body.nombre_paciente || !body.id_agencia || !body.motivo) { alert('Completa nombre, agencia y motivo'); return; }
   try {
@@ -490,7 +567,7 @@ async function guardarReagSolicitudBot() {
     const caso = await res.json();
     if (!res.ok) throw new Error(caso.error);
     cerrarModal('modalReagSolicitud');
-    alert(`Solicitud enviada. Folio: \${caso.folio}`);
+    alert(`Solicitud enviada. Folio: ${caso.folio}`);
     token = window._botTokenAdmin;
     usuarioActual = window._botUsuarioAdmin;
     cargarVista('reagendamiento');
