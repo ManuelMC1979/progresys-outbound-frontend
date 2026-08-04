@@ -305,7 +305,17 @@
   <div class="modal">
     <h3>Registrar respuesta de la agencia</h3>
     <input type="hidden" id="reagRespuestaId">
-    <label>Respuesta / solución entregada</label>
+    <label>¿Se agendó la cita?</label>
+    <select id="reagRespuestaSeAgendo" onchange="mostrarBloqueRespuestaSegunAgendo()">
+      <option value="">Selecciona una opción</option>
+      <option value="SI">Sí</option>
+      <option value="NO">No</option>
+    </select>
+    <div id="bloqueRespuestaFecha" style="display:none; margin-top:10px;">
+      <label>Fecha y hora del agendamiento</label>
+      <input type="datetime-local" id="reagRespuestaFechaHora">
+    </div>
+    <label style="margin-top:10px;">Respuesta / detalle entregado por la agencia</label>
     <textarea id="reagRespuestaTexto" rows="3"></textarea>
     <div class="acciones">
       <button class="btn secundario" onclick="cerrarModal('modalReagRespuesta')">Cancelar</button>
