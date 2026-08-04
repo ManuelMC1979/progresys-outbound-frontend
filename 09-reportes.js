@@ -19,7 +19,7 @@ async function renderReportes() {
       <button class="btn secundario" onclick="aplicarFiltroReporte()">Filtrar</button>
       <button class="btn" onclick="exportarReporteCSV()">Exportar CSV</button>
     </div>
-    <div id="tablaReporte"><div class="cargando">Cargando...</div></div>
+    <div id="tablaReporte">${esqueletoTabla()}</div>
   `;
   await cargarReporte();
 }

@@ -14,7 +14,7 @@ const titulos = { dashboard: 'Dashboard', correos: 'Correos', casos: 'Casos', al
 async function cargarVista(vista) {
   document.getElementById('tituloVista').textContent = titulos[vista];
   const contenido = document.getElementById('contenido');
-  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+  contenido.innerHTML = esqueletoVista(vista);
   try {
     if (vista === 'dashboard') await renderDashboard();
     if (vista === 'correos') await renderCorreos();

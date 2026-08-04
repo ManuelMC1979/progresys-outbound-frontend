@@ -31,7 +31,7 @@ async function renderEjecutivos() {
 async function abrirFichaEjecutivo(idEjecutivo, nombre) {
   document.getElementById('tituloVista').textContent = `Ejecutivo: ${nombre}`;
   const contenido = document.getElementById('contenido');
-  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+  contenido.innerHTML = esqueletoFicha();
 
   const puedeVolver = !(usuarioActual.rol === 'EJECUTIVO');
 

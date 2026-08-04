@@ -44,7 +44,7 @@ async function abrirDetalleCaso(idCaso) {
   idCasoDetalleActual = idCaso;
   const contenido = document.getElementById('contenido');
   document.getElementById('tituloVista').textContent = 'Detalle del caso';
-  contenido.innerHTML = '<div class="cargando">Cargando...</div>';
+  contenido.innerHTML = esqueletoFicha();
 
   try {
     const caso = await api(`/casos/${idCaso}`);
