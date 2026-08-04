@@ -321,6 +321,10 @@ function renderReagDetalle(caso) {
         </div>
 
         ${acciones ? `<div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">${acciones}</div>` : ''}
+        ${esAdmin ? `
+          <div style="margin-top:12px; border-top:1px solid #eee; padding-top:12px;">
+            <button class="btn secundario" style="font-size:11px; color:#888;" onclick="abrirModalReabrirFolio('${caso.id_caso}')">Reabrir folio</button>
+          </div>` : ''}
       </div>
     </div>
 
@@ -753,6 +757,33 @@ async function cerrarReagFinal(idCaso) {
   try {
     await api(`/reagendamiento/${idCaso}/cerrar-final`, { method: 'POST' });
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirModalReabrirFolio(idCaso) {
+  document.getElementById('reabrirFolioId').value = idCaso;
+  document.getElementById('reabrirPassword').value = '';
+  document.getElementById('reabrirMotivo').value = '';
+  document.getElementById('modalReabrirFolio').classList.add('activo');
+}
+
+async function guardarReabrirFolio() {
+  const id = document.getElementById('reabrirFolioId').value;
+  const password = document.getElementById('reabrirPassword').value;
+  const motivo = document.getElementById('reabrirMotivo').value.trim();
+  if (!password) { alert('Ingresa tu contraseña'); return; }
+  if (!motivo) { alert('Ingresa el motivo de la reapertura'); return; }
+  try {
+    await api(`/reagendamiento/${id}/reabrir`, {
+      method: 'POST',
+      body: JSON.stringify({ password, motivo })
+    });
+    cerrarModal('modalReabrirFolio');
+    alert('Folio reabierto correctamente. Vuelve a Pendiente de revisión.');
+    idReagDetalleActual = null;
+    cargarVista('reagendamiento');
   } catch (err) {
     alert('Error: ' + err.message);
   }
