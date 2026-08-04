@@ -72,9 +72,10 @@ async function renderReagendamiento() {
     const bannerAlcance = `
       <div style="background:#e8f6f4; border:1px solid #17b6a7; border-left:5px solid #17b6a7; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
         <div style="font-size:20px;">ℹ️</div>
-        <div style="font-size:13px; color:var(--azul-marino); line-height:1.5;">
+        <div style="font-size:13px; color:var(--azul-marino); line-height:1.7;">
           <b>Recuerda:</b> solo gestionamos pacientes de la Red, no del Hospital.<br>
-          Plazo aproximado de respuesta: <b>72 horas hábiles</b>.
+          <b>En línea con el paciente:</b> horizonte de cita hasta <b>72 horas hábiles</b> para Atención Primaria y <b>48 horas hábiles</b> para Curaciones.<br>
+          <b>Al escalar al back office:</b> plazo aproximado de respuesta de <b>72 horas hábiles</b>.
         </div>
       </div>
     `;
@@ -117,6 +118,7 @@ async function renderReagendamiento() {
     const pendientesCierre = casosReag.filter(c => c.estado === 'PENDIENTE_CIERRE_ADMIN');
     const dashReag = await api('/reagendamiento/reportes/dashboard');
     bloquesAdmin = `
+      ${bannerAlcance}
       <div class="toolbar">
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
         <button class="btn secundario" onclick="exportarReagExcel()">Descargar reporte</button>
