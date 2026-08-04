@@ -116,8 +116,7 @@ async function renderReagendamiento() {
     bloquesAdmin = `
       <div class="toolbar">
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
-        <button class="btn secundario" onclick="exportarReagExcel()">Exportar a Excel</button>
-        <button class="btn secundario" onclick="exportarReagCSV()">Descargar reporte CSV</button>
+        <button class="btn secundario" onclick="exportarReagExcel()">Descargar reporte</button>
       </div>
 
       <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>
@@ -671,54 +670,12 @@ async function exportarReagExcel() {
     const res = await fetch(`${API_BASE}/reagendamiento/reportes/exportar-excel`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error('No se pudo generar el Excel');
+    if (!res.ok) throw new Error('No se pudo generar el reporte');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Reagendamiento_${new Date().toISOString().slice(0,10)}.xlsx`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    alert('Error al exportar: ' + err.message);
-  }
-}
-
-async function exportarReagCSV() {
-  try {
-    const casos = await api('/reagendamiento');
-    const encabezados = [
-      'Folio','RUT','Nombre paciente','Teléfono','Correo','Tipo de atención',
-      '¿Se agendó?','Fecha y hora agendada','Estado','Agencia','Motivo','Resultado',
-      'Observaciones','SLA','Ejecutivo','Fecha límite Admin','Fecha límite Agencia'
-    ];
-    const filas = casos.map(c => [
-      c.folio || '',
-      c.rut_paciente || '',
-      c.nombre_paciente || '',
-      c.telefono || '',
-      c.correo || '',
-      etiquetaTipoAtencion(c.tipo_atencion) || '',
-      c.reagendamiento_ley === 'SI' ? 'Sí' : 'No',
-      c.hora_agendada ? formatFecha(c.hora_agendada) : '',
-      c.estado || '',
-      c.agencia || '',
-      c.motivo || '',
-      c.resultado || '',
-      c.observaciones || '',
-      c.estado_sla || '',
-      c.ejecutivo || '',
-      c.fecha_limite_admin ? formatFecha(c.fecha_limite_admin) : '',
-      c.fecha_limite_agencia ? formatFecha(c.fecha_limite_agencia) : ''
-    ]);
-    const csv = [encabezados, ...filas]
-      .map(fila => fila.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Reporte_Reagendamiento_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `Reporte_Reagendamiento_${new Date().toISOString().slice(0,10)}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   } catch (err) {
