@@ -194,6 +194,97 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalScriptLlamada">
+  <div class="modal" style="max-width:640px; max-height:85vh; overflow-y:auto;">
+    <h3>Script de llamada — Reagendamiento de cita STP</h3>
+    <p style="font-size:12px; color:#888; margin-top:-8px; margin-bottom:14px;">Contact Center | Pacientes que informaron que no podrán asistir a su cita</p>
+
+    <p style="font-size:13px; line-height:1.6;"><b>Objetivo:</b> contactar al paciente que notificó que no podrá asistir a su cita, confirmar si desea solicitar el reagendamiento y gestionar una nueva fecha según disponibilidad, resguardando la continuidad de su tratamiento.</p>
+
+    <h4 style="color:var(--azul-marino); font-size:14px; margin:18px 0 8px; border-bottom:2px solid var(--turquesa); padding-bottom:6px;">1. Consideraciones para la ejecutiva</h4>
+    <ul style="font-size:13px; line-height:1.7; padding-left:20px; margin:0;">
+      <li>Utilizar trato formal y cercano, manteniendo un tono orientador.</li>
+      <li>No prometer una fecha antes de revisar disponibilidad.</li>
+      <li>Informar que la nueva cita queda sujeta a disponibilidad de agenda.</li>
+      <li>Si no existe disponibilidad dentro de los próximos 3 días hábiles, derivar el caso a la ejecutiva de agencia para gestión local.</li>
+      <li>Reforzar que la asistencia a la cita es importante para la continuidad del tratamiento.</li>
+    </ul>
+
+    <h4 style="color:var(--azul-marino); font-size:14px; margin:18px 0 10px; border-bottom:2px solid var(--turquesa); padding-bottom:6px;">2. Script de llamada</h4>
+
+    <div class="script-momento">
+      <div class="script-etiqueta">Inicio y contexto</div>
+      <div class="script-texto">
+        Hola, ¿hablo con [Nombre del paciente]?<br><br>
+        Mi nombre es [Nombre ejecutiva] y le llamo desde Achs Salud. Para efectos de auditoría y seguridad, esta llamada podría ser grabada.<br><br>
+        Estamos en conocimiento de que usted informó que no podrá asistir a su cita de [tipo de atención], agendada para el día [fecha cita] a las [hora cita], en [centro].<br><br>
+        Lo/la llamamos para revisar si quiere solicitar el reagendamiento de esta cita y apoyar la continuidad de su tratamiento.<br><br>
+        ¿Desea que revisemos una nueva fecha para su atención?
+      </div>
+    </div>
+
+    <div class="script-momento">
+      <div class="script-etiqueta">Si el paciente SÍ desea reagendar</div>
+      <div class="script-texto">
+        Perfecto, revisaré la disponibilidad de agenda para buscar una nueva fecha, procurando no afectar la continuidad de su tratamiento.<br><br>
+        Permítame un momento, por favor.
+      </div>
+    </div>
+
+    <div class="script-momento">
+      <div class="script-etiqueta">Si hay disponibilidad</div>
+      <div class="script-texto">
+        Encontré una alternativa para reagendar su cita:<br>
+        Fecha: [nueva fecha]<br>
+        Hora: [nueva hora]<br>
+        Centro: [centro]<br>
+        Dirección: [dirección]<br><br>
+        ¿Confirma que puede asistir en esta nueva fecha y horario?
+      </div>
+    </div>
+
+    <div class="script-momento">
+      <div class="script-etiqueta">Si el paciente confirma la nueva fecha</div>
+      <div class="script-texto">
+        Gracias. Su nueva cita quedará confirmada para el día [nueva fecha] a las [nueva hora], en [centro].<br><br>
+        Le recordamos que su asistencia es importante para dar continuidad a su tratamiento.<br><br>
+        Recibirá la información de su cita por los canales habituales. Muchas gracias por su tiempo.
+      </div>
+    </div>
+
+    <div class="script-momento">
+      <div class="script-etiqueta">Si el paciente no puede asistir a la opción disponible</div>
+      <div class="script-texto">
+        Entiendo. Revisaré si existe otra alternativa disponible dentro de los próximos 3 días hábiles.<br><br>
+        Si no encontramos disponibilidad en ese plazo, derivaremos su caso a la ejecutiva de agencia para que pueda revisar alternativas de agenda de manera local.
+      </div>
+    </div>
+
+    <div class="script-momento">
+      <div class="script-etiqueta">Si NO hay disponibilidad dentro de 3 días hábiles</div>
+      <div class="script-texto">
+        En este momento no encuentro disponibilidad para reagendar su cita dentro de los próximos 3 días hábiles.<br><br>
+        Para resguardar la continuidad de su tratamiento, derivaremos su caso por correo a la ejecutiva de agencia, quien revisará alternativas de agenda de manera local.<br><br>
+        La ejecutiva de agencia se contactará directamente con usted para informarle la nueva fecha, hora y lugar de la cita, según disponibilidad.<br><br>
+        Le pedimos mantenerse atento/a a su teléfono y canales de contacto. Muchas gracias por su tiempo.
+      </div>
+    </div>
+
+    <div class="script-momento" style="border-left-color:#d9534f;">
+      <div class="script-etiqueta">Si el paciente NO desea reagendar</div>
+      <div class="script-texto">
+        Entiendo. Dejaremos registro de que no desea reagendar su cita.<br><br>
+        Le recordamos que su asistencia es importante para mantener la continuidad de su tratamiento. Si no asiste podría considerarse abandono y dar por finalizada la cobertura del Seguro.<br><br>
+        Muchas gracias por su tiempo.
+      </div>
+    </div>
+
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalScriptLlamada')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalReagRechazar">
   <div class="modal">
     <h3>Rechazar solicitud — Agendar directamente</h3>
