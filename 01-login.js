@@ -6,7 +6,13 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
   const email = document.getElementById('loginEmail').value;
   const password = document.getElementById('loginPassword').value;
   const errorDiv = document.getElementById('errorLogin');
+  const btnSubmit = document.getElementById('btnLoginSubmit');
   errorDiv.style.display = 'none';
+
+  btnSubmit.disabled = true;
+  const textoOriginalBoton = btnSubmit.textContent;
+  btnSubmit.textContent = 'Ingresando...';
+  mostrarCargandoGlobal();
 
   try {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -28,6 +34,10 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
   } catch (err) {
     errorDiv.textContent = 'No se pudo conectar con el servidor. El backend gratuito de Render puede tardar ~30-60s en despertar si estaba inactivo — intenta de nuevo en un momento.';
     errorDiv.style.display = 'block';
+  } finally {
+    ocultarCargandoGlobal();
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = textoOriginalBoton;
   }
 });
 

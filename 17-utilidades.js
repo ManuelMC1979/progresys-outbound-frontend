@@ -11,6 +11,27 @@ function formatFecha(f) {
   return d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+/* ============================================================
+   BARRA DE CARGA GLOBAL — se muestra mientras haya al menos
+   una solicitud en curso hacia el servidor (login, guardar,
+   escalar, cerrar, etc.), sin importar desde qué pantalla
+   ============================================================ */
+let solicitudesEnCurso = 0;
+
+function mostrarCargandoGlobal() {
+  solicitudesEnCurso++;
+  const barra = document.getElementById('barraCargaGlobal');
+  if (barra) barra.classList.add('activa');
+}
+
+function ocultarCargandoGlobal() {
+  solicitudesEnCurso = Math.max(0, solicitudesEnCurso - 1);
+  if (solicitudesEnCurso === 0) {
+    const barra = document.getElementById('barraCargaGlobal');
+    if (barra) barra.classList.remove('activa');
+  }
+}
+
 function badgeEstado(estado) {
   if (!estado) return '—';
   const e = estado.toUpperCase();

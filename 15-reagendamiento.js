@@ -681,6 +681,7 @@ function graficoBarrasAgencias(porAgencia) {
 }
 
 async function exportarReagExcel() {
+  mostrarCargandoGlobal();
   try {
     const res = await fetch(`${API_BASE}/reagendamiento/reportes/exportar-excel`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -695,6 +696,8 @@ async function exportarReagExcel() {
     URL.revokeObjectURL(url);
   } catch (err) {
     alert('Error al generar el reporte: ' + err.message);
+  } finally {
+    ocultarCargandoGlobal();
   }
 }
 
