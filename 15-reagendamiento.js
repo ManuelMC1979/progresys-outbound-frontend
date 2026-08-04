@@ -200,9 +200,9 @@ function tablaReag(lista, contexto) {
             <td style="text-align:center;">${c.agencia ? renderIntentosMini(c.intentos) : '<span style="color:#ccc;">—</span>'}</td>
             <td style="white-space:nowrap;">
               <button class="btn secundario" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>Ver detalle</button>
-              <button class="btn secundario" onclick='abrirModalObsReag(${JSON.stringify(c.id_caso)})'>+ Obs.</button>
+              ${!(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" onclick='abrirModalObsReag(${JSON.stringify(c.id_caso)})'>+ Obs.</button>` : ''}
               ${contexto === 'admin_pendiente' ? `
-                <button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>
+                ${!(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>` : ''}
                 <button class="btn" onclick="abrirEscalarConScript('${c.id_caso}')">Confirmar sin cita → Escalar</button>
                 ${(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${c.id_caso}')">Rechazar por mal ingreso</button>` : ''}
               ` : ''}
