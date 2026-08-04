@@ -3,6 +3,8 @@
    ============================================================ */
 let catalogoAgencias = [];
 let idReagDetalleActual = null;
+let casosReagCache = {};
+let idEscalarActual = null;
 
 async function cargarCatalogoAgencias() {
   try { catalogoAgencias = await api('/reagendamiento/agencias'); } catch (e) { catalogoAgencias = []; }
@@ -105,8 +107,6 @@ async function renderReagendamiento() {
     const dashReag = await api('/reagendamiento/reportes/dashboard');
     bloquesAdmin = `
       <div class="toolbar">
-        <button class="btn" onclick="abrirFormAdminDirecto()">+ Ingresar caso directo</button>
-        <button class="btn" style="background:#534AB7;" onclick="abrirFormBot()">+ Ingresar folio BOT</button>
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
         <button class="btn secundario" onclick="exportarReagExcel()">Exportar a Excel</button>
         <button class="btn secundario" onclick="exportarReagCSV()">Descargar reporte CSV</button>
@@ -174,7 +174,7 @@ function tablaReag(lista, contexto) {
     <table>
       <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Fecha agendada</th><th>Estado</th><th>SLA</th><th style="text-align:center;">Intentos</th><th></th></tr></thead>
       <tbody>
-        ${lista.map(c => `
+        ${lista.map(c => { casosReagCache[c.id_caso] = c; return `
           <tr>
             <td>${celdaFolio(c)}</td>
             <td>${c.rut_paciente}</td>
@@ -189,13 +189,13 @@ function tablaReag(lista, contexto) {
               <button class="btn secundario" onclick='abrirModalObsReag(${JSON.stringify(c.id_caso)})'>+ Obs.</button>
               ${contexto === 'admin_pendiente' ? `
                 <button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>
-                <button class="btn" onclick="abrirReagModalEscalar('${c.id_caso}')">Confirmar sin cita → Escalar</button>
+                <button class="btn" onclick="abrirEscalarConScript('${c.id_caso}')">Confirmar sin cita → Escalar</button>
               ` : ''}
               ${contexto === 'admin_escalado' ? `<button class="btn" onclick="abrirReagModalRespuesta('${c.id_caso}')">Registrar respuesta agencia</button>` : ''}
               ${contexto === 'admin_pendiente_cierre' ? `<button class="btn" onclick="cerrarReagFinal('${c.id_caso}')">Cerrar caso</button>` : ''}
             </td>
           </tr>
-        `).join('')}
+        `; }).join('')}
       </tbody>
     </table>
   `;
@@ -231,6 +231,7 @@ async function abrirReagDetalle(idCaso) {
 }
 
 function renderReagDetalle(caso) {
+  casosReagCache[caso.id_caso] = caso;
   const contenido = document.getElementById('contenido');
   const esAdmin = usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
 
@@ -240,7 +241,7 @@ function renderReagDetalle(caso) {
   if (caso.estado === 'PENDIENTE_ADMIN' && esAdmin) {
     acciones = `
       <button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>
-      <button class="btn" onclick="abrirReagModalEscalar('${caso.id_caso}')">Confirmar sin cita → Escalar</button>
+      <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Confirmar sin cita → Escalar</button>
     `;
   } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
     acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta agencia</button>`;
@@ -441,241 +442,70 @@ async function guardarReagSolicitud() {
 /* ============================================================
    INGRESO BOT — muestra el formulario del ejecutivo con badge BOT
    ============================================================ */
-function abrirFormBot() {
-  const contenido = document.getElementById('contenido');
-  document.getElementById('tituloVista').textContent = 'Ingresar folio BOT';
-  // Guardar sesion actual del admin
-  const tokenAdmin = token;
-  const usuarioAdmin = usuarioActual;
-
-  contenido.innerHTML = `
-    <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
-
-    <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#26215C; line-height:1.5; display:flex; gap:10px; align-items:flex-start;">
-      <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;">BOT</span>
-      <span>Ingresando como BOT. El folio quedará en <b>Pendiente de revisión</b>.</span>
-    </div>
-
-    <div style="background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:20px;">
-      <h3 style="color:var(--azul-marino); font-size:15px;">Registrar llamada de cambio de cita</h3>
-      <label>RUT del paciente</label>
-      <input type="text" id="reagRut" placeholder="Ej: 12.345.678-9">
-      <label>Tipo de atención</label>
-      <select id="reagTipoAtencion">
-        <option value="CONTROL">Atención Primaria</option>
-        <option value="CURACIÓN">Curación</option>
-      </select>
-      <label>¿Se logró reagendar en el momento? (Reagendamiento Ley)</label>
-      <select id="reagLey" onchange="mostrarBloqueReagSegunLey()">
-        <option value="">Selecciona una opción</option>
-        <option value="SI">Reagendamiento Ley - Sí</option>
-        <option value="NO">Reagendamiento Ley - No</option>
-      </select>
-      <div id="reagBloqueSi" style="display:none; margin-top:10px;">
-        <label>Fecha y hora agendada para el paciente</label>
-        <input type="datetime-local" id="reagHoraAgendada">
-        <label>Observaciones (opcional)</label>
-        <textarea id="reagObsLeySi" rows="2" placeholder="Observaciones del caso..."></textarea>
-        <button class="btn" style="margin-top:8px;" onclick="guardarReagLeySiBot('${tokenAdmin}', ${JSON.stringify(usuarioAdmin).replace(/'/g, "\'")})">Cerrar caso (cita agendada)</button>
-      </div>
-      <div id="reagBloqueNo" style="display:none; margin-top:10px;">
-        <p style="font-size:12px; color:#888;">No hay cita disponible. Ingresa la solicitud completa para escalarla a Administración.</p>
-        <button class="btn" onclick="abrirReagModalSolicitudBot('${tokenAdmin}', ${JSON.stringify(usuarioAdmin).replace(/'/g, "\'")})">Ingresar solicitud completa</button>
-      </div>
-    </div>
-  `;
-}
-
-async function autenticarBot() {
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'bot.call@progesys.local', password: 'Progresys2026!' })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error autenticando BOT');
-    return { token: data.token, usuario: data.usuario };
-  } catch (err) {
-    throw new Error('No se pudo autenticar el usuario BOT: ' + err.message);
-  }
-}
-
-async function guardarReagLeySiBot(tokenAdmin, usuarioAdmin) {
-  const rut = document.getElementById('reagRut').value.trim();
-  const tipo = document.getElementById('reagTipoAtencion').value;
-  const hora = document.getElementById('reagHoraAgendada').value;
-  const obs = document.getElementById('reagObsLeySi').value.trim();
-  if (!rut || !hora) { alert('Ingresa el RUT y la hora agendada'); return; }
-  try {
-    const bot = await autenticarBot();
-    const res = await fetch(`${API_BASE}/reagendamiento`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${bot.token}` },
-      body: JSON.stringify({ rut_paciente: rut, tipo_atencion: tipo, reagendamiento_ley: 'SI', hora_agendada: hora, observaciones: obs || undefined, origen: 'BOT', ingresado_bot: true })
-    });
-    const caso = await res.json();
-    if (!res.ok) throw new Error(caso.error);
-    alert(`Caso ${caso.folio} cerrado correctamente.`);
-    // Restaurar sesión admin
-    token = tokenAdmin;
-    usuarioActual = usuarioAdmin;
-    cargarVista('reagendamiento');
-  } catch (err) { alert('Error: ' + err.message); }
-}
-
-async function abrirReagModalSolicitudBot(tokenAdmin, usuarioAdmin) {
-  const rut = document.getElementById('reagRut').value.trim();
-  if (!rut) { alert('Ingresa primero el RUT del paciente'); return; }
-  // Guardar para restaurar después
-  window._botTokenAdmin = tokenAdmin;
-  window._botUsuarioAdmin = usuarioAdmin;
-  document.getElementById('reagRutOculto').value = rut;
-  document.getElementById('reagNombre').value = '';
-  document.getElementById('reagCorreo').value = '';
-  document.getElementById('reagTelefono').value = '';
-  document.getElementById('reagAgenciaSolicitud').innerHTML = '<option value="">Selecciona una agencia</option>' +
-    catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('');
-  document.getElementById('reagMotivo').value = '';
-  document.getElementById('modalReagSolicitud').classList.add('activo');
-}
-
-// Override temporal de guardarReagSolicitud para el flujo BOT
-const _guardarReagSolicitudOriginal = typeof guardarReagSolicitud === 'function' ? guardarReagSolicitud : null;
-
-async function guardarReagSolicitudBot() {
-  const body = {
-    rut_paciente: document.getElementById('reagRutOculto').value,
-    tipo_atencion: document.getElementById('reagTipoAtencion') ? document.getElementById('reagTipoAtencion').value : 'CONTROL',
-    reagendamiento_ley: 'NO',
-    nombre_paciente: document.getElementById('reagNombre').value.trim(),
-    correo: document.getElementById('reagCorreo').value.trim(),
-    telefono: document.getElementById('reagTelefono').value.trim(),
-    id_agencia: Number(document.getElementById('reagAgenciaSolicitud').value) || undefined,
-    motivo: document.getElementById('reagMotivo').value.trim(),
-    origen: 'BOT',
-    ingresado_bot: true
-  };
-  if (!body.nombre_paciente || !body.id_agencia || !body.motivo) { alert('Completa nombre, agencia y motivo'); return; }
-  try {
-    const bot = await autenticarBot();
-    const res = await fetch(`${API_BASE}/reagendamiento`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${bot.token}` },
-      body: JSON.stringify(body)
-    });
-    const caso = await res.json();
-    if (!res.ok) throw new Error(caso.error);
-    cerrarModal('modalReagSolicitud');
-    alert(`Solicitud enviada. Folio: ${caso.folio}`);
-    token = window._botTokenAdmin;
-    usuarioActual = window._botUsuarioAdmin;
-    cargarVista('reagendamiento');
-  } catch (err) { alert('Error: ' + err.message); }
-}
-
-
 /* ============================================================
-   INGRESO DIRECTO ADMIN — formulario inline + script de correo
+   ESCALAR A AGENCIA — con script de correo, usando el folio ya creado
    ============================================================ */
-function abrirFormAdminDirecto() {
+function abrirEscalarConScript(idCaso) {
+  idEscalarActual = idCaso;
+  const caso = casosReagCache[idCaso];
+  if (!caso) { alert('No se encontró el caso. Vuelve a la lista e intenta de nuevo.'); return; }
+
   const contenido = document.getElementById('contenido');
-  document.getElementById('tituloVista').textContent = 'Ingresar caso directo — Administrador';
+  document.getElementById('tituloVista').textContent = 'Confirmar sin cita — Escalar a agencia';
+
   contenido.innerHTML = `
-    <button class="btn secundario" onclick="cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
+    <button class="btn secundario" onclick="idReagDetalleActual = null; cargarVista('reagendamiento')" style="margin-bottom:16px;">← Volver a Reagendamiento</button>
 
     <div style="background:#fff3cd; border-left:5px solid #f0ad4e; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#7a5c00; line-height:1.5;">
-      Este caso se ingresa directamente por el Administrador y se deriva de inmediato a la agencia indicada.
+      Folio <b>${caso.folio}</b> — se confirma que no hay cita disponible y se deriva a la agencia indicada.
     </div>
 
     <div style="display:flex; gap:20px; flex-wrap:wrap;">
       <div style="flex:1; min-width:300px; background:white; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
-        <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:14px;">Datos del caso</h3>
+        <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:14px;">Datos del folio</h3>
+
+        <table style="margin-bottom:14px;">
+          <tbody>
+            <tr><td><b>RUT</b></td><td>${caso.rut_paciente || '—'}</td></tr>
+            <tr><td><b>Nombre</b></td><td>${caso.nombre_paciente || '—'}</td></tr>
+            <tr><td><b>Teléfono</b></td><td>${caso.telefono || '—'}</td></tr>
+            <tr><td><b>Tipo de atención</b></td><td>${etiquetaTipoAtencion(caso.tipo_atencion) || '—'}</td></tr>
+          </tbody>
+        </table>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">RUT del paciente</label>
-            <input type="text" id="adRut" placeholder="12.345.678-9" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre del paciente</label>
-            <input type="text" id="adNombre" placeholder="Nombre completo" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Teléfono</label>
-            <input type="text" id="adTel" placeholder="+56 9 1234 5678" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-          </div>
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Correo paciente</label>
-            <input type="email" id="adCorreo" placeholder="paciente@correo.cl" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Tipo de atención</label>
-            <select id="adTipo" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-              <option value="CONTROL">Atención Primaria</option>
-              <option value="CURACIÓN">Curación</option>
-            </select>
-          </div>
-          <div>
             <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Fecha cita original</label>
-            <input type="date" id="adFecha" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+            <input type="date" id="escFecha" onchange="actualizarScriptEscalar()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
           </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
           <div>
             <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Hora cita original</label>
-            <input type="time" id="adHoraCita" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+            <input type="time" id="escHora" onchange="actualizarScriptEscalar()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
           </div>
-          <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Motivo</label>
-            <select id="adMotivo" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-              <option>Enfermedad</option>
-              <option>Hospitalización o urgencia</option>
-              <option>Fallecimiento de familiar directo o indirecto pero cercano</option>
-              <option>Cuidado de otra persona</option>
-              <option>Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
-              <option>Constancia de Carabineros</option>
-              <option>Problema de transporte ACHS</option>
-              <option>Trámite personal urgente</option>
-              <option>Error de agendamiento/información</option>
-            </select>
-          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
+          <select id="escAgencia" onchange="actualizarScriptEscalar()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+            <option value="">— Selecciona una agencia —</option>
+            ${catalogoAgencias.map(a => `<option value="${a.id_agencia}" ${caso.id_agencia === a.id_agencia ? 'selected' : ''}>${a.nombre}</option>`).join('')}
+          </select>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
           <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Agencia a derivar</label>
-            <select id="adAgencia" onchange="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-              <option value="">— Selecciona una agencia —</option>
-              ${catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('')}
-            </select>
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Ejecutivo/a Contact Center</label>
+            <input type="text" id="escEjecutivo" placeholder="Tu nombre" value="${usuarioActual.nombre || ''}" oninput="actualizarScriptEscalar()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
           </div>
           <div>
-            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Ejecutivo/a Contact Center</label>
-            <input type="text" id="adEjecutivo" placeholder="Tu nombre" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre ejecutiva agencia (destinatario)</label>
+            <input type="text" id="escDest" placeholder="Nombre de quien recibe" oninput="actualizarScriptEscalar()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
           </div>
-        </div>
-
-        <div style="margin-top:10px;">
-          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Nombre ejecutiva agencia (destinatario)</label>
-          <input type="text" id="adDest" placeholder="Nombre de quien recibe" oninput="actualizarScriptCorreo()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
-        </div>
-
-        <div style="margin-top:10px;">
-          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Observaciones</label>
-          <textarea id="adObs" rows="2" placeholder="Contexto adicional del caso..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;"></textarea>
         </div>
 
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px; border-top:1px solid #eee; padding-top:14px;">
-          <button class="btn secundario" onclick="cargarVista('reagendamiento')">Cancelar</button>
-          <button class="btn" onclick="guardarCasoAdminDirecto()">Derivar a agencia</button>
+          <button class="btn secundario" onclick="idReagDetalleActual = null; cargarVista('reagendamiento')">Cancelar</button>
+          <button class="btn" onclick="guardarEscalarConScript('${caso.id_caso}')">Escalar (SLA 24h)</button>
         </div>
       </div>
 
@@ -685,50 +515,52 @@ function abrirFormAdminDirecto() {
           <div style="background:#f4f6f8; border-radius:6px; padding:8px 10px; font-size:12px; margin-bottom:8px;">
             <span style="font-weight:700; color:var(--azul-marino);">Asunto:</span> Derivación reagendamiento paciente STP – gestión local
           </div>
-          <div id="scriptCorreoReag" style="background:#f9f9f9; border:1px solid #e5e5e5; border-radius:6px; padding:10px 12px; font-size:12px; color:#333; line-height:1.6; white-space:pre-wrap; font-family:inherit;"></div>
-          <button class="btn secundario" style="margin-top:8px; width:100%;" onclick="copiarScriptCorreoReag()">Copiar correo</button>
+          <div id="scriptCorreoEscalar" style="background:#f9f9f9; border:1px solid #e5e5e5; border-radius:6px; padding:10px 12px; font-size:12px; color:#333; line-height:1.6; white-space:pre-wrap; font-family:inherit;"></div>
+          <button class="btn secundario" style="margin-top:8px; width:100%;" onclick="copiarScriptCorreoEscalar()">Copiar correo</button>
         </div>
       </div>
     </div>
   `;
-  actualizarScriptCorreo();
+
+  actualizarScriptEscalar();
 }
 
-function actualizarScriptCorreo() {
-  const el = document.getElementById('scriptCorreoReag');
+function actualizarScriptEscalar() {
+  const el = document.getElementById('scriptCorreoEscalar');
   if (!el) return;
+  const caso = casosReagCache[idEscalarActual] || {};
+
   const v = id => { const e = document.getElementById(id); return e ? e.value.trim() || '…' : '…'; };
-  const tipoEl = document.getElementById('adTipo');
-  const tipo = tipoEl ? etiquetaTipoAtencion(tipoEl.value) : '…';
-  const fechaRaw = document.getElementById('adFecha') ? document.getElementById('adFecha').value : '';
+  const fechaRaw = document.getElementById('escFecha') ? document.getElementById('escFecha').value : '';
   let fecha = '…';
   if (fechaRaw) {
     const d = new Date(fechaRaw + 'T12:00:00');
     fecha = d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
-  const hora = document.getElementById('adHoraCita') ? (document.getElementById('adHoraCita').value || '…') : '…';
-  const agenciaEl = document.getElementById('adAgencia');
+  const hora = document.getElementById('escHora') ? (document.getElementById('escHora').value || '…') : '…';
+  const agenciaEl = document.getElementById('escAgencia');
   const agencia = agenciaEl && agenciaEl.value ? agenciaEl.options[agenciaEl.selectedIndex].text : '…';
+  const tipo = etiquetaTipoAtencion(caso.tipo_atencion) || '…';
 
-  el.textContent = `Hola ${v('adDest')}:
+  el.textContent = `Hola ${v('escDest')}:
 
 Derivamos solicitud de reagendamiento de paciente STP, ya que desde Contact Center no fue posible encontrar disponibilidad dentro de los próximos 3 días hábiles.
 
-Paciente: ${v('adNombre')}
-RUT: ${v('adRut')}
-Teléfono: ${v('adTel')}
+Paciente: ${caso.nombre_paciente || '…'}
+RUT: ${caso.rut_paciente || '…'}
+Teléfono: ${caso.telefono || '…'}
 Cita original: ${tipo} – ${fecha} – ${hora}
 Centro / Agencia: ${agencia}
-Motivo informado: ${v('adMotivo')}
+Motivo informado: ${caso.motivo || '…'}
 
 Se solicita revisar alternativas de agenda de manera local y contactar al paciente directamente para informar la nueva fecha, priorizando la continuidad de su tratamiento.
 
 Saludos,
-${v('adEjecutivo')}`;
+${v('escEjecutivo')}`;
 }
 
-function copiarScriptCorreoReag() {
-  const el = document.getElementById('scriptCorreoReag');
+function copiarScriptCorreoEscalar() {
+  const el = document.getElementById('scriptCorreoEscalar');
   if (!el) return;
   const asunto = 'Asunto: Derivación reagendamiento paciente STP – gestión local';
   const texto = asunto + '\n\n' + el.textContent;
@@ -742,26 +574,13 @@ function copiarScriptCorreoReag() {
     });
 }
 
-async function guardarCasoAdminDirecto() {
-  const idAgencia = Number(document.getElementById('adAgencia').value);
+async function guardarEscalarConScript(idCaso) {
+  const idAgencia = Number(document.getElementById('escAgencia').value);
   if (!idAgencia) { alert('Selecciona una agencia'); return; }
-  const rut = document.getElementById('adRut').value.trim();
-  if (!rut) { alert('Ingresa el RUT del paciente'); return; }
-  const body = {
-    rut_paciente: rut,
-    tipo_atencion: document.getElementById('adTipo').value,
-    reagendamiento_ley: 'NO',
-    nombre_paciente: document.getElementById('adNombre').value.trim(),
-    correo: document.getElementById('adCorreo').value.trim(),
-    telefono: document.getElementById('adTel').value.trim(),
-    id_agencia: idAgencia,
-    motivo: document.getElementById('adMotivo').value.trim(),
-    observaciones: document.getElementById('adObs').value.trim() || undefined,
-    ingresado_por_admin: true
-  };
   try {
-    const caso = await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
-    alert(`Caso creado y derivado. Folio: ${caso.folio}`);
+    await api(`/reagendamiento/${idCaso}/escalar`, { method: 'POST', body: JSON.stringify({ id_agencia: idAgencia }) });
+    alert('Caso escalado a agencia correctamente.');
+    idReagDetalleActual = null;
     cargarVista('reagendamiento');
   } catch (err) {
     alert('Error: ' + err.message);
@@ -783,24 +602,6 @@ async function guardarReagRechazo() {
   try {
     await api(`/reagendamiento/${id}/rechazar`, { method: 'POST', body: JSON.stringify({ hora_agendada: hora, observacion: obs || undefined }) });
     cerrarModal('modalReagRechazar');
-    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-}
-
-function abrirReagModalEscalar(idCaso) {
-  document.getElementById('reagEscalarId').value = idCaso;
-  document.getElementById('reagEscalarAgencia').innerHTML = catalogoAgencias.map(a => `<option value="${a.id_agencia}">${a.nombre}</option>`).join('');
-  document.getElementById('modalReagEscalar').classList.add('activo');
-}
-
-async function guardarReagEscalar() {
-  const id = document.getElementById('reagEscalarId').value;
-  const idAgencia = Number(document.getElementById('reagEscalarAgencia').value);
-  try {
-    await api(`/reagendamiento/${id}/escalar`, { method: 'POST', body: JSON.stringify({ id_agencia: idAgencia }) });
-    cerrarModal('modalReagEscalar');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
   } catch (err) {
     alert('Error: ' + err.message);
