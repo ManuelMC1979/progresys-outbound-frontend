@@ -53,13 +53,14 @@ async function renderReagendamiento() {
   const casosReag = await api('/reagendamiento');
 
   const bannerSap = `
-    <div style="background:#fff3cd; border:1px solid #f0ad4e; border-left:5px solid #f0ad4e; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
+    <div style="background:#fff3cd; border:1px solid #f0ad4e; border-left:5px solid #f0ad4e; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:center;">
       <div style="font-size:20px;">⚠️</div>
-      <div style="font-size:13px; color:#7a5c00; line-height:1.5;">
+      <div style="font-size:13px; color:#7a5c00; line-height:1.5; flex:1;">
         <b>Recordatorio importante — Nota externa en SAP:</b><br>
         Al dejar la nota externa en SAP, debe quedar registrada como:<br>
         <b>Gpo. prof.:</b> Administrativo &nbsp;·&nbsp; <b>Categoría:</b> MED:23 Alerta inasistencia control
       </div>
+      <button class="btn secundario" style="white-space:nowrap; flex-shrink:0;" onclick="document.getElementById('modalScriptLlamada').classList.add('activo')">Script de llamada</button>
     </div>
   `;
 
