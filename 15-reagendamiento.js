@@ -63,7 +63,7 @@ async function renderReagendamiento() {
         Al dejar la nota externa en SAP, debe quedar registrada como:<br>
         <b>Gpo. prof.:</b> Administrativo &nbsp;·&nbsp; <b>Categoría:</b> MED:23 Alerta inasistencia control
       </div>
-      <button class="btn secundario" style="white-space:nowrap; flex-shrink:0;" onclick="document.getElementById('modalScriptLlamada').classList.add('activo')">Script de llamada</button>
+      ${esAdmin ? `<button class="btn secundario" style="white-space:nowrap; flex-shrink:0;" onclick="document.getElementById('modalScriptLlamada').classList.add('activo')">Script de llamada</button>` : ''}
     </div>
   `;
 
