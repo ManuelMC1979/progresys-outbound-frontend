@@ -250,7 +250,7 @@ function tablaReag(lista, contexto) {
                 <button class="btn" onclick="abrirEscalarConScript('${c.id_caso}')">Confirmar sin cita → Escalar</button>
                 ${(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${c.id_caso}')">Rechazar por mal ingreso</button>` : ''}
               ` : ''}
-              ${contexto === 'admin_escalado' ? `<button class="btn" onclick="abrirReagModalRespuesta('${c.id_caso}')">Registrar respuesta agencia</button>` : ''}
+              ${contexto === 'admin_escalado' ? `<button class="btn" onclick="abrirReagModalRespuesta('${c.id_caso}')">Registrar respuesta primera línea</button>` : ''}
               ${contexto === 'admin_pendiente_cierre' ? `<button class="btn" onclick="cerrarReagFinal('${c.id_caso}')">Cerrar caso</button>` : ''}
             </td>
           </tr>
@@ -304,7 +304,7 @@ function renderReagDetalle(caso) {
       ${(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Rechazar por mal ingreso</button>` : ''}
     `;
   } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
-    acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta agencia</button>`;
+    acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta primera línea</button>`;
   } else if (caso.estado === 'PENDIENTE_CIERRE_ADMIN' && esAdmin) {
     acciones = `<button class="btn" onclick="cerrarReagFinal('${caso.id_caso}')">Cerrar caso</button>`;
   }
@@ -714,6 +714,7 @@ function abrirReagModalRespuesta(idCaso) {
   document.getElementById('reagRespuestaSeAgendo').value = '';
   document.getElementById('reagRespuestaFechaHora').value = '';
   document.getElementById('bloqueRespuestaFecha').style.display = 'none';
+  document.getElementById('tituloModalRespuesta').textContent = 'Registrar respuesta primera línea';
   document.getElementById('modalReagRespuesta').classList.add('activo');
 }
 
@@ -729,11 +730,10 @@ async function guardarReagRespuesta() {
   const fechaHora = document.getElementById('reagRespuestaFechaHora').value;
   if (!seAgendo) { alert('Indica si se agendó la cita'); return; }
   if (seAgendo === 'SI' && !fechaHora) { alert('Ingresa la fecha y hora del agendamiento'); return; }
-  if (!resultado) { alert('Ingresa el detalle entregado por la agencia'); return; }
   try {
     await api(`/reagendamiento/${id}/respuesta-agencia`, {
       method: 'POST',
-      body: JSON.stringify({ resultado, se_agendo: seAgendo, hora_agendada: seAgendo === 'SI' ? fechaHora : undefined })
+      body: JSON.stringify({ resultado: resultado || undefined, se_agendo: seAgendo, hora_agendada: seAgendo === 'SI' ? fechaHora : undefined })
     });
     cerrarModal('modalReagRespuesta');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
