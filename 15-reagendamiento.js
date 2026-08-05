@@ -26,6 +26,7 @@ function badgeEstadoReag(estado) {
     RESUELTO: ['Resuelto por agencia', 'gestionado'],
     RESUELTO_PRIMERA_LINEA: ['Resuelto — primera línea', 'gestionado'],
     CERRADO_SIN_CONTACTO: ['Cerrado sin contacto', 'cerrado'],
+    ANULADO: ['Anulado', 'alerta'],
   };
   const [txt, clase] = map[estado] || [estado, 'pendiente'];
   return `<span class="badge ${clase}">${txt}</span>`;
@@ -166,7 +167,7 @@ async function renderReagendamiento() {
       <h3 style="color:var(--azul-marino); margin-top:24px;">Pendientes de cierre — respuesta de agencia recibida (${pendientesCierre.length})</h3>
       ${tablaReag(pendientesCierre, 'admin_pendiente_cierre')}
       <h3 style="color:var(--azul-marino); margin-top:24px;">Historial</h3>
-      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','CERRADO_SIN_CONTACTO'].includes(c.estado)), 'historial')}
+      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
     `;
   }
 
@@ -343,7 +344,7 @@ function renderReagDetalle(caso) {
 function panelIntentos(caso) {
   const intentos = (caso.intentos || []).slice().sort((a, b) => a.numero_intento - b.numero_intento);
   const siguiente = intentos.length + 1;
-  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RESUELTO_PRIMERA_LINEA', 'CERRADO_SIN_CONTACTO'].includes(caso.estado);
+  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RESUELTO_PRIMERA_LINEA', 'CERRADO_SIN_CONTACTO', 'ANULADO'].includes(caso.estado);
 
   const etiquetaIntento = {
     CONFIRMA: ['Contacto — confirma', 'estado-confirma'],
@@ -770,10 +771,25 @@ async function cerrarReagFinal(idCaso) {
   }
 }
 
+function cambiarTabFolio(tab) {
+  const esReabrir = tab === 'reabrir';
+  document.getElementById('panelReabrir').style.display = esReabrir ? 'block' : 'none';
+  document.getElementById('panelAnular').style.display = esReabrir ? 'none' : 'block';
+  document.getElementById('tabReabrir').style.background = esReabrir ? 'var(--turquesa)' : 'white';
+  document.getElementById('tabReabrir').style.color = esReabrir ? 'white' : '#555';
+  document.getElementById('tabReabrir').style.borderColor = esReabrir ? 'var(--turquesa)' : '#ccc';
+  document.getElementById('tabAnular').style.background = esReabrir ? 'white' : 'var(--rojo)';
+  document.getElementById('tabAnular').style.color = esReabrir ? '#555' : 'white';
+  document.getElementById('tabAnular').style.borderColor = esReabrir ? '#ccc' : 'var(--rojo)';
+}
+
 function abrirModalReabrirFolio(idCaso) {
   document.getElementById('reabrirFolioId').value = idCaso;
   document.getElementById('reabrirPassword').value = '';
   document.getElementById('reabrirMotivo').value = '';
+  document.getElementById('anularPassword').value = '';
+  document.getElementById('anularMotivo').value = '';
+  cambiarTabFolio('reabrir');
   document.getElementById('modalReabrirFolio').classList.add('activo');
 }
 
@@ -790,6 +806,26 @@ async function guardarReabrirFolio() {
     });
     cerrarModal('modalReabrirFolio');
     alert('Folio reabierto correctamente. Vuelve a Pendiente de revisión.');
+    idReagDetalleActual = null;
+    cargarVista('reagendamiento');
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function guardarAnularFolio() {
+  const id = document.getElementById('reabrirFolioId').value;
+  const password = document.getElementById('anularPassword').value;
+  const motivo = document.getElementById('anularMotivo').value.trim();
+  if (!password) { alert('Ingresa tu contraseña'); return; }
+  if (!motivo) { alert('Ingresa el motivo de la anulación'); return; }
+  try {
+    await api(`/reagendamiento/${id}/anular`, {
+      method: 'POST',
+      body: JSON.stringify({ password, motivo })
+    });
+    cerrarModal('modalReabrirFolio');
+    alert('Folio anulado. Pasó al historial como Anulado.');
     idReagDetalleActual = null;
     cargarVista('reagendamiento');
   } catch (err) {
