@@ -370,20 +370,20 @@
 
 <div class="modal-overlay" id="modalReagRespuesta">
   <div class="modal">
-    <h3>Registrar respuesta de la agencia</h3>
+    <h3 id="tituloModalRespuesta">Registrar respuesta primera línea</h3>
     <input type="hidden" id="reagRespuestaId">
     <label>¿Se agendó la cita?</label>
     <select id="reagRespuestaSeAgendo" onchange="mostrarBloqueRespuestaSegunAgendo()">
       <option value="">Selecciona una opción</option>
-      <option value="SI">Sí</option>
-      <option value="NO">No</option>
+      <option value="SI">Sí — se agendó</option>
+      <option value="NO">No — no fue posible agendar</option>
     </select>
     <div id="bloqueRespuestaFecha" style="display:none; margin-top:10px;">
       <label>Fecha y hora del agendamiento</label>
       <input type="datetime-local" id="reagRespuestaFechaHora">
     </div>
-    <label style="margin-top:10px;">Respuesta / detalle entregado por la agencia</label>
-    <textarea id="reagRespuestaTexto" rows="3"></textarea>
+    <label style="margin-top:10px;">Observación</label>
+    <textarea id="reagRespuestaTexto" rows="3" placeholder="Ej: Paciente confirma nueva cita, motivo de no agendamiento..."></textarea>
     <div class="acciones">
       <button class="btn secundario" onclick="cerrarModal('modalReagRespuesta')">Cancelar</button>
       <button class="btn" onclick="guardarReagRespuesta()">Registrar y cerrar</button>
