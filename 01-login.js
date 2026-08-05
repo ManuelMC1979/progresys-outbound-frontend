@@ -63,12 +63,12 @@ function mostrarApp() {
     document.getElementById('btnCorreos').style.display = 'none';
     document.getElementById('btnAlertas').style.display = 'none';
     document.getElementById('btnEjecutivos').style.display = 'none';
+    document.getElementById('campanaWrap').style.display = 'none';
     document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
     document.getElementById('btnCasos').classList.add('activo');
     cargarCatalogos();
     cargarCatalogoAgencias();
     cargarVista('casos');
-    iniciarPollingAlertas();
     return;
   }
 
