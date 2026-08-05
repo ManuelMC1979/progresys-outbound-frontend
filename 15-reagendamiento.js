@@ -146,9 +146,16 @@ async function renderReagendamiento() {
           <h4 style="margin:0 0 12px; color:var(--azul-marino); font-size:13px;">¿Se agendó? — Sí vs No</h4>
           ${barraProporcion(dashReag.ley_si, dashReag.ley_no, 'Sí', 'No')}
         </div>
-        <div style="flex:2; min-width:300px; background:white; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-          <h4 style="margin:0 0 12px; color:var(--azul-marino); font-size:13px;">Casos por agencia</h4>
-          ${graficoBarrasAgencias(dashReag.por_agencia)}
+        <div style="flex:2; min-width:300px; background:white; border-radius:10px; padding:0; box-shadow:0 1px 4px rgba(0,0,0,0.08); overflow:hidden;">
+          <details>
+            <summary style="padding:14px 16px; cursor:pointer; font-size:13px; font-weight:700; color:var(--azul-marino); list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+              Casos por agencia
+              <span class="resumen-agencia-chevron" style="font-size:11px; color:#888;">▼ ver</span>
+            </summary>
+            <div style="padding:0 16px 16px;">
+              ${graficoBarrasAgencias(dashReag.por_agencia)}
+            </div>
+          </details>
         </div>
       </div>
 
