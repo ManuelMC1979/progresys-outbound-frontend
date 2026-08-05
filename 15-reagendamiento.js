@@ -160,20 +160,53 @@ async function renderReagendamiento() {
         </div>
       </div>
 
-      <h3 style="color:var(--azul-marino);">Pendientes de revisión (${pendientes.length})</h3>
+      <h3 style="color:var(--azul-marino); margin-top:24px;">Pendientes de revisión (${pendientes.length})</h3>
       ${tablaReag(pendientes, 'admin_pendiente')}
       <h3 style="color:var(--azul-marino); margin-top:24px;">Escalados a agencia (${escalados.length})</h3>
       ${tablaReag(escalados, 'admin_escalado')}
       <h3 style="color:var(--azul-marino); margin-top:24px;">Pendientes de cierre — respuesta de agencia recibida (${pendientesCierre.length})</h3>
       ${tablaReag(pendientesCierre, 'admin_pendiente_cierre')}
-      <h3 style="color:var(--azul-marino); margin-top:24px;">Historial</h3>
-      ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
+      <div style="margin-top:24px; background:white; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.08); overflow:hidden;">
+        <details>
+          <summary style="padding:14px 16px; cursor:pointer; font-size:15px; font-weight:700; color:var(--azul-marino); list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+            Historial
+            <span style="font-size:11px; color:#888; font-weight:400;">▼ ver</span>
+          </summary>
+          <div style="padding:0 16px 16px;">
+            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
+          </div>
+        </details>
+      </div>
     `;
   }
 
-  const bloqueMisCasos = esEjecutivo ? `<h3 style="color:var(--azul-marino); margin-top:24px;">Mis casos de Reagendamiento</h3>${tablaReag(casosReag, 'ejecutivo')}` : '';
+  const esBot = usuarioActual.email === 'bot.call@progesys.local' || (usuarioActual.nombre || '').toUpperCase() === 'BOT';
+  const bloqueBotImportar = esBot ? `
+    <div style="background:#ede9ff; border:1px solid #534AB7; border-left:5px solid #534AB7; border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; gap:12px; align-items:center;">
+      <span style="background:#534AB7; color:white; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex-shrink:0;">BOT</span>
+      <span style="font-size:13px; color:#26215C; flex:1;">Importa el archivo Excel del Callbot para ingresar folios automáticamente.</span>
+      <label class="btn" style="background:#534AB7; cursor:pointer; margin:0;">
+        📥 Importar Excel Callbot
+        <input type="file" accept=".xlsx,.xls" style="display:none;" onchange="importarExcelBot(event)">
+      </label>
+    </div>
+    <div id="botImportarResultado" style="margin-bottom:16px;"></div>
+  ` : '';
+  const bloqueMisCasos = esEjecutivo ? `
+    <div style="margin-top:24px; background:white; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.08); overflow:hidden;">
+      <details ${esBot ? '' : 'open'}>
+        <summary style="padding:14px 16px; cursor:pointer; font-size:15px; font-weight:700; color:var(--azul-marino); list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+          Mis casos de Reagendamiento
+          <span style="font-size:11px; color:#888; font-weight:400;">▼ ver</span>
+        </summary>
+        <div style="padding:0 16px 16px;">
+          ${tablaReag(casosReag, 'ejecutivo')}
+        </div>
+      </details>
+    </div>
+  ` : '';
 
-  contenido.innerHTML = bannerSap + bloqueFormulario + bloquesAdmin + bloqueMisCasos;
+  contenido.innerHTML = bannerSap + bloqueBotImportar + bloqueFormulario + bloquesAdmin + bloqueMisCasos;
 }
 
 function renderIntentosMini(intentos) {
@@ -839,4 +872,90 @@ function abrirReagModalNuevaAgencia() {
   api('/reagendamiento/agencias', { method: 'POST', body: JSON.stringify({ nombre }) })
     .then(() => { cargarCatalogoAgencias().then(renderReagendamiento); })
     .catch(err => alert('Error: ' + err.message));
+}
+
+async function importarExcelBot(event) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+  event.target.value = '';
+  const resultado = document.getElementById('botImportarResultado');
+  resultado.innerHTML = '<div style="color:#534AB7; font-size:13px;">⏳ Leyendo archivo...</div>';
+
+  try {
+    const XLSX = window.XLSX;
+    if (!XLSX) throw new Error('Librería XLSX no disponible. Recarga la página e intenta de nuevo.');
+
+    const buf = await archivo.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const hoja = wb.Sheets[wb.SheetNames[0]];
+    const filas = XLSX.utils.sheet_to_json(hoja, { defval: '' });
+
+    if (!filas.length) { resultado.innerHTML = '<div style="color:red;">El archivo está vacío.</div>'; return; }
+
+    // Mapa tipo_cita → tipo_atencion
+    const mapaAgencias = {};
+    catalogoAgencias.forEach(a => {
+      mapaAgencias[a.nombre.toUpperCase()] = a.id_agencia;
+    });
+
+    // Busca la agencia por nombre parcial del centro médico
+    function buscarAgencia(centro) {
+      if (!centro) return undefined;
+      const c = String(centro).toUpperCase().trim();
+      for (const [nom, id] of Object.entries(mapaAgencias)) {
+        if (nom.includes(c) || c.includes(nom.replace('AGENCIA ', '').trim())) return id;
+      }
+      return undefined;
+    }
+
+    function normalizarRut(r) {
+      if (!r) return '';
+      return String(r).replace(/\./g,'').trim();
+    }
+
+    function normalizarTelefono(t) {
+      if (!t) return '';
+      let s = String(t).replace(/\D/g,'');
+      if (s.startsWith('56')) s = s.slice(2);
+      return '+56' + s;
+    }
+
+    let ok = 0, errores = [];
+    resultado.innerHTML = `<div style="color:#534AB7; font-size:13px;">⏳ Importando ${filas.length} filas...</div>`;
+
+    for (const fila of filas) {
+      const rut = normalizarRut(fila['rut_paciente_normalizado'] || fila['rut_paciente']);
+      if (!rut) { errores.push('Fila sin RUT'); continue; }
+      const tipo = String(fila['tipo_cita'] || '').toUpperCase().includes('PRESENCIAL') ? 'CONTROL' : 'CURACIÓN';
+      const centro = fila['centro_medico'] || '';
+      const id_agencia = buscarAgencia(centro);
+      const body = {
+        rut_paciente: rut,
+        nombre_paciente: String(fila['nombre_paciente'] || '').trim(),
+        telefono: normalizarTelefono(fila['telefono_paciente']),
+        tipo_atencion: tipo,
+        reagendamiento_ley: 'NO',
+        id_agencia,
+        motivo: 'Paciente rechazó cita vía Callbot',
+        origen: 'BOT',
+        ingresado_bot: true
+      };
+      try {
+        await api('/reagendamiento', { method: 'POST', body: JSON.stringify(body) });
+        ok++;
+      } catch (e) {
+        errores.push(`${rut}: ${e.message}`);
+      }
+    }
+
+    const color = errores.length ? '#f0ad4e' : '#17b6a7';
+    resultado.innerHTML = `
+      <div style="background:white; border:1px solid ${color}; border-left:4px solid ${color}; border-radius:8px; padding:12px 14px; font-size:13px;">
+        <b>${ok} folio${ok !== 1 ? 's' : ''} importado${ok !== 1 ? 's' : ''} correctamente</b>
+        ${errores.length ? `<br><span style="color:#a32d2d;">${errores.length} con error: ${errores.slice(0,3).join('; ')}${errores.length > 3 ? '…' : ''}</span>` : ''}
+      </div>`;
+    if (ok > 0) setTimeout(renderReagendamiento, 1500);
+  } catch (err) {
+    resultado.innerHTML = `<div style="color:red; font-size:13px;">Error: ${err.message}</div>`;
+  }
 }
