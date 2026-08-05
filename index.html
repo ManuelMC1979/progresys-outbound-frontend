@@ -323,18 +323,46 @@
 
 <div class="modal-overlay" id="modalReabrirFolio">
   <div class="modal">
-    <h3>Reabrir folio</h3>
+    <h3 id="tituloModalReabrirFolio">Reabrir / Anular folio</h3>
     <input type="hidden" id="reabrirFolioId">
-    <div style="background:#fff3cd; border-left:4px solid #f0ad4e; padding:10px 12px; font-size:12px; color:#7a5c00; margin-bottom:14px; line-height:1.5;">
-      El folio volverá a <b>Pendiente de revisión</b>. Esta acción queda registrada en la línea de tiempo del caso.
+
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <button id="tabReabrir" onclick="cambiarTabFolio('reabrir')"
+        style="flex:1; padding:8px; border-radius:6px; border:1.5px solid var(--turquesa); background:var(--turquesa); color:white; font-size:13px; font-weight:600; cursor:pointer;">
+        Reabrir folio
+      </button>
+      <button id="tabAnular" onclick="cambiarTabFolio('anular')"
+        style="flex:1; padding:8px; border-radius:6px; border:1.5px solid #ccc; background:white; color:#555; font-size:13px; font-weight:600; cursor:pointer;">
+        Anular folio
+      </button>
     </div>
-    <label>Tu contraseña (para confirmar)</label>
-    <input type="password" id="reabrirPassword" placeholder="Ingresa tu contraseña">
-    <label>Motivo de la reapertura</label>
-    <textarea id="reabrirMotivo" rows="3" placeholder="Ej: Error en tipificación, se debe corregir..."></textarea>
-    <div class="acciones">
-      <button class="btn secundario" onclick="cerrarModal('modalReabrirFolio')">Cancelar</button>
-      <button class="btn" onclick="guardarReabrirFolio()">Confirmar reapertura</button>
+
+    <div id="panelReabrir">
+      <div style="background:#fff3cd; border-left:4px solid #f0ad4e; padding:10px 12px; font-size:12px; color:#7a5c00; margin-bottom:14px; line-height:1.5;">
+        El folio volverá a <b>Pendiente de revisión</b>. Esta acción queda registrada en la línea de tiempo del caso.
+      </div>
+      <label>Tu contraseña (para confirmar)</label>
+      <input type="password" id="reabrirPassword" placeholder="Ingresa tu contraseña">
+      <label>Motivo de la reapertura</label>
+      <textarea id="reabrirMotivo" rows="2" placeholder="Ej: Error en tipificación, se debe corregir..."></textarea>
+      <div class="acciones">
+        <button class="btn secundario" onclick="cerrarModal('modalReabrirFolio')">Cancelar</button>
+        <button class="btn" onclick="guardarReabrirFolio()">Confirmar reapertura</button>
+      </div>
+    </div>
+
+    <div id="panelAnular" style="display:none;">
+      <div style="background:#fcebeb; border-left:4px solid var(--rojo); padding:10px 12px; font-size:12px; color:#a32d2d; margin-bottom:14px; line-height:1.5;">
+        El folio quedará como <b>Anulado</b> y pasará al historial. Esta acción queda registrada en la línea de tiempo del caso.
+      </div>
+      <label>Tu contraseña (para confirmar)</label>
+      <input type="password" id="anularPassword" placeholder="Ingresa tu contraseña">
+      <label>Motivo de la anulación</label>
+      <textarea id="anularMotivo" rows="2" placeholder="Ej: Folio duplicado, error de ingreso..."></textarea>
+      <div class="acciones">
+        <button class="btn secundario" onclick="cerrarModal('modalReabrirFolio')">Cancelar</button>
+        <button class="btn" style="background:var(--rojo);" onclick="guardarAnularFolio()">Confirmar anulación</button>
+      </div>
     </div>
   </div>
 </div>
