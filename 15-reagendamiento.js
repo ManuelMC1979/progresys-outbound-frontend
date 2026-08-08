@@ -521,9 +521,6 @@ async function guardarReagSolicitud() {
 }
 
 /* ============================================================
-   INGRESO BOT — muestra el formulario del ejecutivo con badge BOT
-   ============================================================ */
-/* ============================================================
    ESCALAR A AGENCIA — con script de correo, usando el folio ya creado
    ============================================================ */
 function abrirEscalarConScript(idCaso) {
@@ -892,25 +889,14 @@ async function importarExcelBot(event) {
 
     if (!filas.length) { resultado.innerHTML = '<div style="color:red;">El archivo está vacío.</div>'; return; }
 
-    // Mapa tipo_cita → tipo_atencion
-    const mapaAgencias = {};
-    catalogoAgencias.forEach(a => {
-      mapaAgencias[a.nombre.toUpperCase()] = a.id_agencia;
-    });
-
-    // Busca la agencia por nombre parcial del centro médico
-    function buscarAgencia(centro) {
-      if (!centro) return undefined;
-      const c = String(centro).toUpperCase().trim();
-      for (const [nom, id] of Object.entries(mapaAgencias)) {
-        if (nom.includes(c) || c.includes(nom.replace('AGENCIA ', '').trim())) return id;
-      }
-      return undefined;
-    }
-
+    /* ---------- RUT: agrega el guion antes del último dígito ---------- */
     function normalizarRut(r) {
       if (!r) return '';
-      return String(r).replace(/\./g,'').trim();
+      let limpio = String(r).replace(/[.\s-]/g, '').toUpperCase();
+      if (limpio.length < 2) return limpio;
+      const cuerpo = limpio.slice(0, -1);
+      const dv = limpio.slice(-1);
+      return `${cuerpo}-${dv}`;
     }
 
     function normalizarTelefono(t) {
@@ -920,13 +906,45 @@ async function importarExcelBot(event) {
       return '+56' + s;
     }
 
+    /* ---------- Agencia: ignora tildes y mayúsculas al comparar ---------- */
+    function normalizarTextoAgencia(t) {
+      return String(t || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // quita tildes
+        .replace(/^AGENCIA\s+/i, '')     // quita el prefijo "Agencia " si lo tuviera
+        .trim()
+        .toUpperCase();
+    }
+
+    function buscarAgencia(centro) {
+      if (!centro) return undefined;
+      const centroNormalizado = normalizarTextoAgencia(centro);
+      for (const a of catalogoAgencias) {
+        if (normalizarTextoAgencia(a.nombre) === centroNormalizado) return a.id_agencia;
+      }
+      // si no hay match exacto, intenta por coincidencia parcial (por si el nombre viene con texto extra)
+      for (const a of catalogoAgencias) {
+        const nombreAgenciaNorm = normalizarTextoAgencia(a.nombre);
+        if (nombreAgenciaNorm.includes(centroNormalizado) || centroNormalizado.includes(nombreAgenciaNorm)) {
+          return a.id_agencia;
+        }
+      }
+      return undefined;
+    }
+
     let ok = 0, errores = [];
     resultado.innerHTML = `<div style="color:#534AB7; font-size:13px;">⏳ Importando ${filas.length} filas...</div>`;
 
     for (const fila of filas) {
       const rut = normalizarRut(fila['rut_paciente_normalizado'] || fila['rut_paciente']);
       if (!rut) { errores.push('Fila sin RUT'); continue; }
-      const tipo = String(fila['tipo_cita'] || '').toUpperCase().includes('PRESENCIAL') ? 'CONTROL' : 'CURACIÓN';
+
+      /* ---------- Tipo de atención: ENFERMERIA → Curación, resto → Control ---------- */
+      const unidadTratamiento = String(fila['unidad_de_tratamiento'] || fila['tipo_cita'] || '').toUpperCase().trim();
+      const tipo = unidadTratamiento.includes('ENFERMERIA') || unidadTratamiento.includes('ENFERMERÍA')
+        ? 'CURACIÓN'
+        : 'CONTROL';
+
       const centro = fila['centro_medico'] || '';
       const id_agencia = buscarAgencia(centro);
       const body = {
