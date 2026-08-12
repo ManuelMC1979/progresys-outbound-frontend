@@ -452,6 +452,35 @@
   </div>
 </div>
 
+<!-- ==================== MODAL: Editar usuario ==================== -->
+<div class="modal-overlay" id="modalEditarUsuario">
+  <div class="modal">
+    <h3>Editar usuario</h3>
+    <input type="hidden" id="editUsuarioId">
+    <label>Nombre</label>
+    <input type="text" id="editNombre">
+    <label>Apellido</label>
+    <input type="text" id="editApellido">
+    <label>Correo</label>
+    <input type="email" id="editEmail">
+    <label>Rol</label>
+    <select id="editRol" onchange="mostrarSelectEjecutivoEditSiCorresponde()">
+      <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+      <option value="SUPERVISOR">SUPERVISOR</option>
+      <option value="EJECUTIVO">EJECUTIVO</option>
+      <option value="CONSULTA">CONSULTA</option>
+    </select>
+    <div id="filaEjecutivoVinculadoEdit" style="display:none;">
+      <label>Ejecutivo a vincular</label>
+      <select id="editIdEjecutivo"></select>
+    </div>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalEditarUsuario')">Cancelar</button>
+      <button class="btn" onclick="guardarEditarUsuario()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== MODAL: Reabrir caso ==================== -->
 <div class="modal-overlay" id="modalReapertura">
   <div class="modal">
