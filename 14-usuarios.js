@@ -3,6 +3,7 @@
    ============================================================ */
 async function renderUsuarios() {
   const usuarios = await api('/usuarios');
+  usuariosCache = usuarios;
   const contenido = document.getElementById('contenido');
 
   contenido.innerHTML = `
@@ -24,6 +25,7 @@ async function renderUsuarios() {
             <td>${estadoUsuarioBadge(u.estado)}</td>
             <td>${formatFecha(u.ultimo_acceso)}</td>
             <td>
+              <button class="btn secundario" onclick="abrirModalEditarUsuario('${u.id_usuario}')">Editar</button>
               <button class="btn secundario" onclick="abrirModalResetPassword('${u.id_usuario}')">Resetear clave</button>
               ${u.estado === 'ACTIVO'
                 ? `<button class="btn secundario" onclick="cambiarEstadoUsuario('${u.id_usuario}', 'INACTIVO')">Desactivar</button>`
@@ -110,3 +112,59 @@ async function guardarResetPassword() {
   }
 }
 
+/* ============================================================
+   EDITAR USUARIO (nombre, apellido, correo, rol)
+   ============================================================ */
+let usuariosCache = [];
+
+async function abrirModalEditarUsuario(idUsuario) {
+  if (!catalogos) await cargarCatalogos();
+  const u = usuariosCache.find(x => x.id_usuario === idUsuario);
+  if (!u) { alert('No se encontró el usuario. Recarga la página e intenta de nuevo.'); return; }
+
+  document.getElementById('editUsuarioId').value = u.id_usuario;
+  document.getElementById('editNombre').value = u.nombre;
+  document.getElementById('editApellido').value = u.apellido;
+  document.getElementById('editEmail').value = u.email;
+  document.getElementById('editRol').value = u.rol;
+  document.getElementById('editIdEjecutivo').innerHTML = '<option value="">Sin vincular</option>' +
+    (catalogos.ejecutivos || []).map(e => `<option value="${e.id_ejecutivo}">${e.nombre}</option>`).join('');
+  // preseleccionar el ejecutivo vinculado actual, si tiene
+  if (u.ejecutivo_vinculado) {
+    const opciones = document.getElementById('editIdEjecutivo').options;
+    for (const op of opciones) { if (op.text === u.ejecutivo_vinculado) op.selected = true; }
+  }
+  mostrarSelectEjecutivoEditSiCorresponde();
+  document.getElementById('modalEditarUsuario').classList.add('activo');
+}
+
+function mostrarSelectEjecutivoEditSiCorresponde() {
+  const rol = document.getElementById('editRol').value;
+  document.getElementById('filaEjecutivoVinculadoEdit').style.display = rol === 'EJECUTIVO' ? 'block' : 'none';
+}
+
+async function guardarEditarUsuario() {
+  const idUsuario = document.getElementById('editUsuarioId').value;
+  const rol = document.getElementById('editRol').value;
+  const body = {
+    nombre: document.getElementById('editNombre').value.trim(),
+    apellido: document.getElementById('editApellido').value.trim(),
+    email: document.getElementById('editEmail').value.trim(),
+    rol: rol
+  };
+  if (rol === 'EJECUTIVO') {
+    const idEjecutivo = document.getElementById('editIdEjecutivo').value;
+    body.id_ejecutivo = idEjecutivo || null;
+  }
+  if (!body.nombre || !body.apellido || !body.email) {
+    alert('Completa nombre, apellido y correo');
+    return;
+  }
+  try {
+    await api(`/usuarios/${idUsuario}`, { method: 'PUT', body: JSON.stringify(body) });
+    cerrarModal('modalEditarUsuario');
+    renderUsuarios();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
