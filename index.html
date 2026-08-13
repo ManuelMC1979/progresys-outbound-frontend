@@ -482,8 +482,14 @@
 
 <div class="modal-overlay" id="modalReagRespuesta">
   <div class="modal">
-    <h3 id="tituloModalRespuesta">Registrar respuesta de agencia</h3>
+    <h3 id="tituloModalRespuesta">Registrar respuesta primera línea</h3>
     <input type="hidden" id="reagRespuestaId">
+    <label>Tipificación de contacto</label>
+    <select id="reagRespuestaTipificacion">
+      <option value="">Selecciona una opción</option>
+      <option value="CONTACTO_3_INTENTOS">Contacto logrado — 3 intentos</option>
+      <option value="CONTACTADO">Contactado</option>
+    </select>
     <label>¿Se agendó la cita?</label>
     <select id="reagRespuestaSeAgendo" onchange="mostrarBloqueRespuestaSegunAgendo()">
       <option value="">Selecciona una opción</option>
