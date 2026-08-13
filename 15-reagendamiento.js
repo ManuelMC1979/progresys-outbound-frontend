@@ -23,6 +23,7 @@ function badgeEstadoReag(estado) {
     EN_PROCESO_BACK: ['EN PROCESO BACK', 'gestion'],
     RECHAZADO: ['Rechazado — agendado por Admin', 'gestion'],
     RECHAZADO_MAL_INGRESO: ['Rechazado — mal ingreso', 'alerta'],
+    RECHAZADO_MAL_DERIVADO: ['Rechazado — mal derivado', 'alerta'],
     ESCALADO_AGENCIA: ['Escalado a agencia', 'celeste'],
     PENDIENTE_CIERRE_ADMIN: ['Pendiente de cierre (Admin)', 'gestion'],
     RESUELTO: ['Resuelto por agencia', 'gestionado'],
@@ -186,7 +187,7 @@ async function renderReagendamiento() {
             <span style="font-size:11px; color:#888; font-weight:400;">▼ ver</span>
           </summary>
           <div style="padding:0 16px 16px;">
-            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','RESUELTO_BACK','CERRADO_NO_AGENDA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
+            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RECHAZADO_MAL_DERIVADO','RESUELTO','RESUELTO_PRIMERA_LINEA','RESUELTO_BACK','CERRADO_NO_AGENDA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
           </div>
         </details>
       </div>
@@ -366,6 +367,7 @@ function renderReagDetalle(caso) {
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>` : ''}
       <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Escalar a agencia</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Mal ingreso</button>
+      <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalDerivado('${caso.id_caso}')">Rechazo mal derivado</button>
     `;
   } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
     acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta primera línea</button>`;
@@ -441,7 +443,7 @@ function renderReagDetalle(caso) {
 function panelIntentos(caso) {
   const intentos = (caso.intentos || []).slice().sort((a, b) => a.numero_intento - b.numero_intento);
   const siguiente = intentos.length + 1;
-  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RESUELTO_PRIMERA_LINEA', 'RESUELTO_BACK', 'CERRADO_NO_AGENDA', 'CERRADO_SIN_CONTACTO', 'ANULADO'].includes(caso.estado);
+  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RECHAZADO_MAL_DERIVADO', 'RESUELTO_PRIMERA_LINEA', 'RESUELTO_BACK', 'CERRADO_NO_AGENDA', 'CERRADO_SIN_CONTACTO', 'ANULADO'].includes(caso.estado);
 
   const filas = [1, 2, 3].map(n => {
     const it = intentos.find(x => x.numero_intento === n);
@@ -798,6 +800,33 @@ async function guardarReagRechazoMalIngreso() {
   try {
     await api(`/reagendamiento/${id}/rechazar-mal-ingreso`, { method: 'POST', body: JSON.stringify({ motivo_rechazo_mal_ingreso: motivo }) });
     cerrarModal('modalReagRechazarMalIngreso');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalRechazarMalDerivado(idCaso) {
+  document.getElementById('reagMalDerivadoId').value = idCaso;
+  document.getElementById('reagMalDerivadoSubMotivo').value = '';
+  document.getElementById('reagMalDerivadoHora').value = '';
+  document.getElementById('reagMalDerivadoObservacion').value = '';
+  document.getElementById('modalReagRechazarMalDerivado').classList.add('activo');
+}
+
+async function guardarReagRechazoMalDerivado() {
+  const id = document.getElementById('reagMalDerivadoId').value;
+  const subMotivo = document.getElementById('reagMalDerivadoSubMotivo').value;
+  const hora = document.getElementById('reagMalDerivadoHora').value;
+  const obs = document.getElementById('reagMalDerivadoObservacion').value.trim();
+  if (!subMotivo) { alert('Selecciona el sub-motivo'); return; }
+  if (!hora) { alert('Ingresa la fecha y hora de la cita reagendada'); return; }
+  try {
+    await api(`/reagendamiento/${id}/rechazar-mal-derivado`, {
+      method: 'POST',
+      body: JSON.stringify({ sub_motivo: subMotivo, hora_agendada: hora, observacion: obs || undefined })
+    });
+    cerrarModal('modalReagRechazarMalDerivado');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
   } catch (err) {
     alert('Error: ' + err.message);

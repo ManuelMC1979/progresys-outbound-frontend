@@ -413,6 +413,27 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalReagRechazarMalDerivado">
+  <div class="modal">
+    <h3>Rechazo mal derivado</h3>
+    <input type="hidden" id="reagMalDerivadoId">
+    <p style="font-size:12px; color:#888;">Usa esto cuando el paciente ya tiene una cita vigente y el folio fue derivado por error a este flujo. Contacta al paciente, reagenda su cita vigente y registra aquí la nueva hora antes de cerrar.</p>
+    <label>Sub-motivo</label>
+    <select id="reagMalDerivadoSubMotivo">
+      <option value="">Selecciona un sub-motivo</option>
+      <option value="Si hay citas vigentes">Si hay citas vigentes</option>
+    </select>
+    <label>Fecha y hora de la cita reagendada</label>
+    <input type="datetime-local" id="reagMalDerivadoHora">
+    <label>Observaciones (opcional)</label>
+    <textarea id="reagMalDerivadoObservacion" rows="3" placeholder="Observaciones del caso..."></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagRechazarMalDerivado')">Cancelar</button>
+      <button class="btn peligro" onclick="guardarReagRechazoMalDerivado()" style="background:var(--rojo);">Rechazar y cerrar caso</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalReabrirFolio">
   <div class="modal">
     <h3 id="tituloModalReabrirFolio">Reabrir / Anular folio</h3>
