@@ -51,11 +51,22 @@ document.getElementById('btnLogout').addEventListener('click', () => {
   document.getElementById('pantallaLogin').style.display = 'flex';
 });
 
+function mostrarPantallaBienvenida() {
+  document.getElementById('tituloVista').textContent = 'Bienvenido';
+  document.getElementById('contenido').innerHTML = `
+    <div class="bienvenida">
+      <h2>¡Bienvenido${usuarioActual.nombre ? ', ' + usuarioActual.nombre : ''}! 👋</h2>
+      <p>Selecciona una opción del menú lateral para comenzar a trabajar.</p>
+    </div>
+  `;
+}
+
 function mostrarApp() {
   document.getElementById('pantallaLogin').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('usuarioNombre').textContent = `${usuarioActual.nombre} ${usuarioActual.apellido}`;
   document.getElementById('usuarioRol').textContent = usuarioActual.rol;
+  mostrarPantallaBienvenida();
 
   if (usuarioActual.rol === 'EJECUTIVO') {
     // El Ejecutivo solo gestiona sus propios casos: se ocultan el resto de los módulos
@@ -64,11 +75,8 @@ function mostrarApp() {
     document.getElementById('btnAlertas').style.display = 'none';
     document.getElementById('btnEjecutivos').style.display = 'none';
     document.getElementById('campanaWrap').style.display = 'none';
-    document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
-    document.getElementById('btnCasos').classList.add('activo');
     cargarCatalogos();
     cargarCatalogoAgencias();
-    cargarVista('casos');
     return;
   }
 
@@ -85,7 +93,6 @@ function mostrarApp() {
   }
   cargarCatalogos();
   cargarCatalogoAgencias();
-  cargarVista('dashboard');
   iniciarPollingAlertas();
 }
 

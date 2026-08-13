@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PROGRESYS OUTBOUND</title>
+<title>PROGESYS OUTBOUND</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -14,7 +14,7 @@
 <!-- ==================== LOGIN ==================== -->
 <div id="pantallaLogin">
   <div class="caja-login">
-    <h1>PROGRESYS OUTBOUND</h1>
+    <h1>PROGESYS OUTBOUND</h1>
     <p class="subtitulo">Control operacional de gestiones outbound</p>
     <form id="formLogin">
       <label>Correo</label>
@@ -31,20 +31,76 @@
 <div id="app">
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">PROGRESYS <span>OUTBOUND</span></div>
+      <div class="logo">
+        <div class="logo-main">PROGESYS</div>
+        <div class="logo-sub">OUTBOUND</div>
+      </div>
       <nav>
-        <button data-vista="dashboard" id="btnDashboard" class="activo">Dashboard</button>
-        <button data-vista="correos" id="btnCorreos">Correos</button>
-        <button data-vista="casos" id="btnCasos">Casos</button>
-        <button data-vista="reagendamiento" id="btnReagendamiento" class="modulo-reag">🗓️ Reagendamiento</button>
-        <button data-vista="reagConfiguracion" id="btnReagConfiguracion" class="modulo-reag" style="display:none;">🗓️ Config. SLA Reagend.</button>
-        <button data-vista="alertas" id="btnAlertas">Alertas</button>
-        <button data-vista="auditoria" id="btnAuditoria" style="display:none;">Auditoría</button>
-        <button data-vista="reportes" id="btnReportes" style="display:none;">Reportes</button>
-        <button data-vista="importar" id="btnImportar" style="display:none;">Importar Excel</button>
-        <button data-vista="ejecutivos" id="btnEjecutivos" style="display:none;">Ejecutivos</button>
-        <button data-vista="configuracion" id="btnConfiguracion" style="display:none;">Configuración</button>
-        <button data-vista="usuarios" id="btnUsuarios" style="display:none;">Usuarios</button>
+        <div class="menu-grupo menu-grupo--inicio" data-grupo="inicio">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">⌂</span><span>Inicio</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="dashboard" id="btnDashboard">Dashboard</button>
+          </div>
+        </div>
+
+        <div class="menu-grupo menu-grupo--gestion" data-grupo="gestion">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">✉</span><span>Gestión de contactos</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="correos" id="btnCorreos">Correos</button>
+            <button data-vista="casos" id="btnCasos">Casos</button>
+          </div>
+        </div>
+
+        <div class="menu-grupo menu-grupo--reagendamiento" data-grupo="reagendamiento">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">▣</span><span>Reagendamiento</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="reagendamiento" id="btnReagendamiento" class="modulo-reag">Reagendamiento</button>
+            <button data-vista="reagConfiguracion" id="btnReagConfiguracion" class="modulo-reag" style="display:none;">Config. SLA Reagend.</button>
+          </div>
+        </div>
+
+        <div class="menu-grupo menu-grupo--control" data-grupo="control">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">♧</span><span>Control y alertas</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="alertas" id="btnAlertas">Alertas</button>
+            <button data-vista="auditoria" id="btnAuditoria" style="display:none;">Auditoría</button>
+          </div>
+        </div>
+
+        <div class="menu-grupo menu-grupo--analisis" data-grupo="analisis">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">▥</span><span>Análisis y reportes</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="reportes" id="btnReportes" style="display:none;">Reportes</button>
+            <button data-vista="importar" id="btnImportar" style="display:none;">Importar Excel</button>
+          </div>
+        </div>
+
+        <div class="menu-grupo menu-grupo--administracion" data-grupo="administracion">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">⚙</span><span>Administración</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="ejecutivos" id="btnEjecutivos" style="display:none;">Ejecutivos</button>
+            <button data-vista="configuracion" id="btnConfiguracion" style="display:none;">Configuración</button>
+            <button data-vista="usuarios" id="btnUsuarios" style="display:none;">Usuarios</button>
+          </div>
+        </div>
       </nav>
       <div class="usuario">
         <div id="usuarioNombre">—</div>
@@ -59,20 +115,16 @@
 
     <div class="main">
       <header class="topbar">
-        <h2 id="tituloVista">Dashboard</h2>
+        <h2 id="tituloVista">Bienvenido</h2>
         <div class="campana-wrap" id="campanaWrap">
-          <button class="campana-btn" onclick="alternarPanelAlertas()">
+          <button class="campana-btn" onclick="irAVistaAlertas()" title="Ir a Alertas">
             🔔
             <span class="badge-contador" id="contadorBadgeAlertas">0</span>
           </button>
-          <div class="panel-alertas" id="panelAlertasGlobal">
-            <div class="panel-header"><h3>Alertas activas</h3></div>
-            <div id="listaAlertasGlobal"></div>
-          </div>
         </div>
       </header>
       <div class="contenido" id="contenido">
-        <div class="cargando">Cargando...</div>
+        <div class="estado-vacio">Selecciona una opción del menú para comenzar.</div>
       </div>
     </div>
   </div>
@@ -575,8 +627,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="16-campanita.js"></script>
 <script src="17-utilidades.js"></script>
-
-<div class="toast-container" id="toastContainer"></div>
 
 </body>
 </html>

@@ -1,11 +1,38 @@
 /* ============================================================
    NAVEGACIÓN
    ============================================================ */
+function marcarBotonActivo(idBoton) {
+  const btn = document.getElementById(idBoton);
+  if (!btn) return;
+  document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  const grupo = btn.closest('.menu-grupo');
+  if (grupo) {
+    document.querySelectorAll('.menu-grupo').forEach(g => g.classList.remove('abierto'));
+    grupo.classList.add('abierto');
+  }
+}
+
+function activarVista(idBoton) {
+  marcarBotonActivo(idBoton);
+  cargarVista(document.getElementById(idBoton).dataset.vista);
+}
+
 document.querySelectorAll('.sidebar nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('activo'));
-    btn.classList.add('activo');
-    cargarVista(btn.dataset.vista);
+  btn.addEventListener('click', () => activarVista(btn.id));
+});
+
+document.querySelectorAll('.menu-grupo-header').forEach(header => {
+  header.setAttribute('tabindex', '0');
+  header.setAttribute('role', 'button');
+  header.addEventListener('click', () => {
+    const grupo = header.closest('.menu-grupo');
+    const yaAbierto = grupo.classList.contains('abierto');
+    document.querySelectorAll('.menu-grupo').forEach(g => g.classList.remove('abierto'));
+    if (!yaAbierto) grupo.classList.add('abierto');
+  });
+  header.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.click(); }
   });
 });
 
