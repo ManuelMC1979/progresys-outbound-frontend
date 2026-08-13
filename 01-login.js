@@ -61,6 +61,14 @@ function mostrarPantallaBienvenida() {
   `;
 }
 
+function ocultarGruposVacios() {
+  document.querySelectorAll('.menu-grupo').forEach(grupo => {
+    const tieneBotonVisible = Array.from(grupo.querySelectorAll('button'))
+      .some(b => b.style.display !== 'none');
+    grupo.style.display = tieneBotonVisible ? '' : 'none';
+  });
+}
+
 function mostrarApp() {
   document.getElementById('pantallaLogin').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -69,12 +77,13 @@ function mostrarApp() {
   mostrarPantallaBienvenida();
 
   if (usuarioActual.rol === 'EJECUTIVO') {
-    // El Ejecutivo solo gestiona sus propios casos: se ocultan el resto de los módulos
+    // El Ejecutivo solo gestiona sus propios casos y reagendamientos: se ocultan el resto de los módulos
     document.getElementById('btnDashboard').style.display = 'none';
     document.getElementById('btnCorreos').style.display = 'none';
     document.getElementById('btnAlertas').style.display = 'none';
     document.getElementById('btnEjecutivos').style.display = 'none';
     document.getElementById('campanaWrap').style.display = 'none';
+    ocultarGruposVacios();
     cargarCatalogos();
     cargarCatalogoAgencias();
     return;
@@ -91,6 +100,7 @@ function mostrarApp() {
     document.getElementById('btnUsuarios').style.display = 'block';
     document.getElementById('btnReagConfiguracion').style.display = 'block';
   }
+  ocultarGruposVacios();
   cargarCatalogos();
   cargarCatalogoAgencias();
   iniciarPollingAlertas();
