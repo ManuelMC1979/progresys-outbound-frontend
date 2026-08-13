@@ -5,6 +5,7 @@ let catalogoAgencias = [];
 let idReagDetalleActual = null;
 let casosReagCache = {};
 let idEscalarActual = null;
+let casosReagUltimo = [];
 
 async function cargarCatalogoAgencias() {
   try { catalogoAgencias = await api('/reagendamiento/agencias'); } catch (e) { catalogoAgencias = []; }
@@ -19,12 +20,15 @@ function badgeEstadoReag(estado) {
   const map = {
     CERRADO: ['Cerrado', 'cerrado'],
     PENDIENTE_ADMIN: ['Pendiente revisión Admin', 'pendiente'],
+    EN_PROCESO_BACK: ['EN PROCESO BACK', 'gestion'],
     RECHAZADO: ['Rechazado — agendado por Admin', 'gestion'],
     RECHAZADO_MAL_INGRESO: ['Rechazado — mal ingreso', 'alerta'],
-    ESCALADO_AGENCIA: ['Escalado a agencia', 'gestion'],
+    ESCALADO_AGENCIA: ['Escalado a agencia', 'celeste'],
     PENDIENTE_CIERRE_ADMIN: ['Pendiente de cierre (Admin)', 'gestion'],
     RESUELTO: ['Resuelto por agencia', 'gestionado'],
     RESUELTO_PRIMERA_LINEA: ['Resuelto — primera línea', 'gestionado'],
+    RESUELTO_BACK: ['Resuelto — Back', 'gestionado'],
+    CERRADO_NO_AGENDA: ['Cerrado — no agenda cita', 'cerrado'],
     CERRADO_SIN_CONTACTO: ['Cerrado sin contacto', 'cerrado'],
     ANULADO: ['Anulado', 'alerta'],
   };
@@ -36,6 +40,10 @@ function badgeBot() {
   return `<span style="background:#534AB7; color:white; font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; letter-spacing:0.5px;">BOT</span>`;
 }
 
+function badgeIN() {
+  return `<span style="background:var(--turquesa); color:white; font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; letter-spacing:0.5px;" title="Ingresado por Ejecutivo">IN</span>`;
+}
+
 function textoSla(estadoSla) {
   if (!estadoSla) return '<span style="color:#ccc;">—</span>';
   const colores = { 'VENCIDO': '#d9534f', 'POR VENCER': '#f0ad4e', 'DENTRO DE PLAZO': '#2ecc71' };
@@ -45,7 +53,8 @@ function textoSla(estadoSla) {
 
 function celdaFolio(c) {
   const esBot = c.origen === 'BOT' || c.ingresado_bot;
-  return `<b>${c.folio}</b>${esBot ? badgeBot() : ''}`;
+  const esEjecutivo = c.origen === 'EJECUTIVO';
+  return `<b>${c.folio}</b>${esBot ? badgeBot() : ''}${esEjecutivo ? badgeIN() : ''}`;
 }
 
 async function renderReagendamiento() {
@@ -55,6 +64,7 @@ async function renderReagendamiento() {
   const esAdmin = usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
 
   const casosReag = await api('/reagendamiento');
+  casosReagUltimo = casosReag;
 
   const bannerSap = `
     <div style="background:#fff3cd; border:1px solid #f0ad4e; border-left:5px solid #f0ad4e; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:center;">
@@ -69,7 +79,7 @@ async function renderReagendamiento() {
   `;
 
   const bannerAlcance = `
-    <div style="background:#e8f6f4; border:1px solid #17b6a7; border-left:5px solid #17b6a7; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
+    <div style="background:#e8f6f4; border:1px solid var(--turquesa); border-left:5px solid var(--turquesa); border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
       <div style="font-size:20px;">ℹ️</div>
       <div style="font-size:13px; color:var(--azul-marino); line-height:1.7;">
         <b>Recuerda:</b> solo gestionamos pacientes de la Red, no del Hospital.<br>
@@ -115,7 +125,7 @@ async function renderReagendamiento() {
 
   let bloquesAdmin = '';
   if (esAdmin) {
-    const pendientes = casosReag.filter(c => c.estado === 'PENDIENTE_ADMIN');
+    const pendientes = casosReag.filter(c => ['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(c.estado));
     const escalados = casosReag.filter(c => c.estado === 'ESCALADO_AGENCIA');
     const pendientesCierre = casosReag.filter(c => c.estado === 'PENDIENTE_CIERRE_ADMIN');
     const dashReag = await api('/reagendamiento/reportes/dashboard');
@@ -128,18 +138,21 @@ async function renderReagendamiento() {
 
       <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>
       <div class="kpis" style="margin-bottom:20px;">
-        <div class="kpi-card"><div class="valor">${dashReag.total}</div><div class="etiqueta">Total solicitudes</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.ley_si}</div><div class="etiqueta">¿Se agendó? - Sí</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.ley_no}</div><div class="etiqueta">¿Se agendó? - No</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.pendientes}</div><div class="etiqueta">Pendientes revisión</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.escalados}</div><div class="etiqueta">Escalados a agencia</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.pendientes_cierre}</div><div class="etiqueta">Pendientes de cierre (Admin)</div></div>
-        <div class="kpi-card alerta"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia + dashReag.vencidos_cierre}</div><div class="etiqueta">SLA vencidos</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.rechazados}</div><div class="etiqueta">Rechazados</div></div>
-        <div class="kpi-card alerta"><div class="valor">${dashReag.rechazados_mal_ingreso}</div><div class="etiqueta">Mal ingreso (trazabilidad)</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.resueltos_primera_linea}</div><div class="etiqueta">Resueltos primera línea</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.cerrados_sin_contacto}</div><div class="etiqueta">Cerrados sin contacto</div></div>
-        <div class="kpi-card"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resueltos</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('total')"><div class="valor">${dashReag.total}</div><div class="etiqueta">Total solicitudes</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('ley_si')"><div class="valor">${dashReag.ley_si}</div><div class="etiqueta">¿Se agendó? - Sí</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('ley_no')"><div class="valor">${dashReag.ley_no}</div><div class="etiqueta">¿Se agendó? - No</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('pendientes')"><div class="valor">${dashReag.pendientes}</div><div class="etiqueta">Pendientes revisión</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('en_proceso_back')"><div class="valor">${dashReag.en_proceso_back}</div><div class="etiqueta">En proceso Back</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('escalados')"><div class="valor">${dashReag.escalados}</div><div class="etiqueta">Escalados a agencia</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('pendientes_cierre')"><div class="valor">${dashReag.pendientes_cierre}</div><div class="etiqueta">Pendientes de cierre (Admin)</div></div>
+        <div class="kpi-card alerta" style="cursor:pointer;" onclick="mostrarResumenKpi('sla_vencidos')"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia + dashReag.vencidos_cierre}</div><div class="etiqueta">SLA vencidos</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('rechazados')"><div class="valor">${dashReag.rechazados}</div><div class="etiqueta">Rechazados</div></div>
+        <div class="kpi-card alerta" style="cursor:pointer;" onclick="mostrarResumenKpi('rechazados_mal_ingreso')"><div class="valor">${dashReag.rechazados_mal_ingreso}</div><div class="etiqueta">Mal ingreso (trazabilidad)</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos_primera_linea')"><div class="valor">${dashReag.resueltos_primera_linea}</div><div class="etiqueta">Resueltos primera línea</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos_back')"><div class="valor">${dashReag.resueltos_back}</div><div class="etiqueta">Resueltos — Back</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('cerrados_no_agenda')"><div class="valor">${dashReag.cerrados_no_agenda}</div><div class="etiqueta">Cerrados — no agenda cita</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('cerrados_sin_contacto')"><div class="valor">${dashReag.cerrados_sin_contacto}</div><div class="etiqueta">Cerrados sin contacto</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos')"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resueltos</div></div>
       </div>
 
       <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:24px;">
@@ -173,7 +186,7 @@ async function renderReagendamiento() {
             <span style="font-size:11px; color:#888; font-weight:400;">▼ ver</span>
           </summary>
           <div style="padding:0 16px 16px;">
-            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
+            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RESUELTO','RESUELTO_PRIMERA_LINEA','RESUELTO_BACK','CERRADO_NO_AGENDA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
           </div>
         </details>
       </div>
@@ -234,24 +247,16 @@ function tablaReag(lista, contexto) {
       <tbody>
         ${lista.map(c => { casosReagCache[c.id_caso] = c; return `
           <tr>
-            <td>${celdaFolio(c)}</td>
+            <td style="cursor:pointer;" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>${celdaFolio(c)}</td>
             <td>${c.rut_paciente}</td>
             <td>${etiquetaTipoAtencion(c.tipo_atencion)}</td>
-            <td>${c.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</td>
+            <td>${(c.reagendamiento_ley === 'SI' || c.hora_agendada) ? 'Sí' : 'No'}</td>
             <td>${c.hora_agendada ? formatFecha(c.hora_agendada) : '—'}</td>
             <td>${badgeEstadoReag(c.estado)}</td>
             <td>${textoSla(c.estado_sla)}</td>
             <td style="text-align:center;">${c.agencia ? renderIntentosMini(c.intentos) : '<span style="color:#ccc;">—</span>'}</td>
             <td style="white-space:nowrap;">
               <button class="btn secundario" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>Ver detalle</button>
-              ${!(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" onclick='abrirModalObsReag(${JSON.stringify(c.id_caso)})'>+ Obs.</button>` : ''}
-              ${contexto === 'admin_pendiente' ? `
-                ${!(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${c.id_caso}')">Rechazar y agendar</button>` : ''}
-                <button class="btn" onclick="abrirEscalarConScript('${c.id_caso}')">Confirmar sin cita → Escalar</button>
-                ${(c.origen === 'BOT' || c.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${c.id_caso}')">Rechazar por mal ingreso</button>` : ''}
-              ` : ''}
-              ${contexto === 'admin_escalado' ? `<button class="btn" onclick="abrirReagModalRespuesta('${c.id_caso}')">Registrar respuesta primera línea</button>` : ''}
-              ${contexto === 'admin_pendiente_cierre' ? `<button class="btn" onclick="cerrarReagFinal('${c.id_caso}')">Cerrar caso</button>` : ''}
             </td>
           </tr>
         `; }).join('')}
@@ -260,20 +265,77 @@ function tablaReag(lista, contexto) {
   `;
 }
 
-/* --- Observación rápida desde tabla --- */
-function abrirModalObsReag(idCaso) {
-  const obs = prompt('Ingresa la observación para este caso:');
-  if (!obs || !obs.trim()) return;
-  api(`/reagendamiento/${idCaso}/observacion`, {
-    method: 'POST',
-    body: JSON.stringify({ observacion: obs.trim() })
-  }).then(() => {
-    if (idReagDetalleActual === idCaso) {
-      abrirReagDetalle(idCaso);
-    } else {
-      renderReagendamiento();
-    }
-  }).catch(err => alert('Error: ' + err.message));
+/* ============================================================
+   RESUMEN AL HACER CLIC EN UN KPI DEL DASHBOARD
+   ============================================================ */
+const KPI_REAG_TITULOS = {
+  total: 'Total solicitudes',
+  ley_si: '¿Se agendó? — Sí',
+  ley_no: '¿Se agendó? — No',
+  pendientes: 'Pendientes revisión',
+  en_proceso_back: 'En proceso Back',
+  escalados: 'Escalados a agencia',
+  pendientes_cierre: 'Pendientes de cierre (Admin)',
+  sla_vencidos: 'SLA vencidos',
+  rechazados: 'Rechazados',
+  rechazados_mal_ingreso: 'Mal ingreso (trazabilidad)',
+  resueltos_primera_linea: 'Resueltos primera línea',
+  resueltos_back: 'Resueltos — Back',
+  cerrados_no_agenda: 'Cerrados — no agenda cita',
+  cerrados_sin_contacto: 'Cerrados sin contacto',
+  resueltos: 'Resueltos',
+};
+
+function filtrarPorKpiReag(criterio) {
+  const ahora = Date.now();
+  const vencido = f => !!f && new Date(f).getTime() < ahora;
+  switch (criterio) {
+    case 'total': return casosReagUltimo;
+    case 'ley_si': return casosReagUltimo.filter(c => c.reagendamiento_ley === 'SI');
+    case 'ley_no': return casosReagUltimo.filter(c => c.reagendamiento_ley === 'NO');
+    case 'pendientes': return casosReagUltimo.filter(c => ['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(c.estado));
+    case 'en_proceso_back': return casosReagUltimo.filter(c => c.estado === 'EN_PROCESO_BACK');
+    case 'escalados': return casosReagUltimo.filter(c => c.estado === 'ESCALADO_AGENCIA');
+    case 'pendientes_cierre': return casosReagUltimo.filter(c => c.estado === 'PENDIENTE_CIERRE_ADMIN');
+    case 'sla_vencidos': return casosReagUltimo.filter(c =>
+      (['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(c.estado) && vencido(c.fecha_limite_admin)) ||
+      (c.estado === 'ESCALADO_AGENCIA' && vencido(c.fecha_limite_agencia)) ||
+      (c.estado === 'PENDIENTE_CIERRE_ADMIN' && vencido(c.fecha_limite_cierre_admin))
+    );
+    case 'rechazados': return casosReagUltimo.filter(c => c.estado === 'RECHAZADO');
+    case 'rechazados_mal_ingreso': return casosReagUltimo.filter(c => c.estado === 'RECHAZADO_MAL_INGRESO');
+    case 'resueltos_primera_linea': return casosReagUltimo.filter(c => c.estado === 'RESUELTO_PRIMERA_LINEA');
+    case 'resueltos_back': return casosReagUltimo.filter(c => c.estado === 'RESUELTO_BACK');
+    case 'cerrados_no_agenda': return casosReagUltimo.filter(c => c.estado === 'CERRADO_NO_AGENDA');
+    case 'cerrados_sin_contacto': return casosReagUltimo.filter(c => c.estado === 'CERRADO_SIN_CONTACTO');
+    case 'resueltos': return casosReagUltimo.filter(c => ['CERRADO', 'RESUELTO'].includes(c.estado));
+    default: return [];
+  }
+}
+
+function mostrarResumenKpi(criterio) {
+  const lista = filtrarPorKpiReag(criterio);
+  const titulo = KPI_REAG_TITULOS[criterio] || criterio;
+  document.getElementById('tituloResumenKpi').textContent = `${titulo} (${lista.length})`;
+  const cuerpo = document.getElementById('cuerpoResumenKpi');
+  cuerpo.innerHTML = lista.length === 0 ? '<p style="color:#999;">Sin casos en esta categoría.</p>' : `
+    <table>
+      <thead><tr><th>Folio</th><th>RUT</th><th>Nombre</th><th>Estado</th><th>Fecha creación</th><th></th></tr></thead>
+      <tbody>
+        ${lista.map(c => { casosReagCache[c.id_caso] = c; return `
+          <tr>
+            <td>${celdaFolio(c)}</td>
+            <td>${c.rut_paciente}</td>
+            <td>${c.nombre_paciente || '—'}</td>
+            <td>${badgeEstadoReag(c.estado)}</td>
+            <td>${formatFecha(c.fecha_creacion)}</td>
+            <td><button class="btn secundario" onclick="cerrarModal('modalResumenKpi'); abrirReagDetalle('${c.id_caso}')">Ver detalle</button></td>
+          </tr>
+        `; }).join('')}
+      </tbody>
+    </table>
+  `;
+  document.getElementById('modalResumenKpi').classList.add('activo');
 }
 
 async function abrirReagDetalle(idCaso) {
@@ -297,11 +359,13 @@ function renderReagDetalle(caso) {
   const eventos = (caso.eventos || []).map(e => ({ titulo: e.titulo, detalle: e.detalle, fecha: e.fecha }));
 
   let acciones = '';
-  if (caso.estado === 'PENDIENTE_ADMIN' && esAdmin) {
+  if (['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(caso.estado) && esAdmin) {
     acciones = `
-      <button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>
-      <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Confirmar sin cita → Escalar</button>
-      ${(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Rechazar por mal ingreso</button>` : ''}
+      ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoAgenda('${caso.id_caso}')">Contactado — Sí agenda cita</button>` : ''}
+      ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoNoAgenda('${caso.id_caso}')">Contactado — No agenda cita</button>` : ''}
+      ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>` : ''}
+      <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Escalar a agencia</button>
+      <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Mal ingreso</button>
     `;
   } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
     acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta primera línea</button>`;
@@ -316,7 +380,7 @@ function renderReagDetalle(caso) {
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.rut_paciente}</div><div class="etiqueta">RUT paciente</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.ejecutivo || '—'}</div><div class="etiqueta">Ejecutivo</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstadoReag(caso.estado)}</div><div class="etiqueta">Estado</div></div>
-      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.reagendamiento_ley === 'SI' ? 'Sí' : 'No'}</div><div class="etiqueta">¿Se agendó?</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${(caso.reagendamiento_ley === 'SI' || caso.hora_agendada) ? 'Sí' : 'No'}</div><div class="etiqueta">¿Se agendó?</div></div>
       ${caso.hora_agendada ? `<div class="kpi-card"><div class="valor" style="font-size:13px;">${formatFecha(caso.hora_agendada)}</div><div class="etiqueta">Fecha y hora agendada</div></div>` : ''}
       ${(caso.origen === 'BOT' || caso.ingresado_bot) ? `<div class="kpi-card" style="border-left-color:#534AB7;"><div class="valor" style="font-size:16px;color:#534AB7;">BOT</div><div class="etiqueta">Origen</div></div>` : ''}
     </div>
@@ -337,21 +401,29 @@ function renderReagDetalle(caso) {
         </div>
       </div>
 
+      ${(acciones || esAdmin || caso.agencia) ? `
+      <div style="flex:0 0 220px; min-width:200px; display:flex; flex-direction:column; gap:8px;">
+        <h3 style="color:var(--azul-marino); font-size:15px;">Acciones</h3>
+        ${caso.agencia ? panelIntentos(caso) : ''}
+        ${acciones ? `<div style="display:flex; flex-direction:column; gap:8px;">${acciones}</div>` : ''}
+        ${esAdmin ? `
+          <div style="margin-top:12px; border-top:1px solid #eee; padding-top:12px;">
+            <button class="btn secundario" style="font-size:11px; color:#888;" onclick="abrirModalReabrirFolio('${caso.id_caso}')">Reabrir folio</button>
+          </div>` : ''}
+      </div>` : ''}
+
       <div style="flex:1; min-width:260px;">
         <h3 style="color:var(--azul-marino); font-size:15px;">Datos del caso</h3>
         <table style="margin-top:12px;">
           <tbody>
             <tr><td><b>Folio</b></td><td>${caso.folio || '—'}</td></tr>
             <tr><td><b>Nombre paciente</b></td><td>${caso.nombre_paciente || '—'}</td></tr>
-            <tr><td><b>Correo</b></td><td>${caso.correo || '—'}</td></tr>
             <tr><td><b>Teléfono</b></td><td>${caso.telefono || '—'}</td></tr>
             <tr><td><b>Tipo de atención</b></td><td>${etiquetaTipoAtencion(caso.tipo_atencion) || '—'}</td></tr>
             <tr><td><b>Agencia</b></td><td>${caso.agencia || '—'}</td></tr>
-            <tr><td><b>Fecha límite Admin</b></td><td>${formatFecha(caso.fecha_limite_admin)}</td></tr>
-            <tr><td><b>Fecha límite Agencia</b></td><td>${formatFecha(caso.fecha_limite_agencia)}</td></tr>
-            <tr><td><b>Fecha y hora agendada</b></td><td>${caso.hora_agendada ? formatFecha(caso.hora_agendada) : '—'}</td></tr>
-            <tr><td><b>Motivo</b></td><td>${caso.motivo || '—'}</td></tr>
-            <tr><td><b>Resultado</b></td><td>${caso.resultado || '—'}</td></tr>
+            ${caso.fecha_limite_agencia ? `<tr><td><b>Fecha límite Agencia</b></td><td>${formatFecha(caso.fecha_limite_agencia)}</td></tr>` : ''}
+            ${caso.hora_agendada ? `<tr><td><b>Fecha y hora agendada</b></td><td>${formatFecha(caso.hora_agendada)}</td></tr>` : ''}
+            <tr><td><b>Motivo del bloqueo</b></td><td>${caso.motivo || '—'}</td></tr>
             <tr><td><b>Observaciones</b></td><td>${caso.observaciones || '—'}</td></tr>
           </tbody>
         </table>
@@ -361,68 +433,54 @@ function renderReagDetalle(caso) {
           <textarea id="obsDetalleReag" rows="2" style="width:100%; margin-top:6px; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px;" placeholder="Escribe una observación..."></textarea>
           <button class="btn secundario" style="margin-top:6px;" onclick="guardarObsDesdeDetalle('${caso.id_caso}')">Guardar observación</button>
         </div>
-
-        ${acciones ? `<div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">${acciones}</div>` : ''}
-        ${esAdmin ? `
-          <div style="margin-top:12px; border-top:1px solid #eee; padding-top:12px;">
-            <button class="btn secundario" style="font-size:11px; color:#888;" onclick="abrirModalReabrirFolio('${caso.id_caso}')">Reabrir folio</button>
-          </div>` : ''}
       </div>
     </div>
-
-    ${caso.agencia ? panelIntentos(caso) : ''}
   `;
 }
 
 function panelIntentos(caso) {
   const intentos = (caso.intentos || []).slice().sort((a, b) => a.numero_intento - b.numero_intento);
   const siguiente = intentos.length + 1;
-  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RESUELTO_PRIMERA_LINEA', 'CERRADO_SIN_CONTACTO', 'ANULADO'].includes(caso.estado);
+  const casoAbierto = !['RESUELTO', 'CERRADO', 'RECHAZADO_MAL_INGRESO', 'RESUELTO_PRIMERA_LINEA', 'RESUELTO_BACK', 'CERRADO_NO_AGENDA', 'CERRADO_SIN_CONTACTO', 'ANULADO'].includes(caso.estado);
 
-  const etiquetaIntento = {
-    CONFIRMA: ['Contacto — confirma', 'estado-confirma'],
-    NO_CONTACTO: ['No contactado', 'estado-nocontacto'],
-    CONTACTO_NO_AGENDO: ['Contacto — no agendó', 'estado-noagendo'],
-  };
-
-  const filas = intentos.map(it => {
-    const [etiqueta, claseEstado] = etiquetaIntento[it.estado] || [it.estado, 'estado-nocontacto'];
+  const filas = [1, 2, 3].map(n => {
+    const it = intentos.find(x => x.numero_intento === n);
+    if (it) {
+      const esContactado = it.estado === 'CONFIRMA';
+      return `
+        <div class="intento-fila">
+          <div class="intento-num" style="${esContactado ? 'background:var(--verde);' : ''}">${n}</div>
+          <div class="intento-info">
+            <div class="intento-estado ${esContactado ? 'estado-confirma' : 'estado-nocontacto'}">${esContactado ? 'Contactado' : 'No contactado'}</div>
+            <div class="intento-fecha">${formatFecha(it.fecha)}</div>
+          </div>
+        </div>
+      `;
+    }
+    if (n === siguiente && casoAbierto) {
+      return `
+        <div class="intento-fila intento-fila-pendiente">
+          <div class="intento-num intento-num-pendiente">${n}</div>
+          <div class="intento-info">
+            <button class="btn secundario" style="width:100%;" onclick="registrarIntento('${caso.id_caso}', 'NO_CONTACTO', ${n})">No contactado</button>
+          </div>
+        </div>
+      `;
+    }
     return `
-      <div class="intento-fila">
-        <div class="intento-num">${it.numero_intento}</div>
+      <div class="intento-fila" style="opacity:0.45;">
+        <div class="intento-num intento-num-pendiente">${n}</div>
         <div class="intento-info">
-          <div class="intento-estado ${claseEstado}">${etiqueta}</div>
-          <div class="intento-fecha">${formatFecha(it.fecha)}</div>
-          ${it.observacion ? `<div class="intento-obs">${it.observacion}</div>` : ''}
+          <div style="font-size:12px; color:#999;">Pendiente</div>
         </div>
       </div>
     `;
   }).join('');
 
-  const filaSiguiente = (siguiente <= 3 && casoAbierto) ? `
-    <div class="intento-fila intento-fila-pendiente">
-      <div class="intento-num intento-num-pendiente">${siguiente}</div>
-      <div class="intento-info">
-        <div style="font-size:12px; color:#888; margin-bottom:6px;">Intento ${siguiente} pendiente de registrar</div>
-        <textarea id="obsIntento${siguiente}" rows="2"
-          placeholder="Observación — obligatoria si el paciente no quiere agendar"
-          style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:12px; margin-bottom:6px;"></textarea>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn secundario" onclick="registrarIntento('${caso.id_caso}', 'CONFIRMA', ${siguiente})">Contacto — confirma</button>
-          <button class="btn secundario" onclick="registrarIntento('${caso.id_caso}', 'NO_CONTACTO', ${siguiente})">No contactado</button>
-          <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);"
-            onclick="registrarIntento('${caso.id_caso}', 'CONTACTO_NO_AGENDO', ${siguiente})">Contacto — no agendó</button>
-        </div>
-        ${siguiente === 3 ? `<div style="font-size:11px; color:var(--rojo); margin-top:6px;">⚠ Este es el 3er y último intento — si no hay contacto, el caso se cerrará automáticamente.</div>` : ''}
-      </div>
-    </div>
-  ` : '';
-
   return `
-    <div style="background:white; border-radius:10px; border:1px solid #e0e0e0; padding:16px; margin-top:20px;">
-      <h3 style="color:var(--azul-marino); font-size:15px; margin-bottom:12px;">Intentos de llamado — Agencia: ${caso.agencia}</h3>
-      ${filas}${filaSiguiente}
-      ${intentos.length === 0 && !casoAbierto ? '<p style="color:#999; font-size:13px;">No se registraron intentos.</p>' : ''}
+    <div style="background:white; border-radius:10px; border:1px solid #e0e0e0; padding:12px;">
+      <h4 style="color:var(--azul-marino); font-size:13px; margin-bottom:8px;">Intentos de llamado</h4>
+      ${filas}
     </div>
   `;
 }
@@ -430,11 +488,6 @@ function panelIntentos(caso) {
 async function registrarIntento(idCaso, estado, numero) {
   const campoObs = document.getElementById(`obsIntento${numero}`);
   const obs = campoObs ? campoObs.value.trim() : '';
-  if (estado === 'CONTACTO_NO_AGENDO' && !obs) {
-    alert('Debes indicar el motivo por el que el paciente no quiso agendar.');
-    if (campoObs) campoObs.focus();
-    return;
-  }
   try {
     await api(`/reagendamiento/${idCaso}/intentos`, {
       method: 'POST',
@@ -588,7 +641,7 @@ function abrirEscalarConScript(idCaso) {
       </div>
 
       <div style="flex:1; min-width:280px;">
-        <div style="background:white; border:1px solid #17b6a7; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
+        <div style="background:white; border:1px solid var(--turquesa); border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.08);">
           <h3 style="color:var(--azul-marino); font-size:14px; margin-bottom:10px;">✉ Script de correo</h3>
           <div style="background:#f4f6f8; border-radius:6px; padding:8px 10px; font-size:12px; margin-bottom:8px;">
             <span style="font-weight:700; color:var(--azul-marino);">Asunto:</span> Derivación reagendamiento paciente STP – gestión local
@@ -665,6 +718,52 @@ async function guardarEscalarConScript(idCaso) {
   }
 }
 
+function abrirReagModalContactadoAgenda(idCaso) {
+  document.getElementById('reagContactadoAgendaId').value = idCaso;
+  document.getElementById('reagContactadoAgendaHora').value = '';
+  document.getElementById('reagContactadoAgendaObservacion').value = '';
+  document.getElementById('modalReagContactadoAgenda').classList.add('activo');
+}
+
+async function guardarReagContactadoAgenda() {
+  const id = document.getElementById('reagContactadoAgendaId').value;
+  const hora = document.getElementById('reagContactadoAgendaHora').value;
+  const obs = document.getElementById('reagContactadoAgendaObservacion').value.trim();
+  if (!hora) { alert('Ingresa la fecha y hora agendada'); return; }
+  try {
+    await api(`/reagendamiento/${id}/contactado-agenda`, {
+      method: 'POST',
+      body: JSON.stringify({ hora_agendada: hora, observacion: obs || undefined })
+    });
+    cerrarModal('modalReagContactadoAgenda');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalContactadoNoAgenda(idCaso) {
+  document.getElementById('reagContactadoNoAgendaId').value = idCaso;
+  document.getElementById('reagContactadoNoAgendaObservacion').value = '';
+  document.getElementById('modalReagContactadoNoAgenda').classList.add('activo');
+}
+
+async function guardarReagContactadoNoAgenda() {
+  const id = document.getElementById('reagContactadoNoAgendaId').value;
+  const obs = document.getElementById('reagContactadoNoAgendaObservacion').value.trim();
+  if (!obs) { alert('Ingresa el motivo por el que no agenda cita'); return; }
+  try {
+    await api(`/reagendamiento/${id}/contactado-no-agenda`, {
+      method: 'POST',
+      body: JSON.stringify({ observacion: obs })
+    });
+    cerrarModal('modalReagContactadoNoAgenda');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
 function abrirReagModalRechazar(idCaso) {
   document.getElementById('reagRechazarId').value = idCaso;
   document.getElementById('reagRechazarHora').value = '';
@@ -707,6 +806,7 @@ async function guardarReagRechazoMalIngreso() {
 
 function abrirReagModalRespuesta(idCaso) {
   document.getElementById('reagRespuestaId').value = idCaso;
+  document.getElementById('reagRespuestaTipificacion').value = '';
   document.getElementById('reagRespuestaTexto').value = '';
   document.getElementById('reagRespuestaSeAgendo').value = '';
   document.getElementById('reagRespuestaFechaHora').value = '';
@@ -722,15 +822,17 @@ function mostrarBloqueRespuestaSegunAgendo() {
 
 async function guardarReagRespuesta() {
   const id = document.getElementById('reagRespuestaId').value;
+  const tipificacion = document.getElementById('reagRespuestaTipificacion').value;
   const resultado = document.getElementById('reagRespuestaTexto').value.trim();
   const seAgendo = document.getElementById('reagRespuestaSeAgendo').value;
   const fechaHora = document.getElementById('reagRespuestaFechaHora').value;
+  if (!tipificacion) { alert('Selecciona la tipificación de contacto'); return; }
   if (!seAgendo) { alert('Indica si se agendó la cita'); return; }
   if (seAgendo === 'SI' && !fechaHora) { alert('Ingresa la fecha y hora del agendamiento'); return; }
   try {
     await api(`/reagendamiento/${id}/respuesta-agencia`, {
       method: 'POST',
-      body: JSON.stringify({ resultado: resultado || undefined, se_agendo: seAgendo, hora_agendada: seAgendo === 'SI' ? fechaHora : undefined })
+      body: JSON.stringify({ tipificacion, resultado: resultado || undefined, se_agendo: seAgendo, hora_agendada: seAgendo === 'SI' ? fechaHora : undefined })
     });
     cerrarModal('modalReagRespuesta');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
@@ -966,7 +1068,7 @@ async function importarExcelBot(event) {
       }
     }
 
-    const color = errores.length ? '#f0ad4e' : '#17b6a7';
+    const color = errores.length ? '#f0ad4e' : '#00A86B';
     resultado.innerHTML = `
       <div style="background:white; border:1px solid ${color}; border-left:4px solid ${color}; border-radius:8px; padding:12px 14px; font-size:13px;">
         <b>${ok} folio${ok !== 1 ? 's' : ''} importado${ok !== 1 ? 's' : ''} correctamente</b>

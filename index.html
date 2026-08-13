@@ -163,6 +163,16 @@
 </div>
 
 <!-- ==================== REAGENDAMIENTO: Modales ==================== -->
+<div class="modal-overlay" id="modalResumenKpi">
+  <div class="modal" style="width:820px; max-width:92vw; padding:28px;">
+    <h3 id="tituloResumenKpi">Resumen</h3>
+    <div id="cuerpoResumenKpi" style="max-height:60vh; overflow-y:auto; overflow-x:auto; margin-top:12px;"></div>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalResumenKpi')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalReagSolicitud">
   <div class="modal">
     <h3>Solicitud de reagendamiento (sin cita disponible)</h3>
@@ -286,6 +296,36 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalReagContactadoAgenda">
+  <div class="modal">
+    <h3>Contactado — Sí agenda cita</h3>
+    <input type="hidden" id="reagContactadoAgendaId">
+    <p style="font-size:12px; color:#888;">Se contactó al paciente en primera línea (sin derivar a agencia) y aceptó una nueva hora.</p>
+    <label>Fecha y hora agendada para el paciente</label>
+    <input type="datetime-local" id="reagContactadoAgendaHora">
+    <label>Observaciones (opcional)</label>
+    <textarea id="reagContactadoAgendaObservacion" rows="3" placeholder="Observaciones del caso..."></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagContactadoAgenda')">Cancelar</button>
+      <button class="btn" onclick="guardarReagContactadoAgenda()">Cerrar caso (cita agendada)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReagContactadoNoAgenda">
+  <div class="modal">
+    <h3>Contactado — No agenda cita</h3>
+    <input type="hidden" id="reagContactadoNoAgendaId">
+    <p style="font-size:12px; color:#888;">Se contactó al paciente en primera línea (sin derivar a agencia), pero no quiso o no pudo agendar.</p>
+    <label>Motivo (observación obligatoria)</label>
+    <textarea id="reagContactadoNoAgendaObservacion" rows="3" placeholder="Ej: Paciente indica que llamará más tarde para agendar..."></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagContactadoNoAgenda')">Cancelar</button>
+      <button class="btn" onclick="guardarReagContactadoNoAgenda()">Cerrar caso (no agenda)</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalReagRechazar">
   <div class="modal">
     <h3>Rechazar solicitud — Agendar directamente</h3>
@@ -304,16 +344,15 @@
 
 <div class="modal-overlay" id="modalReagRechazarMalIngreso">
   <div class="modal">
-    <h3>Rechazar por mal ingreso</h3>
+    <h3>Mal ingreso</h3>
     <input type="hidden" id="reagMalIngresoId">
     <p style="font-size:12px; color:#888;">Usa esto cuando el folio no debió llegar a este flujo. El caso se cierra de inmediato y queda registrado para trazabilidad de folios mal derivados.</p>
     <label>Motivo del mal ingreso</label>
     <select id="reagMalIngresoMotivo">
       <option value="">Selecciona un motivo</option>
-      <option value="Paciente de medicina del trabajo">Paciente de medicina del trabajo</option>
-      <option value="Paciente no ley">Paciente no ley</option>
-      <option value="Paciente ley con reposo">Paciente ley con reposo</option>
-      <option value="Otros">Otros</option>
+      <option value="Medicina del Trabajo">Medicina del Trabajo</option>
+      <option value="Paciente Ley con reposo">Paciente Ley con reposo</option>
+      <option value="Paciente No ley">Paciente No ley</option>
     </select>
     <div class="acciones">
       <button class="btn secundario" onclick="cerrarModal('modalReagRechazarMalIngreso')">Cancelar</button>
@@ -372,6 +411,12 @@
   <div class="modal">
     <h3 id="tituloModalRespuesta">Registrar respuesta primera línea</h3>
     <input type="hidden" id="reagRespuestaId">
+    <label>Tipificación de contacto</label>
+    <select id="reagRespuestaTipificacion">
+      <option value="">Selecciona una opción</option>
+      <option value="CONTACTO_3_INTENTOS">Contacto logrado — 3 intentos</option>
+      <option value="CONTACTADO">Contactado</option>
+    </select>
     <label>¿Se agendó la cita?</label>
     <select id="reagRespuestaSeAgendo" onchange="mostrarBloqueRespuestaSegunAgendo()">
       <option value="">Selecciona una opción</option>
