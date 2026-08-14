@@ -389,8 +389,6 @@ function renderReagDetalle(caso) {
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoAgenda('${caso.id_caso}')">Contactado — Sí agenda cita</button>` : ''}
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoNoAgenda('${caso.id_caso}')">Contactado — No agenda cita</button>` : ''}
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>` : ''}
-      ${caso.estado === 'EN_PROCESO_BACK' ? `<button class="btn" style="background-color:#28a745; border-color:#28a745;" onclick="abrirModalContactadoBackend('${caso.id_caso}')">✓ Contactado (Resuelto)</button>` : ''}
-      ${caso.estado === 'EN_PROCESO_BACK' ? `<button class="btn secundario" style="background-color:#dc3545; color:white; border-color:#dc3545;" onclick="abrirModalNoContactadoBackend('${caso.id_caso}')">✗ No contactado</button>` : ''}
       <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Escalar a agencia</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Mal ingreso</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalDerivado('${caso.id_caso}')">Rechazo mal derivado</button>
@@ -431,10 +429,10 @@ function renderReagDetalle(caso) {
         </div>
       </div>
 
-      ${(acciones || esAdmin || caso.agencia) ? `
+      ${(acciones || esAdmin || caso.agencia || ['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(caso.estado)) ? `
       <div style="flex:0 0 220px; min-width:200px; display:flex; flex-direction:column; gap:8px;">
         <h3 style="color:var(--azul-marino); font-size:15px;">Acciones</h3>
-        ${caso.agencia ? panelIntentos(caso) : ''}
+        ${(caso.agencia || ['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(caso.estado)) ? panelIntentos(caso) : ''}
         ${acciones ? `<div style="display:flex; flex-direction:column; gap:8px;">${acciones}</div>` : ''}
         ${esAdmin ? `
           <div style="margin-top:12px; border-top:1px solid #eee; padding-top:12px;">
@@ -991,92 +989,6 @@ async function cerrarReagFinal(idCaso) {
   try {
     await api(`/reagendamiento/${idCaso}/cerrar-final`, { method: 'POST' });
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-}
-
-/* ============================================================
-   MODAL: CONTACTADO — Resolver sin derivar a agencia (EN_PROCESO_BACK)
-   ============================================================ */
-function abrirModalContactadoBackend(idCaso) {
-  document.getElementById('contactadoBackendIdCaso').value = idCaso;
-  document.getElementById('contactadoBackendFecha').value = new Date().toISOString().slice(0,10);
-  document.getElementById('contactadoBackendResultado').value = '';
-  document.getElementById('contactadoBackendObservaciones').value = '';
-  document.getElementById('modalContactadoBackend').classList.add('activo');
-}
-
-async function guardarContactadoBackend() {
-  const idCaso = document.getElementById('contactadoBackendIdCaso').value;
-  const fecha = document.getElementById('contactadoBackendFecha').value;
-  const resultado = document.getElementById('contactadoBackendResultado').value.trim();
-  const observaciones = document.getElementById('contactadoBackendObservaciones').value.trim();
-
-  if (!resultado) {
-    alert('Ingresa el resultado del contacto');
-    return;
-  }
-
-  try {
-    const body = {
-      fecha,
-      resultado,
-      observaciones: observaciones || undefined
-    };
-    await api(`/reagendamiento/${idCaso}/contactado-backend`, { 
-      method: 'POST', 
-      body: JSON.stringify(body) 
-    });
-    cerrarModal('modalContactadoBackend');
-    if (idReagDetalleActual) {
-      abrirReagDetalle(idReagDetalleActual);
-    } else {
-      renderReagendamiento();
-    }
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-}
-
-/* ============================================================
-   MODAL: NO CONTACTADO — No se logró contactar (EN_PROCESO_BACK)
-   ============================================================ */
-function abrirModalNoContactadoBackend(idCaso) {
-  document.getElementById('noContactadoBackendIdCaso').value = idCaso;
-  document.getElementById('noContactadoBackendFecha').value = new Date().toISOString().slice(0,10);
-  document.getElementById('noContactadoBackendMotivo').value = '';
-  document.getElementById('noContactadoBackendObservaciones').value = '';
-  document.getElementById('modalNoContactadoBackend').classList.add('activo');
-}
-
-async function guardarNoContactadoBackend() {
-  const idCaso = document.getElementById('noContactadoBackendIdCaso').value;
-  const fecha = document.getElementById('noContactadoBackendFecha').value;
-  const motivo = document.getElementById('noContactadoBackendMotivo').value.trim();
-  const observaciones = document.getElementById('noContactadoBackendObservaciones').value.trim();
-
-  if (!motivo) {
-    alert('Ingresa el motivo por el cual no se contactó');
-    return;
-  }
-
-  try {
-    const body = {
-      fecha,
-      motivo,
-      observaciones: observaciones || undefined
-    };
-    await api(`/reagendamiento/${idCaso}/no-contactado-backend`, { 
-      method: 'POST', 
-      body: JSON.stringify(body) 
-    });
-    cerrarModal('modalNoContactadoBackend');
-    if (idReagDetalleActual) {
-      abrirReagDetalle(idReagDetalleActual);
-    } else {
-      renderReagendamiento();
-    }
   } catch (err) {
     alert('Error: ' + err.message);
   }

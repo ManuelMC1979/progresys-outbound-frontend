@@ -474,53 +474,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL: Contactado Backend (EN_PROCESO_BACK) ==================== -->
-<div class="modal-overlay" id="modalContactadoBackend">
-  <div class="modal">
-    <h3>✓ Contactado — Resuelto sin derivación</h3>
-    <input type="hidden" id="contactadoBackendIdCaso">
-    <p style="font-size:12px; color:#888; margin-top:-8px; margin-bottom:14px;">Registra que el folio fue contactado y se resolvió sin necesidad de derivación a agencia.</p>
-    <label>Fecha del contacto</label>
-    <input type="date" id="contactadoBackendFecha">
-    <label>Resultado del contacto</label>
-    <input type="text" id="contactadoBackendResultado" placeholder="Ej: CITA CONFIRMADA, INFORMACIÓN ENTREGADA" required>
-    <label>Observaciones (opcional)</label>
-    <textarea id="contactadoBackendObservaciones" rows="3" placeholder="Detalles adicionales del contacto..."></textarea>
-    <div class="acciones">
-      <button class="btn secundario" onclick="cerrarModal('modalContactadoBackend')">Cancelar</button>
-      <button class="btn" style="background-color:#28a745; border-color:#28a745;" onclick="guardarContactadoBackend()">Guardar contactado</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MODAL: No Contactado Backend (EN_PROCESO_BACK) ==================== -->
-<div class="modal-overlay" id="modalNoContactadoBackend">
-  <div class="modal">
-    <h3>✗ No contactado — No se logró comunicación</h3>
-    <input type="hidden" id="noContactadoBackendIdCaso">
-    <p style="font-size:12px; color:#888; margin-top:-8px; margin-bottom:14px;">Registra que no se logró contactar al paciente en el periodo disponible.</p>
-    <label>Fecha del intento</label>
-    <input type="date" id="noContactadoBackendFecha">
-    <label>Motivo (obligatorio)</label>
-    <select id="noContactadoBackendMotivo">
-      <option value="">Selecciona un motivo</option>
-      <option value="NO CONTESTA">NO CONTESTA</option>
-      <option value="OCUPADO">OCUPADO</option>
-      <option value="BUZÓN DE VOZ">BUZÓN DE VOZ</option>
-      <option value="TELÉFONO APAGADO">TELÉFONO APAGADO</option>
-      <option value="NÚMERO ERRÓNEO">NÚMERO ERRÓNEO</option>
-      <option value="RECHAZA GESTIÓN">RECHAZA GESTIÓN</option>
-      <option value="OTRO">OTRO</option>
-    </select>
-    <label>Observaciones (opcional)</label>
-    <textarea id="noContactadoBackendObservaciones" rows="3" placeholder="Detalles adicionales..."></textarea>
-    <div class="acciones">
-      <button class="btn secundario" onclick="cerrarModal('modalNoContactadoBackend')">Cancelar</button>
-      <button class="btn" style="background-color:#dc3545; border-color:#dc3545;" onclick="guardarNoContactadoBackend()">Registrar no contactado</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modalReabrirFolio">
   <div class="modal">
     <h3 id="tituloModalReabrirFolio">Reabrir / Anular folio</h3>
