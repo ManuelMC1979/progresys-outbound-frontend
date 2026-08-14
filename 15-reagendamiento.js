@@ -390,6 +390,7 @@ function renderReagDetalle(caso) {
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoNoAgenda('${caso.id_caso}')">Contactado — No agenda cita</button>` : ''}
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>` : ''}
       ${caso.estado === 'EN_PROCESO_BACK' ? `<button class="btn" style="background-color:#28a745; border-color:#28a745;" onclick="abrirModalContactadoBackend('${caso.id_caso}')">✓ Contactado (Resuelto)</button>` : ''}
+      ${caso.estado === 'EN_PROCESO_BACK' ? `<button class="btn secundario" style="background-color:#dc3545; color:white; border-color:#dc3545;" onclick="abrirModalNoContactadoBackend('${caso.id_caso}')">✗ No contactado</button>` : ''}
       <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Escalar a agencia</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Mal ingreso</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalDerivado('${caso.id_caso}')">Rechazo mal derivado</button>
@@ -1028,6 +1029,49 @@ async function guardarContactadoBackend() {
       body: JSON.stringify(body) 
     });
     cerrarModal('modalContactadoBackend');
+    if (idReagDetalleActual) {
+      abrirReagDetalle(idReagDetalleActual);
+    } else {
+      renderReagendamiento();
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   MODAL: NO CONTACTADO — No se logró contactar (EN_PROCESO_BACK)
+   ============================================================ */
+function abrirModalNoContactadoBackend(idCaso) {
+  document.getElementById('noContactadoBackendIdCaso').value = idCaso;
+  document.getElementById('noContactadoBackendFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('noContactadoBackendMotivo').value = '';
+  document.getElementById('noContactadoBackendObservaciones').value = '';
+  document.getElementById('modalNoContactadoBackend').classList.add('activo');
+}
+
+async function guardarNoContactadoBackend() {
+  const idCaso = document.getElementById('noContactadoBackendIdCaso').value;
+  const fecha = document.getElementById('noContactadoBackendFecha').value;
+  const motivo = document.getElementById('noContactadoBackendMotivo').value.trim();
+  const observaciones = document.getElementById('noContactadoBackendObservaciones').value.trim();
+
+  if (!motivo) {
+    alert('Ingresa el motivo por el cual no se contactó');
+    return;
+  }
+
+  try {
+    const body = {
+      fecha,
+      motivo,
+      observaciones: observaciones || undefined
+    };
+    await api(`/reagendamiento/${idCaso}/no-contactado-backend`, { 
+      method: 'POST', 
+      body: JSON.stringify(body) 
+    });
+    cerrarModal('modalNoContactadoBackend');
     if (idReagDetalleActual) {
       abrirReagDetalle(idReagDetalleActual);
     } else {
