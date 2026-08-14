@@ -6,6 +6,20 @@ let idReagDetalleActual = null;
 let casosReagCache = {};
 let idEscalarActual = null;
 let casosReagUltimo = [];
+let reagFiltroFechaDesde = '';
+let reagFiltroFechaHasta = '';
+
+function aplicarFiltroFechasReag() {
+  reagFiltroFechaDesde = document.getElementById('reagFiltroFechaDesde').value;
+  reagFiltroFechaHasta = document.getElementById('reagFiltroFechaHasta').value;
+  renderReagendamiento();
+}
+
+function limpiarFiltroFechasReag() {
+  reagFiltroFechaDesde = '';
+  reagFiltroFechaHasta = '';
+  renderReagendamiento();
+}
 
 async function cargarCatalogoAgencias() {
   try { catalogoAgencias = await api('/reagendamiento/agencias'); } catch (e) { catalogoAgencias = []; }
@@ -64,7 +78,10 @@ async function renderReagendamiento() {
   const esEjecutivo = usuarioActual.rol === 'EJECUTIVO';
   const esAdmin = usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
 
-  const casosReag = await api('/reagendamiento');
+  const qsReag = new URLSearchParams();
+  if (reagFiltroFechaDesde) qsReag.set('fecha_desde', reagFiltroFechaDesde);
+  if (reagFiltroFechaHasta) qsReag.set('fecha_hasta', reagFiltroFechaHasta);
+  const casosReag = await api(`/reagendamiento${qsReag.toString() ? '?' + qsReag.toString() : ''}`);
   casosReagUltimo = casosReag;
 
   const bannerSap = `
@@ -135,6 +152,13 @@ async function renderReagendamiento() {
       <div class="toolbar">
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
         <button class="btn secundario" onclick="exportarReagExcel()">Descargar reporte</button>
+        <span style="margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label style="font-size:12px; color:#666; margin:0;">Folios ingresados — Desde</label>
+          <input type="date" id="reagFiltroFechaDesde" value="${reagFiltroFechaDesde}" onchange="aplicarFiltroFechasReag()">
+          <label style="font-size:12px; color:#666; margin:0;">Hasta</label>
+          <input type="date" id="reagFiltroFechaHasta" value="${reagFiltroFechaHasta}" onchange="aplicarFiltroFechasReag()">
+          ${(reagFiltroFechaDesde || reagFiltroFechaHasta) ? `<button class="btn secundario" onclick="limpiarFiltroFechasReag()">Limpiar filtro</button>` : ''}
+        </span>
       </div>
 
       <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>

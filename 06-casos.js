@@ -1,14 +1,39 @@
 /* ============================================================
    CASOS
    ============================================================ */
+let casosFiltroFechaDesde = '';
+let casosFiltroFechaHasta = '';
+
+function aplicarFiltroFechasCasos() {
+  casosFiltroFechaDesde = document.getElementById('casosFiltroFechaDesde').value;
+  casosFiltroFechaHasta = document.getElementById('casosFiltroFechaHasta').value;
+  renderCasos();
+}
+
+function limpiarFiltroFechasCasos() {
+  casosFiltroFechaDesde = '';
+  casosFiltroFechaHasta = '';
+  renderCasos();
+}
+
 async function renderCasos() {
-  const casos = await api('/casos');
+  const qs = new URLSearchParams();
+  if (casosFiltroFechaDesde) qs.set('fecha_desde', casosFiltroFechaDesde);
+  if (casosFiltroFechaHasta) qs.set('fecha_hasta', casosFiltroFechaHasta);
+  const casos = await api(`/casos${qs.toString() ? '?' + qs.toString() : ''}`);
   const contenido = document.getElementById('contenido');
 
   contenido.innerHTML = `
+    <div class="toolbar">
+      <label style="font-size:12px; color:#666; margin:0;">Folios ingresados — Desde</label>
+      <input type="date" id="casosFiltroFechaDesde" value="${casosFiltroFechaDesde}" onchange="aplicarFiltroFechasCasos()">
+      <label style="font-size:12px; color:#666; margin:0;">Hasta</label>
+      <input type="date" id="casosFiltroFechaHasta" value="${casosFiltroFechaHasta}" onchange="aplicarFiltroFechasCasos()">
+      ${(casosFiltroFechaDesde || casosFiltroFechaHasta) ? `<button class="btn secundario" onclick="limpiarFiltroFechasCasos()">Limpiar filtro</button>` : ''}
+    </div>
     <table>
       <thead><tr>
-        <th>Folio</th><th>RUT</th><th>Ejecutivo</th><th>Área</th><th>Intentos</th>
+        <th>Folio</th><th>RUT</th><th>Fecha ingreso</th><th>Ejecutivo</th><th>Área</th><th>Intentos</th>
         <th>Estado</th><th>SLA</th><th>Acciones</th>
       </tr></thead>
       <tbody>
@@ -16,6 +41,7 @@ async function renderCasos() {
           <tr>
             <td><a href="#" onclick="abrirDetalleCaso('${c.id_caso}'); return false;" style="color:var(--azul-corp); font-weight:600;">${c.folio || c.id_caso.slice(0,8)}</a></td>
             <td>${c.rut_paciente}</td>
+            <td>${c.fecha_recepcion ? formatFecha(c.fecha_recepcion) : '—'}</td>
             <td>${c.ejecutivo || '—'}</td>
             <td>${c.area || '—'}</td>
             <td>${c.numero_intentos}</td>
