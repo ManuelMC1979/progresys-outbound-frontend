@@ -3,16 +3,23 @@
    ============================================================ */
 let casosFiltroFechaDesde = '';
 let casosFiltroFechaHasta = '';
+let casosFiltroRut = '';
 
 function aplicarFiltroFechasCasos() {
   casosFiltroFechaDesde = document.getElementById('casosFiltroFechaDesde').value;
   casosFiltroFechaHasta = document.getElementById('casosFiltroFechaHasta').value;
+  casosFiltroRut = document.getElementById('casosFiltroRut').value.trim();
   renderCasos();
+}
+
+function buscarRutCasosOnEnter(event) {
+  if (event.key === 'Enter') { event.preventDefault(); aplicarFiltroFechasCasos(); }
 }
 
 function limpiarFiltroFechasCasos() {
   casosFiltroFechaDesde = '';
   casosFiltroFechaHasta = '';
+  casosFiltroRut = '';
   renderCasos();
 }
 
@@ -20,16 +27,20 @@ async function renderCasos() {
   const qs = new URLSearchParams();
   if (casosFiltroFechaDesde) qs.set('fecha_desde', casosFiltroFechaDesde);
   if (casosFiltroFechaHasta) qs.set('fecha_hasta', casosFiltroFechaHasta);
+  if (casosFiltroRut) qs.set('rut', casosFiltroRut);
   const casos = await api(`/casos${qs.toString() ? '?' + qs.toString() : ''}`);
   const contenido = document.getElementById('contenido');
 
   contenido.innerHTML = `
     <div class="toolbar">
+      <label style="font-size:12px; color:#666; margin:0;">Buscar RUT</label>
+      <input type="text" id="casosFiltroRut" value="${casosFiltroRut}" placeholder="Ej: 12.345.678-9" onkeydown="buscarRutCasosOnEnter(event)" style="width:140px;">
+      <button class="btn secundario" onclick="aplicarFiltroFechasCasos()">Buscar</button>
       <label style="font-size:12px; color:#666; margin:0;">Folios ingresados — Desde</label>
       <input type="date" id="casosFiltroFechaDesde" value="${casosFiltroFechaDesde}" onchange="aplicarFiltroFechasCasos()">
       <label style="font-size:12px; color:#666; margin:0;">Hasta</label>
       <input type="date" id="casosFiltroFechaHasta" value="${casosFiltroFechaHasta}" onchange="aplicarFiltroFechasCasos()">
-      ${(casosFiltroFechaDesde || casosFiltroFechaHasta) ? `<button class="btn secundario" onclick="limpiarFiltroFechasCasos()">Limpiar filtro</button>` : ''}
+      ${(casosFiltroFechaDesde || casosFiltroFechaHasta || casosFiltroRut) ? `<button class="btn secundario" onclick="limpiarFiltroFechasCasos()">Limpiar filtro</button>` : ''}
     </div>
     <table>
       <thead><tr>

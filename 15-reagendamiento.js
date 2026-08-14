@@ -8,16 +8,23 @@ let idEscalarActual = null;
 let casosReagUltimo = [];
 let reagFiltroFechaDesde = '';
 let reagFiltroFechaHasta = '';
+let reagFiltroRut = '';
 
 function aplicarFiltroFechasReag() {
   reagFiltroFechaDesde = document.getElementById('reagFiltroFechaDesde').value;
   reagFiltroFechaHasta = document.getElementById('reagFiltroFechaHasta').value;
+  reagFiltroRut = document.getElementById('reagFiltroRut').value.trim();
   renderReagendamiento();
+}
+
+function buscarRutReagOnEnter(event) {
+  if (event.key === 'Enter') { event.preventDefault(); aplicarFiltroFechasReag(); }
 }
 
 function limpiarFiltroFechasReag() {
   reagFiltroFechaDesde = '';
   reagFiltroFechaHasta = '';
+  reagFiltroRut = '';
   renderReagendamiento();
 }
 
@@ -81,6 +88,7 @@ async function renderReagendamiento() {
   const qsReag = new URLSearchParams();
   if (reagFiltroFechaDesde) qsReag.set('fecha_desde', reagFiltroFechaDesde);
   if (reagFiltroFechaHasta) qsReag.set('fecha_hasta', reagFiltroFechaHasta);
+  if (reagFiltroRut) qsReag.set('rut', reagFiltroRut);
   const casosReag = await api(`/reagendamiento${qsReag.toString() ? '?' + qsReag.toString() : ''}`);
   casosReagUltimo = casosReag;
 
@@ -153,11 +161,14 @@ async function renderReagendamiento() {
         <button class="btn secundario" onclick="abrirReagModalNuevaAgencia()">+ Nueva agencia</button>
         <button class="btn secundario" onclick="exportarReagExcel()">Descargar reporte</button>
         <span style="margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label style="font-size:12px; color:#666; margin:0;">Buscar RUT</label>
+          <input type="text" id="reagFiltroRut" value="${reagFiltroRut}" placeholder="Ej: 12.345.678-9" onkeydown="buscarRutReagOnEnter(event)" style="width:140px;">
+          <button class="btn secundario" onclick="aplicarFiltroFechasReag()">Buscar</button>
           <label style="font-size:12px; color:#666; margin:0;">Folios ingresados — Desde</label>
           <input type="date" id="reagFiltroFechaDesde" value="${reagFiltroFechaDesde}" onchange="aplicarFiltroFechasReag()">
           <label style="font-size:12px; color:#666; margin:0;">Hasta</label>
           <input type="date" id="reagFiltroFechaHasta" value="${reagFiltroFechaHasta}" onchange="aplicarFiltroFechasReag()">
-          ${(reagFiltroFechaDesde || reagFiltroFechaHasta) ? `<button class="btn secundario" onclick="limpiarFiltroFechasReag()">Limpiar filtro</button>` : ''}
+          ${(reagFiltroFechaDesde || reagFiltroFechaHasta || reagFiltroRut) ? `<button class="btn secundario" onclick="limpiarFiltroFechasReag()">Limpiar filtro</button>` : ''}
         </span>
       </div>
 
