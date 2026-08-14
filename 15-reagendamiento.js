@@ -373,6 +373,8 @@ function renderReagDetalle(caso) {
     acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta primera línea</button>`;
   } else if (caso.estado === 'PENDIENTE_CIERRE_ADMIN' && esAdmin) {
     acciones = `<button class="btn" onclick="cerrarReagFinal('${caso.id_caso}')">Cerrar caso</button>`;
+  } else if (caso.estado === 'PENDIENTE_ADMIN' && usuarioActual.rol === 'EJECUTIVO') {
+    acciones = `<button class="btn secundario" onclick="abrirReagModalEditarDatos('${caso.id_caso}')">Editar datos</button>`;
   }
 
   contenido.innerHTML = `
@@ -827,6 +829,42 @@ async function guardarReagRechazoMalDerivado() {
       body: JSON.stringify({ sub_motivo: subMotivo, hora_agendada: hora, observacion: obs || undefined })
     });
     cerrarModal('modalReagRechazarMalDerivado');
+    if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirReagModalEditarDatos(idCaso) {
+  const caso = casosReagCache[idCaso];
+  if (!caso) return;
+  document.getElementById('reagEditarId').value = idCaso;
+  document.getElementById('reagEditarRut').value = caso.rut_paciente || '';
+  document.getElementById('reagEditarNombre').value = caso.nombre_paciente || '';
+  document.getElementById('reagEditarCorreo').value = caso.correo || '';
+  document.getElementById('reagEditarTelefono').value = caso.telefono || '';
+  document.getElementById('reagEditarTipoAtencion').value = caso.tipo_atencion || 'CONTROL';
+  document.getElementById('reagEditarAgencia').innerHTML = '<option value="">Selecciona una agencia</option>' +
+    catalogoAgencias.map(a => `<option value="${a.id_agencia}" ${caso.id_agencia === a.id_agencia ? 'selected' : ''}>${a.nombre}</option>`).join('');
+  document.getElementById('reagEditarMotivo').value = caso.motivo || '';
+  document.getElementById('modalReagEditarDatos').classList.add('activo');
+}
+
+async function guardarReagEditarDatos() {
+  const id = document.getElementById('reagEditarId').value;
+  const body = {
+    rut_paciente: document.getElementById('reagEditarRut').value.trim(),
+    nombre_paciente: document.getElementById('reagEditarNombre').value.trim(),
+    correo: document.getElementById('reagEditarCorreo').value.trim(),
+    telefono: document.getElementById('reagEditarTelefono').value.trim(),
+    tipo_atencion: document.getElementById('reagEditarTipoAtencion').value,
+    id_agencia: Number(document.getElementById('reagEditarAgencia').value) || undefined,
+    motivo: document.getElementById('reagEditarMotivo').value.trim()
+  };
+  if (!body.rut_paciente || !body.tipo_atencion) { alert('El RUT y el tipo de atención son obligatorios'); return; }
+  try {
+    await api(`/reagendamiento/${id}/editar-datos`, { method: 'PUT', body: JSON.stringify(body) });
+    cerrarModal('modalReagEditarDatos');
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
   } catch (err) {
     alert('Error: ' + err.message);

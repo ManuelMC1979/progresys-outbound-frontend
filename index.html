@@ -257,6 +257,46 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalReagEditarDatos">
+  <div class="modal">
+    <h3>Editar datos del folio</h3>
+    <input type="hidden" id="reagEditarId">
+    <p style="font-size:12px; color:#888;">Puedes corregir estos datos mientras el folio siga pendiente de revisión por Administración. Una vez que Administración lo tome, esta opción ya no estará disponible.</p>
+    <label>RUT del paciente</label>
+    <input type="text" id="reagEditarRut" placeholder="Ej: 12.345.678-9">
+    <label>Nombre del paciente</label>
+    <input type="text" id="reagEditarNombre">
+    <div class="fila2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div><label>Correo</label><input type="email" id="reagEditarCorreo"></div>
+      <div><label>Teléfono</label><input type="text" id="reagEditarTelefono"></div>
+    </div>
+    <label>Tipo de atención</label>
+    <select id="reagEditarTipoAtencion">
+      <option value="CONTROL">Atención Primaria</option>
+      <option value="CURACIÓN">Curación</option>
+    </select>
+    <label>Agencia</label>
+    <select id="reagEditarAgencia"></select>
+    <label>Motivo informado por el paciente</label>
+    <select id="reagEditarMotivo">
+      <option value="">Selecciona un motivo</option>
+      <option value="Enfermedad">Enfermedad</option>
+      <option value="Hospitalización o urgencia">Hospitalización o urgencia</option>
+      <option value="Fallecimiento de familiar directo o indirecto pero cercano">Fallecimiento de familiar directo o indirecto pero cercano</option>
+      <option value="Cuidado de otra persona">Cuidado de otra persona</option>
+      <option value="Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio">Citación judicial, tribunal, fiscalía, comisaría u organismo obligatorio</option>
+      <option value="Constancia de Carabineros">Constancia de Carabineros</option>
+      <option value="Problema de transporte ACHS">Problema de transporte ACHS</option>
+      <option value="Trámite personal urgente">Trámite personal urgente</option>
+      <option value="Error de agendamiento/información">Error de agendamiento/información</option>
+    </select>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalReagEditarDatos')">Cancelar</button>
+      <button class="btn" onclick="guardarReagEditarDatos()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalScriptLlamada">
   <div class="modal" style="max-width:640px; max-height:85vh; overflow-y:auto;">
     <h3>Script de llamada — Reagendamiento de cita STP</h3>
