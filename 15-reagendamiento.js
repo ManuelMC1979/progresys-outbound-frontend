@@ -389,6 +389,7 @@ function renderReagDetalle(caso) {
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoAgenda('${caso.id_caso}')">Contactado — Sí agenda cita</button>` : ''}
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalContactadoNoAgenda('${caso.id_caso}')">Contactado — No agenda cita</button>` : ''}
       ${!(caso.origen === 'BOT' || caso.ingresado_bot) ? `<button class="btn secundario" onclick="abrirReagModalRechazar('${caso.id_caso}')">Rechazar y agendar</button>` : ''}
+      ${caso.estado === 'EN_PROCESO_BACK' ? `<button class="btn" style="background-color:#28a745; border-color:#28a745;" onclick="abrirModalContactadoBackend('${caso.id_caso}')">✓ Contactado (Resuelto)</button>` : ''}
       <button class="btn" onclick="abrirEscalarConScript('${caso.id_caso}')">Escalar a agencia</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Mal ingreso</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalDerivado('${caso.id_caso}')">Rechazo mal derivado</button>
@@ -989,6 +990,49 @@ async function cerrarReagFinal(idCaso) {
   try {
     await api(`/reagendamiento/${idCaso}/cerrar-final`, { method: 'POST' });
     if (idReagDetalleActual) { abrirReagDetalle(idReagDetalleActual); } else { renderReagendamiento(); }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+/* ============================================================
+   MODAL: CONTACTADO — Resolver sin derivar a agencia (EN_PROCESO_BACK)
+   ============================================================ */
+function abrirModalContactadoBackend(idCaso) {
+  document.getElementById('contactadoBackendIdCaso').value = idCaso;
+  document.getElementById('contactadoBackendFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('contactadoBackendResultado').value = '';
+  document.getElementById('contactadoBackendObservaciones').value = '';
+  document.getElementById('modalContactadoBackend').classList.add('activo');
+}
+
+async function guardarContactadoBackend() {
+  const idCaso = document.getElementById('contactadoBackendIdCaso').value;
+  const fecha = document.getElementById('contactadoBackendFecha').value;
+  const resultado = document.getElementById('contactadoBackendResultado').value.trim();
+  const observaciones = document.getElementById('contactadoBackendObservaciones').value.trim();
+
+  if (!resultado) {
+    alert('Ingresa el resultado del contacto');
+    return;
+  }
+
+  try {
+    const body = {
+      fecha,
+      resultado,
+      observaciones: observaciones || undefined
+    };
+    await api(`/reagendamiento/${idCaso}/contactado-backend`, { 
+      method: 'POST', 
+      body: JSON.stringify(body) 
+    });
+    cerrarModal('modalContactadoBackend');
+    if (idReagDetalleActual) {
+      abrirReagDetalle(idReagDetalleActual);
+    } else {
+      renderReagendamiento();
+    }
   } catch (err) {
     alert('Error: ' + err.message);
   }
