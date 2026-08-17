@@ -82,7 +82,7 @@ function mostrarApp() {
   ['btnDashboard', 'btnCorreos', 'btnAlertas'].forEach(id => {
     document.getElementById(id).style.display = '';
   });
-  ['btnReagConfiguracion', 'btnChecklistSnl', 'btnValidadorMedico', 'btnAuditoria',
+  ['btnReagConfiguracion', 'btnChecklistSnl', 'btnValidadorMedico', 'btnPanelContactabilidad', 'btnAuditoria',
    'btnReportes', 'btnImportar', 'btnEjecutivos', 'btnConfiguracion', 'btnUsuarios'
   ].forEach(id => {
     document.getElementById(id).style.display = 'none';
@@ -108,6 +108,7 @@ function mostrarApp() {
     document.getElementById('btnImportar').style.display = 'block';
     document.getElementById('btnChecklistSnl').style.display = 'block';
     document.getElementById('btnValidadorMedico').style.display = 'block';
+    document.getElementById('btnPanelContactabilidad').style.display = 'block';
   }
   document.getElementById('btnEjecutivos').style.display = 'block';
   if (usuarioActual.rol === 'ADMINISTRADOR') {
