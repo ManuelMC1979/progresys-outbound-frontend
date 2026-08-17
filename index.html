@@ -273,7 +273,7 @@
     <label>Tipo de atención</label>
     <select id="reagEditarTipoAtencion">
       <option value="CONTROL">Atención Primaria</option>
-      <option value="CURACIÓN">Curación</option>
+      <option value="CURACIÓN">Enfermería</option>
     </select>
     <label>Agencia</label>
     <select id="reagEditarAgencia"></select>
@@ -579,9 +579,39 @@
     <input type="text" id="neRut" placeholder="Ej: 12345678-9">
     <label>Correo (opcional)</label>
     <input type="email" id="neEmail">
+    <label>Servicio</label>
+    <select id="neServicio">
+      <option value="">Selecciona un servicio</option>
+      <option value="VSC">VSC</option>
+      <option value="Área Trabajador">Área Trabajador</option>
+    </select>
     <div class="acciones">
       <button class="btn secundario" onclick="cerrarModal('modalNuevoEjecutivo')">Cancelar</button>
       <button class="btn" onclick="guardarNuevoEjecutivo()">Crear ejecutivo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: Editar ejecutivo ==================== -->
+<div class="modal-overlay" id="modalEditarEjecutivo">
+  <div class="modal">
+    <h3>Editar ejecutivo</h3>
+    <input type="hidden" id="eeId">
+    <label>Nombre completo</label>
+    <input type="text" id="eeNombre" placeholder="Ej: Camila Torres">
+    <label>RUT (opcional)</label>
+    <input type="text" id="eeRut" placeholder="Ej: 12345678-9">
+    <label>Correo (opcional)</label>
+    <input type="email" id="eeEmail">
+    <label>Servicio</label>
+    <select id="eeServicio">
+      <option value="">Selecciona un servicio</option>
+      <option value="VSC">VSC</option>
+      <option value="Área Trabajador">Área Trabajador</option>
+    </select>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalEditarEjecutivo')">Cancelar</button>
+      <button class="btn" onclick="guardarEditarEjecutivo()">Guardar cambios</button>
     </div>
   </div>
 </div>

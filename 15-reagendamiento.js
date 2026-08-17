@@ -33,7 +33,7 @@ async function cargarCatalogoAgencias() {
 }
 
 function etiquetaTipoAtencion(valor) {
-  const mapa = { CONTROL: 'Atención Primaria', 'CURACIÓN': 'Curación' };
+  const mapa = { CONTROL: 'Atención Primaria', 'CURACIÓN': 'Enfermería' };
   return mapa[valor] || valor;
 }
 
@@ -109,7 +109,7 @@ async function renderReagendamiento() {
       <div style="font-size:20px;">ℹ️</div>
       <div style="font-size:13px; color:var(--azul-marino); line-height:1.7;">
         <b>Recuerda:</b> solo gestionamos pacientes de la Red, no del Hospital.<br>
-        <b>En línea con el paciente:</b> horizonte de cita hasta <b>72 horas hábiles</b> para Atención Primaria y <b>48 horas hábiles</b> para Curaciones.<br>
+        <b>En línea con el paciente:</b> horizonte de cita hasta <b>72 horas hábiles</b> para Atención Primaria y <b>48 horas hábiles</b> para Enfermería.<br>
         <b>Al escalar al back office:</b> plazo aproximado de respuesta de <b>72 horas hábiles</b>.
       </div>
     </div>
@@ -126,7 +126,7 @@ async function renderReagendamiento() {
         <label>Tipo de atención</label>
         <select id="reagTipoAtencion">
           <option value="CONTROL">Atención Primaria</option>
-          <option value="CURACIÓN">Curación</option>
+          <option value="CURACIÓN">Enfermería</option>
         </select>
         <label>¿Se logró reagendar en el momento? (Reagendamiento Ley)</label>
         <select id="reagLey" onchange="mostrarBloqueReagSegunLey()">
@@ -277,15 +277,17 @@ function renderIntentosMini(intentos) {
 
 function tablaReag(lista, contexto) {
   if (lista.length === 0) return '<p style="color:#999;">Sin casos en esta sección.</p>';
+  const mostrarEjecutivo = contexto !== 'ejecutivo';
   return `
     <table>
-      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th><th>¿Se agendó?</th><th>Fecha agendada</th><th>Estado</th><th>SLA</th><th style="text-align:center;">Intentos</th><th></th></tr></thead>
+      <thead><tr><th>Folio</th><th>RUT</th><th>Tipo</th>${mostrarEjecutivo ? '<th>Ejecutivo</th><th>Servicio</th>' : ''}<th>¿Se agendó?</th><th>Fecha agendada</th><th>Estado</th><th>SLA</th><th style="text-align:center;">Intentos</th><th></th></tr></thead>
       <tbody>
         ${lista.map(c => { casosReagCache[c.id_caso] = c; return `
           <tr>
             <td style="cursor:pointer;" onclick='abrirReagDetalle(${JSON.stringify(c.id_caso)})'>${celdaFolio(c)}</td>
             <td>${c.rut_paciente}</td>
             <td>${etiquetaTipoAtencion(c.tipo_atencion)}</td>
+            ${mostrarEjecutivo ? `<td>${c.ejecutivo || '—'}</td><td>${c.servicio_ejecutivo || '—'}</td>` : ''}
             <td>${(c.reagendamiento_ley === 'SI' || c.hora_agendada) ? 'Sí' : 'No'}</td>
             <td>${c.hora_agendada ? formatFecha(c.hora_agendada) : '—'}</td>
             <td>${badgeEstadoReag(c.estado)}</td>
@@ -419,6 +421,7 @@ function renderReagDetalle(caso) {
     <div class="kpis" style="margin-bottom:24px;">
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.rut_paciente}</div><div class="etiqueta">RUT paciente</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.ejecutivo || '—'}</div><div class="etiqueta">Ejecutivo</div></div>
+      <div class="kpi-card"><div class="valor" style="font-size:16px;">${caso.servicio_ejecutivo || '—'}</div><div class="etiqueta">Servicio</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${badgeEstadoReag(caso.estado)}</div><div class="etiqueta">Estado</div></div>
       <div class="kpi-card"><div class="valor" style="font-size:16px;">${(caso.reagendamiento_ley === 'SI' || caso.hora_agendada) ? 'Sí' : 'No'}</div><div class="etiqueta">¿Se agendó?</div></div>
       ${caso.hora_agendada ? `<div class="kpi-card"><div class="valor" style="font-size:13px;">${formatFecha(caso.hora_agendada)}</div><div class="etiqueta">Fecha y hora agendada</div></div>` : ''}

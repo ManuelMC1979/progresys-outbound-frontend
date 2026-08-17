@@ -15,12 +15,16 @@ async function renderEjecutivos() {
   contenido.innerHTML = `
     ${usuarioActual.rol === 'ADMINISTRADOR' ? `<div class="toolbar"><button class="btn" onclick="abrirModalNuevoEjecutivo()">+ Nuevo ejecutivo</button></div>` : ''}
     <table>
-      <thead><tr><th>Ejecutivo</th><th></th></tr></thead>
+      <thead><tr><th>Ejecutivo</th><th>Servicio</th><th></th></tr></thead>
       <tbody>
         ${ejecutivos.map(e => `
           <tr>
             <td>${e.nombre}</td>
-            <td><button class="btn secundario" onclick="abrirFichaEjecutivo('${e.id_ejecutivo}', '${e.nombre.replace(/'/g, "\\'")}')">Ver ficha</button></td>
+            <td>${e.servicio || '—'}</td>
+            <td>
+              <button class="btn secundario" onclick="abrirFichaEjecutivo('${e.id_ejecutivo}', '${e.nombre.replace(/'/g, "\\'")}')">Ver ficha</button>
+              ${usuarioActual.rol === 'ADMINISTRADOR' ? `<button class="btn secundario" onclick='abrirModalEditarEjecutivo(${JSON.stringify(e)})'>Editar</button>` : ''}
+            </td>
           </tr>
         `).join('')}
       </tbody>

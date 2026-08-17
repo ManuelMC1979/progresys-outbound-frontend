@@ -51,6 +51,7 @@ function abrirModalNuevoEjecutivo() {
   document.getElementById('neNombre').value = '';
   document.getElementById('neRut').value = '';
   document.getElementById('neEmail').value = '';
+  document.getElementById('neServicio').value = '';
   document.getElementById('modalNuevoEjecutivo').classList.add('activo');
 }
 
@@ -58,13 +59,44 @@ async function guardarNuevoEjecutivo() {
   const body = {
     nombre: document.getElementById('neNombre').value.trim(),
     rut: document.getElementById('neRut').value.trim() || undefined,
-    email: document.getElementById('neEmail').value.trim() || undefined
+    email: document.getElementById('neEmail').value.trim() || undefined,
+    servicio: document.getElementById('neServicio').value
   };
   if (!body.nombre) { alert('El nombre es obligatorio'); return; }
+  if (!body.servicio) { alert('Selecciona el servicio del ejecutivo'); return; }
   try {
     await api('/ejecutivos', { method: 'POST', body: JSON.stringify(body) });
     cerrarModal('modalNuevoEjecutivo');
     await cargarCatalogos(); // refresca la lista de ejecutivos disponible en toda la app
+    renderEjecutivos();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function abrirModalEditarEjecutivo(e) {
+  document.getElementById('eeId').value = e.id_ejecutivo;
+  document.getElementById('eeNombre').value = e.nombre || '';
+  document.getElementById('eeRut').value = e.rut || '';
+  document.getElementById('eeEmail').value = e.email || '';
+  document.getElementById('eeServicio').value = e.servicio || '';
+  document.getElementById('modalEditarEjecutivo').classList.add('activo');
+}
+
+async function guardarEditarEjecutivo() {
+  const id = document.getElementById('eeId').value;
+  const body = {
+    nombre: document.getElementById('eeNombre').value.trim(),
+    rut: document.getElementById('eeRut').value.trim() || undefined,
+    email: document.getElementById('eeEmail').value.trim() || undefined,
+    servicio: document.getElementById('eeServicio').value
+  };
+  if (!body.nombre) { alert('El nombre es obligatorio'); return; }
+  if (!body.servicio) { alert('Selecciona el servicio del ejecutivo'); return; }
+  try {
+    await api(`/ejecutivos/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    cerrarModal('modalEditarEjecutivo');
+    await cargarCatalogos();
     renderEjecutivos();
   } catch (err) {
     alert('Error: ' + err.message);
