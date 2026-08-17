@@ -68,6 +68,16 @@
           </div>
         </div>
 
+        <div class="menu-grupo menu-grupo--checklist-snl" data-grupo="checklistSnl">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">☑</span><span>Check List SNL</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="checklistSnl" id="btnChecklistSnl" style="display:none;">Check List SNL</button>
+          </div>
+        </div>
+
         <div class="menu-grupo menu-grupo--control" data-grupo="control">
           <div class="menu-grupo-header">
             <div class="menu-grupo-titulo"><span class="menu-icon">♧</span><span>Control y alertas</span></div>
@@ -718,6 +728,36 @@
   </div>
 </div>
 
+<!-- ==================== MODAL: Nuevo registro Check List SNL ==================== -->
+<div class="modal-overlay" id="modalNuevoChecklistSnl">
+  <div class="modal">
+    <h3>Nuevo registro — Check List SNL</h3>
+    <label>Fecha</label>
+    <input type="date" id="cksnlFecha">
+    <label>Profesional</label>
+    <input type="text" id="cksnlProfesional" placeholder="Ej: Alejandra Hoffmann Campos">
+    <label>Ejecutivo a cargo</label>
+    <input type="text" id="cksnlEjecutivo" placeholder="Ej: Catherine Aedo">
+    <div class="fila2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div><label>Fecha inicio bloqueo</label><input type="date" id="cksnlFechaInicio"></div>
+      <div><label>Fecha fin bloqueo</label><input type="date" id="cksnlFechaFin"></div>
+    </div>
+    <label style="margin-top:10px;">Checklist diario</label>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+      <label style="display:flex; align-items:center; gap:8px; font-weight:normal; margin:0;"><input type="checkbox" id="cksnlCheckCitas" style="width:auto; padding:0;"> ¿Citas bloqueadas?</label>
+      <label style="display:flex; align-items:center; gap:8px; font-weight:normal; margin:0;"><input type="checkbox" id="cksnlCheckPrint" style="width:auto; padding:0;"> ¿Print + respaldo correo?</label>
+      <label style="display:flex; align-items:center; gap:8px; font-weight:normal; margin:0;"><input type="checkbox" id="cksnlCheckRespondio" style="width:auto; padding:0;"> ¿Se respondió correo?</label>
+      <label style="display:flex; align-items:center; gap:8px; font-weight:normal; margin:0;"><input type="checkbox" id="cksnlCheckCorreo1830" style="width:auto; padding:0;"> ¿Correo 18:30 sin pendientes?</label>
+    </div>
+    <label>Notas / observaciones</label>
+    <textarea id="cksnlNotas" rows="2" placeholder="Ej: Citas del mismo día"></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalNuevoChecklistSnl')">Cancelar</button>
+      <button class="btn" onclick="guardarChecklistSnl()">Guardar registro</button>
+    </div>
+  </div>
+</div>
+
 
 <script src="00-config.js"></script>
 <script src="01-login.js"></script>
@@ -738,6 +778,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="16-campanita.js"></script>
 <script src="17-utilidades.js"></script>
+<script src="18-checklist-snl.js"></script>
 
 </body>
 </html>

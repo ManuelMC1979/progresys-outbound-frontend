@@ -36,7 +36,7 @@ document.querySelectorAll('.menu-grupo-header').forEach(header => {
   });
 });
 
-const titulos = { dashboard: 'Dashboard', correos: 'Correos', casos: 'Casos', alertas: 'Centro de Alertas', auditoria: 'Auditoría', reportes: 'Reportes', importar: 'Importar desde Excel', ejecutivos: 'Ejecutivos', configuracion: 'Configuración del sistema', usuarios: 'Gestión de usuarios', reagendamiento: 'Reagendamiento', reagConfiguracion: 'Configuración SLA — Reagendamiento' };
+const titulos = { dashboard: 'Dashboard', correos: 'Correos', casos: 'Casos', alertas: 'Centro de Alertas', checklistSnl: 'Check List SNL', auditoria: 'Auditoría', reportes: 'Reportes', importar: 'Importar desde Excel', ejecutivos: 'Ejecutivos', configuracion: 'Configuración del sistema', usuarios: 'Gestión de usuarios', reagendamiento: 'Reagendamiento', reagConfiguracion: 'Configuración SLA — Reagendamiento' };
 
 async function cargarVista(vista) {
   document.getElementById('tituloVista').textContent = titulos[vista];
@@ -47,6 +47,7 @@ async function cargarVista(vista) {
     if (vista === 'correos') await renderCorreos();
     if (vista === 'casos') await renderCasos();
     if (vista === 'alertas') await renderAlertas();
+    if (vista === 'checklistSnl') await renderChecklistSnl();
     if (vista === 'auditoria') await renderAuditoria();
     if (vista === 'reportes') await renderReportes();
     if (vista === 'importar') await renderImportar();
