@@ -94,6 +94,7 @@ function mostrarApp() {
     document.getElementById('btnReportes').style.display = 'block';
     document.getElementById('btnImportar').style.display = 'block';
     document.getElementById('btnChecklistSnl').style.display = 'block';
+    document.getElementById('btnValidadorMedico').style.display = 'block';
   }
   document.getElementById('btnEjecutivos').style.display = 'block';
   if (usuarioActual.rol === 'ADMINISTRADOR') {
