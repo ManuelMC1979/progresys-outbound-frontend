@@ -76,6 +76,19 @@ function mostrarApp() {
   document.getElementById('usuarioRol').textContent = usuarioActual.rol;
   mostrarPantallaBienvenida();
 
+  // Reset completo del menú a su estado por defecto antes de aplicar las reglas
+  // del rol actual. Sin esto, si un usuario cambia de cuenta (logout/login) sin
+  // recargar la página, quedan visibles los botones que había mostrado el rol anterior.
+  ['btnDashboard', 'btnCorreos', 'btnAlertas'].forEach(id => {
+    document.getElementById(id).style.display = '';
+  });
+  ['btnReagConfiguracion', 'btnChecklistSnl', 'btnValidadorMedico', 'btnAuditoria',
+   'btnReportes', 'btnImportar', 'btnEjecutivos', 'btnConfiguracion', 'btnUsuarios'
+  ].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('campanaWrap').style.display = '';
+
   if (usuarioActual.rol === 'EJECUTIVO') {
     // El Ejecutivo solo gestiona sus propios casos y reagendamientos: se ocultan el resto de los módulos
     document.getElementById('btnDashboard').style.display = 'none';
