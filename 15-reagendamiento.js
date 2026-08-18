@@ -189,7 +189,7 @@ async function renderReagendamiento() {
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos_back')"><div class="valor">${dashReag.resueltos_back}</div><div class="etiqueta">Resueltos — Back</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('cerrados_no_agenda')"><div class="valor">${dashReag.cerrados_no_agenda}</div><div class="etiqueta">Cerrados — no agenda cita</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('cerrados_sin_contacto')"><div class="valor">${dashReag.cerrados_sin_contacto}</div><div class="etiqueta">Cerrados sin contacto</div></div>
-        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos')"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resueltos</div></div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos')"><div class="valor">${dashReag.resueltos}</div><div class="etiqueta">Resuelto Agencia</div></div>
       </div>
 
       <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:24px;">
@@ -322,7 +322,7 @@ const KPI_REAG_TITULOS = {
   resueltos_back: 'Resueltos — Back',
   cerrados_no_agenda: 'Cerrados — no agenda cita',
   cerrados_sin_contacto: 'Cerrados sin contacto',
-  resueltos: 'Resueltos',
+  resueltos: 'Resuelto Agencia',
 };
 
 function filtrarPorKpiReag(criterio) {
