@@ -175,7 +175,7 @@ async function renderReagendamiento() {
       <h3 style="color:var(--azul-marino);">Dashboard Reagendamiento</h3>
       <div class="kpis" style="margin-bottom:20px;">
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('total')"><div class="valor">${dashReag.total}</div><div class="etiqueta">Total solicitudes</div></div>
-        <div class="kpi-card" title="Intentos con contacto confirmado (${dashReag.contactados} de ${dashReag.total_intentos} intentos)"><div class="valor">${dashReag.pct_contactabilidad}%</div><div class="etiqueta">% Contactabilidad</div></div>
+        <div class="kpi-card ${dashReag.pct_contactabilidad >= 85 ? 'exito' : 'alerta'}" title="Intentos con contacto confirmado (${dashReag.contactados} de ${dashReag.total_intentos} intentos) — meta 85%"><div class="valor">${dashReag.pct_contactabilidad}%</div><div class="etiqueta">% Contactabilidad</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('ley_si')"><div class="valor">${dashReag.ley_si}</div><div class="etiqueta">¿Se agendó? - Sí</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('ley_no')"><div class="valor">${dashReag.ley_no}</div><div class="etiqueta">¿Se agendó? - No</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('pendientes')"><div class="valor">${dashReag.pendientes}</div><div class="etiqueta">Pendientes revisión</div></div>

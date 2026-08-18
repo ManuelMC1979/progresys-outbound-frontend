@@ -245,6 +245,8 @@
   .kpi-card .etiqueta { font-size: 12px; color: #888; margin-top: 4px; }
   .kpi-card.alerta { border-left-color: var(--rojo); }
   .kpi-card.alerta .valor { color: var(--rojo); }
+  .kpi-card.exito { border-left-color: var(--verde); }
+  .kpi-card.exito .valor { color: var(--verde); }
 
   /* Tabla */
   table {
