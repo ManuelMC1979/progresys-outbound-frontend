@@ -110,7 +110,7 @@ async function renderReagendamiento() {
       <div style="font-size:13px; color:var(--azul-marino); line-height:1.7;">
         <b>Recuerda:</b> solo gestionamos pacientes de la Red, no del Hospital.<br>
         <b>En línea con el paciente:</b> horizonte de cita hasta <b>72 horas hábiles</b> para Atención Primaria y <b>48 horas hábiles</b> para Enfermería.<br>
-        <b>Al escalar al back office:</b> plazo aproximado de respuesta de <b>72 horas hábiles</b>.
+        <b>Al escalar al back office:</b> plazo aproximado de respuesta de <b>24 horas hábiles</b>.
       </div>
     </div>
   `;
