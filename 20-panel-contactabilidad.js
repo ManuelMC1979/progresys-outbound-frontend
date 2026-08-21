@@ -1171,6 +1171,7 @@ const PC = (function () {
     document.getElementById('m-contactado').value = '';
     fillModalSelect(document.getElementById('m-ejecutivo'), ejecutivos, '');
     fillModalSelect(document.getElementById('m-proceso'), procesos, '');
+    asegurarProcesosFijos(document.getElementById('m-proceso'));
     document.getElementById('modal-overlay').classList.add('open');
   }
   function editRecord(idx) {
@@ -1185,6 +1186,7 @@ const PC = (function () {
     document.getElementById('m-tipo').value = r.tipo_cita || 'BLOQUEO';
     fillModalSelect(document.getElementById('m-ejecutivo'), ejecutivos, r.ejecutivo);
     fillModalSelect(document.getElementById('m-proceso'), procesos, r.proceso);
+    asegurarProcesosFijos(document.getElementById('m-proceso'));
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -1441,6 +1443,7 @@ const PC = (function () {
   function openBulkModal() {
     fillModalSelect(document.getElementById('bm-ejecutivo'), ejecutivos, '');
     fillModalSelect(document.getElementById('bm-proceso'), procesos, '');
+    asegurarProcesosFijos(document.getElementById('bm-proceso'));
     document.getElementById('bm-fecha').value = new Date().toISOString().slice(0, 10);
     document.getElementById('bm-ruts').value = '';
     document.getElementById('bm-estado').value = '';
