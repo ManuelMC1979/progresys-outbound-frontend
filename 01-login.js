@@ -96,11 +96,6 @@ function mostrarApp() {
     document.getElementById('btnAlertas').style.display = 'none';
     document.getElementById('btnEjecutivos').style.display = 'none';
     document.getElementById('campanaWrap').style.display = 'none';
-    // Excepción puntual: Melissa Salgado tiene acceso a estos dos módulos aunque su rol sea Ejecutivo
-    if (usuarioActual.email === 'melissa.salgado@progresys.local') {
-      document.getElementById('btnPanelContactabilidad').style.display = 'block';
-      document.getElementById('btnValidadorMedico').style.display = 'block';
-    }
     ocultarGruposVacios();
     cargarCatalogos();
     cargarCatalogoAgencias();

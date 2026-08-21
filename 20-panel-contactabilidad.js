@@ -946,6 +946,14 @@ const PC = (function () {
   }
 
   // BASE DE DATOS
+  const PROCESOS_FIJOS = ['CORREOS GESTIONADOS', 'CORREOS PENDIENTES DE HOY', 'NO CONFIRMA CITA'];
+  function asegurarProcesosFijos(sel) {
+    PROCESOS_FIJOS.forEach(v => {
+      if (![...sel.options].some(o => o.value === v)) {
+        const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o);
+      }
+    });
+  }
   function initBaseFilters() {
     populateSelect(document.getElementById('fb-estado'), estados);
     populateSelect(document.getElementById('fb-ejecutivo'), ejecutivos);
@@ -953,12 +961,8 @@ const PC = (function () {
     populateSelect(document.getElementById('fb-tipo'), tipos);
     populateSelect(document.getElementById('bulk-proceso-sel'), procesos);
     populateSelect(document.getElementById('bulk-ejecutivo-sel'), ejecutivos);
-    const bps = document.getElementById('bulk-proceso-sel');
-    ['CORREOS GESTIONADOS', 'CORREOS PENDIENTES DE HOY', 'NO CONFIRMA CITA'].forEach(v => {
-      if (![...bps.options].some(o => o.value === v)) {
-        const o = document.createElement('option'); o.value = v; o.textContent = v; bps.appendChild(o);
-      }
-    });
+    asegurarProcesosFijos(document.getElementById('fb-proceso'));
+    asegurarProcesosFijos(document.getElementById('bulk-proceso-sel'));
   }
 
   function onRowCheck(cb) {
