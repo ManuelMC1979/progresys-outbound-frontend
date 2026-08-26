@@ -46,6 +46,7 @@ function badgeEstadoReag(estado) {
     RECHAZADO_MAL_INGRESO: ['Rechazado — mal ingreso', 'alerta'],
     RECHAZADO_MAL_DERIVADO: ['Rechazado — mal derivado', 'alerta'],
     ESCALADO_AGENCIA: ['Escalado a agencia', 'celeste'],
+    SIN_RESPUESTA_AGENCIA: ['Sin respuesta agencia', 'alerta'],
     PENDIENTE_CIERRE_ADMIN: ['Pendiente de cierre (Admin)', 'gestion'],
     RESUELTO: ['Resuelto por agencia', 'celeste'],
     RESUELTO_PRIMERA_LINEA: ['Resuelto — primera línea', 'gestionado'],
@@ -181,8 +182,9 @@ async function renderReagendamiento() {
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('pendientes')"><div class="valor">${dashReag.pendientes}</div><div class="etiqueta">Pendientes revisión</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('en_proceso_back')"><div class="valor">${dashReag.en_proceso_back}</div><div class="etiqueta">En proceso Back</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('escalados')"><div class="valor">${dashReag.escalados}</div><div class="etiqueta">Escalados a agencia</div></div>
+        <div class="kpi-card alerta" style="cursor:pointer;" onclick="mostrarResumenKpi('sin_respuesta_agencia')"><div class="valor">${dashReag.sin_respuesta_agencia}</div><div class="etiqueta">Sin respuesta agencia (+24h)</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('pendientes_cierre')"><div class="valor">${dashReag.pendientes_cierre}</div><div class="etiqueta">Pendientes de cierre (Admin)</div></div>
-        <div class="kpi-card alerta" style="cursor:pointer;" onclick="mostrarResumenKpi('sla_vencidos')"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia + dashReag.vencidos_cierre}</div><div class="etiqueta">SLA vencidos</div></div>
+        <div class="kpi-card alerta" style="cursor:pointer;" onclick="mostrarResumenKpi('sla_vencidos')"><div class="valor">${dashReag.vencidos_admin + dashReag.vencidos_agencia + dashReag.vencidos_cierre + dashReag.sin_respuesta_agencia}</div><div class="etiqueta">SLA vencidos</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('rechazados')"><div class="valor">${dashReag.rechazados}</div><div class="etiqueta">Rechazados</div></div>
         <div class="kpi-card alerta" style="cursor:pointer;" onclick="mostrarResumenKpi('rechazados_mal_ingreso')"><div class="valor">${dashReag.rechazados_mal_ingreso}</div><div class="etiqueta">Mal ingreso (trazabilidad)</div></div>
         <div class="kpi-card" style="cursor:pointer;" onclick="mostrarResumenKpi('resueltos_primera_linea')"><div class="valor">${dashReag.resueltos_primera_linea}</div><div class="etiqueta">Resueltos primera línea</div></div>
@@ -223,7 +225,7 @@ async function renderReagendamiento() {
             <span style="font-size:11px; color:#888; font-weight:400;">▼ ver</span>
           </summary>
           <div style="padding:0 16px 16px;">
-            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RECHAZADO_MAL_DERIVADO','RESUELTO','RESUELTO_PRIMERA_LINEA','RESUELTO_BACK','CERRADO_NO_AGENDA','CERRADO_SIN_CONTACTO','ANULADO'].includes(c.estado)), 'historial')}
+            ${tablaReag(casosReag.filter(c => ['CERRADO','RECHAZADO','RECHAZADO_MAL_INGRESO','RECHAZADO_MAL_DERIVADO','RESUELTO','RESUELTO_PRIMERA_LINEA','RESUELTO_BACK','CERRADO_NO_AGENDA','CERRADO_SIN_CONTACTO','ANULADO','SIN_RESPUESTA_AGENCIA'].includes(c.estado)), 'historial')}
           </div>
         </details>
       </div>
@@ -314,6 +316,7 @@ const KPI_REAG_TITULOS = {
   pendientes: 'Pendientes revisión',
   en_proceso_back: 'En proceso Back',
   escalados: 'Escalados a agencia',
+  sin_respuesta_agencia: 'Sin respuesta agencia (+24h)',
   pendientes_cierre: 'Pendientes de cierre (Admin)',
   sla_vencidos: 'SLA vencidos',
   rechazados: 'Rechazados',
@@ -335,10 +338,12 @@ function filtrarPorKpiReag(criterio) {
     case 'pendientes': return casosReagUltimo.filter(c => ['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(c.estado));
     case 'en_proceso_back': return casosReagUltimo.filter(c => c.estado === 'EN_PROCESO_BACK');
     case 'escalados': return casosReagUltimo.filter(c => c.estado === 'ESCALADO_AGENCIA');
+    case 'sin_respuesta_agencia': return casosReagUltimo.filter(c => c.estado === 'SIN_RESPUESTA_AGENCIA');
     case 'pendientes_cierre': return casosReagUltimo.filter(c => c.estado === 'PENDIENTE_CIERRE_ADMIN');
     case 'sla_vencidos': return casosReagUltimo.filter(c =>
       (['PENDIENTE_ADMIN', 'EN_PROCESO_BACK'].includes(c.estado) && vencido(c.fecha_limite_admin)) ||
       (c.estado === 'ESCALADO_AGENCIA' && vencido(c.fecha_limite_agencia)) ||
+      (c.estado === 'SIN_RESPUESTA_AGENCIA') ||
       (c.estado === 'PENDIENTE_CIERRE_ADMIN' && vencido(c.fecha_limite_cierre_admin))
     );
     case 'rechazados': return casosReagUltimo.filter(c => c.estado === 'RECHAZADO');
@@ -408,7 +413,7 @@ function renderReagDetalle(caso) {
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalIngreso('${caso.id_caso}')">Mal ingreso</button>
       <button class="btn secundario" style="color:var(--rojo); border-color:var(--rojo);" onclick="abrirReagModalRechazarMalDerivado('${caso.id_caso}')">Rechazo mal derivado</button>
     `;
-  } else if (caso.estado === 'ESCALADO_AGENCIA' && esAdmin) {
+  } else if (['ESCALADO_AGENCIA', 'SIN_RESPUESTA_AGENCIA'].includes(caso.estado) && esAdmin) {
     acciones = `<button class="btn" onclick="abrirReagModalRespuesta('${caso.id_caso}')">Registrar respuesta primera línea</button>`;
   } else if (caso.estado === 'PENDIENTE_CIERRE_ADMIN' && esAdmin) {
     acciones = `<button class="btn" onclick="cerrarReagFinal('${caso.id_caso}')">Cerrar caso</button>`;
