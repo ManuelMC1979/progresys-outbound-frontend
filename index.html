@@ -78,6 +78,16 @@
           </div>
         </div>
 
+        <div class="menu-grupo menu-grupo--checklist-outbot" data-grupo="checklistOutbot">
+          <div class="menu-grupo-header">
+            <div class="menu-grupo-titulo"><span class="menu-icon">☑</span><span>Check List OUT-BOT</span></div>
+            <span class="menu-grupo-flecha">›</span>
+          </div>
+          <div class="menu-grupo-contenido">
+            <button data-vista="checklistOutbot" id="btnChecklistOutbot" style="display:none;">Check List OUT-BOT</button>
+          </div>
+        </div>
+
         <div class="menu-grupo menu-grupo--validador-medico" data-grupo="validadorMedico">
           <div class="menu-grupo-header">
             <div class="menu-grupo-titulo"><span class="menu-icon">🩺</span><span>Validador Médico</span></div>
@@ -779,6 +789,29 @@
 </div>
 
 
+<!-- ==================== MODAL: Nuevo registro Check List OUT-BOT ==================== -->
+<div class="modal-overlay" id="modalNuevoChecklistOutbot">
+  <div class="modal">
+    <h3>Nuevo registro — Check List OUT-BOT</h3>
+    <label>Fecha que llegó el correo</label>
+    <input type="date" id="ckoFechaCorreo">
+    <label>Cantidad de RUT</label>
+    <input type="number" id="ckoCantidadRut" min="0" placeholder="Ej: 5">
+    <label>Cuándo se respondió el correo</label>
+    <input type="date" id="ckoFechaRespuesta">
+    <label>Asunto del correo</label>
+    <input type="text" id="ckoAsunto" placeholder="Ej: Solicitud de gestión pacientes VSC">
+    <label>Área que solicita</label>
+    <select id="ckoArea"></select>
+    <label>Notas</label>
+    <textarea id="ckoNotas" rows="2" placeholder="Observaciones adicionales"></textarea>
+    <div class="acciones">
+      <button class="btn secundario" onclick="cerrarModal('modalNuevoChecklistOutbot')">Cancelar</button>
+      <button class="btn" onclick="guardarChecklistOutbot()">Guardar registro</button>
+    </div>
+  </div>
+</div>
+
 <script src="00-config.js"></script>
 <script src="01-login.js"></script>
 <script src="02-api-helper.js"></script>
@@ -801,6 +834,7 @@
 <script src="18-checklist-snl.js"></script>
 <script src="19-validador-medico.js"></script>
 <script src="20-panel-contactabilidad.js"></script>
+<script src="21-checklist-outbot.js"></script>
 
 </body>
 </html>

@@ -82,7 +82,7 @@ function mostrarApp() {
   ['btnDashboard', 'btnCorreos', 'btnAlertas'].forEach(id => {
     document.getElementById(id).style.display = '';
   });
-  ['btnReagConfiguracion', 'btnChecklistSnl', 'btnValidadorMedico', 'btnPanelContactabilidad', 'btnAuditoria',
+  ['btnReagConfiguracion', 'btnChecklistSnl', 'btnChecklistOutbot', 'btnValidadorMedico', 'btnPanelContactabilidad', 'btnAuditoria',
    'btnReportes', 'btnImportar', 'btnEjecutivos', 'btnConfiguracion', 'btnUsuarios'
   ].forEach(id => {
     document.getElementById(id).style.display = 'none';
@@ -107,6 +107,7 @@ function mostrarApp() {
     document.getElementById('btnReportes').style.display = 'block';
     document.getElementById('btnImportar').style.display = 'block';
     document.getElementById('btnChecklistSnl').style.display = 'block';
+    document.getElementById('btnChecklistOutbot').style.display = 'block';
     document.getElementById('btnValidadorMedico').style.display = 'block';
     document.getElementById('btnPanelContactabilidad').style.display = 'block';
   }
