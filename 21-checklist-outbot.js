@@ -14,7 +14,7 @@ async function renderChecklistOutbot() {
     <table>
       <thead>
         <tr>
-          <th>Fecha llegada correo</th>
+          <th>Fecha y hora llegada correo</th>
           <th>Cantidad de RUT</th>
           <th>Fecha respuesta correo</th>
           <th>Asunto del correo</th>
@@ -26,7 +26,7 @@ async function renderChecklistOutbot() {
       <tbody>
         ${checklistOutbotData.map(r => `
           <tr>
-            <td>${formatearFechaCorta(r.fecha_correo)}</td>
+            <td>${formatFecha(r.fecha_correo)}</td>
             <td>${r.cantidad_rut}</td>
             <td>${formatearFechaCorta(r.fecha_respuesta)}</td>
             <td>${r.asunto || '—'}</td>
@@ -54,7 +54,7 @@ async function eliminarChecklistOutbot(id) {
 function abrirModalNuevoChecklistOutbot() {
   if (!catalogos) { alert('Aún se están cargando los catálogos, intenta de nuevo en un segundo.'); return; }
 
-  document.getElementById('ckoFechaCorreo').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('ckoFechaCorreo').value = new Date().toISOString().slice(0, 16);
   document.getElementById('ckoCantidadRut').value = '';
   document.getElementById('ckoFechaRespuesta').value = '';
   document.getElementById('ckoAsunto').value = '';
@@ -67,12 +67,12 @@ async function guardarChecklistOutbot() {
   const fechaCorreo = document.getElementById('ckoFechaCorreo').value;
   const cantidadRut = document.getElementById('ckoCantidadRut').value;
   const asunto = document.getElementById('ckoAsunto').value.trim();
-  if (!fechaCorreo) { alert('La fecha de llegada del correo es obligatoria'); return; }
+  if (!fechaCorreo) { alert('La fecha y hora de llegada del correo son obligatorias'); return; }
   if (!cantidadRut) { alert('La cantidad de RUT es obligatoria'); return; }
   if (!asunto) { alert('El asunto del correo es obligatorio'); return; }
 
   const body = {
-    fecha_correo: fechaCorreo,
+    fecha_correo: new Date(fechaCorreo).toISOString(),
     cantidad_rut: Number(cantidadRut),
     fecha_respuesta: document.getElementById('ckoFechaRespuesta').value || undefined,
     asunto,
