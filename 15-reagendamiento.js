@@ -47,7 +47,7 @@ function badgeEstadoReag(estado) {
     RECHAZADO_MAL_DERIVADO: ['Rechazado — mal derivado', 'alerta'],
     ESCALADO_AGENCIA: ['Escalado a agencia', 'celeste'],
     PENDIENTE_CIERRE_ADMIN: ['Pendiente de cierre (Admin)', 'gestion'],
-    RESUELTO: ['Resuelto por agencia', 'gestionado'],
+    RESUELTO: ['Resuelto por agencia', 'celeste'],
     RESUELTO_PRIMERA_LINEA: ['Resuelto — primera línea', 'gestionado'],
     RESUELTO_BACK: ['Resuelto — Back', 'gestionado'],
     CERRADO_NO_AGENDA: ['Cerrado — no agenda cita', 'cerrado'],
