@@ -1,0 +1,685 @@
+<!-- =====================================================
+  MÓDULO: Check List OUT-BOT
+  Archivo: checklist-outbot.html
+  Sistema: PROGRESYS OUTBOUND
+  Solo visible para rol: Administrador
+  ===================================================== -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Check List OUT-BOT | PROGRESYS OUTBOUND</title>
+  <style>
+    /* ── Variables ACHS ── */
+    :root {
+      --azul:   #0066CC;
+      --verde:  #00A651;
+      --azul-oscuro: #004F9E;
+      --gris-bg: #F4F6F9;
+      --gris-borde: #D1D9E0;
+      --texto: #1A2B3C;
+      --blanco: #FFFFFF;
+      --rojo: #DC3545;
+      --amarillo: #FFC107;
+      --shadow: 0 2px 12px rgba(0,102,204,0.10);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gris-bg); color: var(--texto); }
+
+    /* ── Header ── */
+    .page-header {
+      background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+      color: var(--blanco);
+      padding: 20px 28px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .page-header .icon { font-size: 2rem; }
+    .page-header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.5px; }
+    .page-header p { font-size: 0.82rem; opacity: 0.85; margin-top: 2px; }
+
+    /* ── Layout ── */
+    .container { max-width: 1200px; margin: 28px auto; padding: 0 18px; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 18px;
+    }
+    .toolbar-left { display: flex; gap: 10px; flex-wrap: wrap; }
+    .filtro-input {
+      border: 1.5px solid var(--gris-borde); border-radius: 7px;
+      padding: 8px 13px; font-size: 0.88rem; background: var(--blanco);
+      transition: border-color .2s;
+    }
+    .filtro-input:focus { border-color: var(--azul); outline: none; }
+
+    /* ── Botones ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 7px; border: none;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all .2s;
+    }
+    .btn-primary   { background: var(--azul); color: var(--blanco); }
+    .btn-primary:hover { background: var(--azul-oscuro); }
+    .btn-success   { background: var(--verde); color: var(--blanco); }
+    .btn-success:hover { filter: brightness(.9); }
+    .btn-warning   { background: var(--amarillo); color: #333; }
+    .btn-warning:hover { filter: brightness(.92); }
+    .btn-danger    { background: var(--rojo); color: var(--blanco); }
+    .btn-danger:hover  { filter: brightness(.88); }
+    .btn-outline   { background: transparent; color: var(--azul); border: 1.5px solid var(--azul); }
+    .btn-outline:hover { background: var(--azul); color: var(--blanco); }
+    .btn-sm { padding: 5px 11px; font-size: 0.8rem; }
+
+    /* ── Tabla ── */
+    .card {
+      background: var(--blanco); border-radius: 12px;
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card-header {
+      background: var(--azul); color: var(--blanco);
+      padding: 13px 20px; font-size: 0.95rem; font-weight: 700;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .tabla-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead { background: #EAF1FB; }
+    thead th {
+      padding: 11px 14px; text-align: left; font-weight: 700;
+      color: var(--azul-oscuro); border-bottom: 2px solid var(--azul);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--gris-borde); transition: background .15s; }
+    tbody tr:hover { background: #F0F7FF; }
+    tbody td { padding: 10px 14px; vertical-align: middle; }
+
+    /* ── Estado badges ── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.76rem; font-weight: 700; white-space: nowrap;
+    }
+    .badge-pendiente  { background: #FFF3CD; color: #856404; }
+    .badge-respondido { background: #D1E7DD; color: #0A3622; }
+    .badge-cerrado    { background: #E2E3E5; color: #41464B; }
+
+    /* ── Acciones ── */
+    .acciones { display: flex; gap: 5px; }
+
+    /* ── Skeleton ── */
+    .skeleton-row td { padding: 12px 14px; }
+    .skeleton-bar {
+      height: 14px; border-radius: 6px;
+      background: linear-gradient(90deg, #e8eef4 25%, #d0dce8 50%, #e8eef4 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 50px 20px; color: #8096A8;
+    }
+    .empty-state .icon { font-size: 2.8rem; margin-bottom: 10px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.48); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--blanco); border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+      width: 100%; max-width: 620px; max-height: 92vh;
+      overflow-y: auto; animation: fadeUp .25s ease;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    .modal-header {
+      background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+      color: var(--blanco); padding: 16px 22px;
+      border-radius: 14px 14px 0 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-header h3 { font-size: 1.05rem; font-weight: 700; }
+    .modal-close {
+      background: rgba(255,255,255,0.2); border: none; color: var(--blanco);
+      border-radius: 50%; width: 30px; height: 30px; cursor: pointer;
+      font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.35); }
+    .modal-body { padding: 22px; }
+    .modal-footer {
+      padding: 14px 22px; border-top: 1px solid var(--gris-borde);
+      display: flex; justify-content: flex-end; gap: 10px;
+    }
+
+    /* ── Formulario ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--azul-oscuro); }
+    .form-group label .req { color: var(--rojo); }
+    .form-control {
+      border: 1.5px solid var(--gris-borde); border-radius: 7px;
+      padding: 9px 12px; font-size: 0.88rem; transition: border-color .2s;
+      font-family: inherit;
+    }
+    .form-control:focus { border-color: var(--azul); outline: none; box-shadow: 0 0 0 3px rgba(0,102,204,0.12); }
+    textarea.form-control { resize: vertical; min-height: 90px; }
+
+    /* ── Modal detalle ── */
+    .detalle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .detalle-item { display: flex; flex-direction: column; gap: 3px; }
+    .detalle-item.full { grid-column: 1 / -1; }
+    .detalle-label { font-size: 0.75rem; font-weight: 700; color: var(--azul); text-transform: uppercase; letter-spacing: 0.5px; }
+    .detalle-valor { font-size: 0.92rem; color: var(--texto); background: var(--gris-bg); border-radius: 6px; padding: 8px 11px; }
+
+    /* ── Confirm modal ── */
+    .confirm-icon { text-align: center; font-size: 3rem; margin-bottom: 8px; }
+    .confirm-msg  { text-align: center; font-size: 0.95rem; color: #5A6A7A; }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--texto); color: var(--blanco);
+      padding: 12px 18px; border-radius: 9px; font-size: 0.87rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      animation: slideIn .3s ease; max-width: 320px;
+    }
+    .toast.success { background: var(--verde); }
+    .toast.error   { background: var(--rojo); }
+    @keyframes slideIn { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+
+    /* ── Resumen ── */
+    .resumen-cards {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px; margin-bottom: 20px;
+    }
+    .resumen-card {
+      background: var(--blanco); border-radius: 10px;
+      padding: 14px 18px; box-shadow: var(--shadow);
+      border-left: 4px solid var(--azul);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .resumen-card.verde  { border-color: var(--verde); }
+    .resumen-card.amarillo { border-color: var(--amarillo); }
+    .resumen-card.gris   { border-color: #8096A8; }
+    .resumen-card .num   { font-size: 1.7rem; font-weight: 800; color: var(--azul); }
+    .resumen-card.verde .num  { color: var(--verde); }
+    .resumen-card.amarillo .num { color: #856404; }
+    .resumen-card.gris .num   { color: #8096A8; }
+    .resumen-card .lbl   { font-size: 0.78rem; color: #6A7E90; font-weight: 600; }
+
+    @media (max-width: 600px) {
+      .form-grid  { grid-template-columns: 1fr; }
+      .detalle-grid { grid-template-columns: 1fr; }
+      .toolbar    { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="page-header">
+  <div class="icon">📋</div>
+  <div>
+    <h1>Check List OUT-BOT</h1>
+    <p>Registro y seguimiento de correos entrantes — Solo Administrador</p>
+  </div>
+</div>
+
+<!-- ── Contenido ── -->
+<div class="container">
+
+  <!-- Resumen -->
+  <div class="resumen-cards" id="resumenCards">
+    <div class="resumen-card">        <div class="num skeleton-bar" style="width:60px;height:28px"></div><div class="lbl">Total registros</div></div>
+    <div class="resumen-card verde"> <div class="num skeleton-bar" style="width:60px;height:28px"></div><div class="lbl">Respondidos</div></div>
+    <div class="resumen-card amarillo"><div class="num skeleton-bar" style="width:60px;height:28px"></div><div class="lbl">Pendientes</div></div>
+    <div class="resumen-card gris">  <div class="num skeleton-bar" style="width:60px;height:28px"></div><div class="lbl">Cerrados</div></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <input type="text"   id="filtroAsunto"  class="filtro-input" placeholder="🔍 Buscar asunto o área..." oninput="filtrarTabla()" style="width:230px"/>
+      <select id="filtroEstado" class="filtro-input" onchange="filtrarTabla()">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Respondido">Respondido</option>
+        <option value="Cerrado">Cerrado</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-success" onclick="exportarExcel()">⬇️ Exportar Excel</button>
+      <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo Registro</button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card">
+    <div class="card-header">
+      <span>📋 Registros Check List OUT-BOT</span>
+      <span id="contadorTabla" style="font-size:0.82rem;opacity:.85"></span>
+    </div>
+    <div class="tabla-wrapper">
+      <table id="tablaChecklist">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha Correo</th>
+            <th>Asunto</th>
+            <th>Área que Solicita</th>
+            <th>Cant. RUT</th>
+            <th>Fecha Respuesta</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyChecklist">
+          <!-- Skeleton loader -->
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:30px"></div></td><td><div class="skeleton-bar" style="width:90px"></div></td><td><div class="skeleton-bar" style="width:200px"></div></td><td><div class="skeleton-bar" style="width:130px"></div></td><td><div class="skeleton-bar" style="width:50px"></div></td><td><div class="skeleton-bar" style="width:90px"></div></td><td><div class="skeleton-bar" style="width:80px"></div></td><td><div class="skeleton-bar" style="width:110px"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:30px"></div></td><td><div class="skeleton-bar" style="width:90px"></div></td><td><div class="skeleton-bar" style="width:160px"></div></td><td><div class="skeleton-bar" style="width:130px"></div></td><td><div class="skeleton-bar" style="width:50px"></div></td><td><div class="skeleton-bar" style="width:90px"></div></td><td><div class="skeleton-bar" style="width:80px"></div></td><td><div class="skeleton-bar" style="width:110px"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:30px"></div></td><td><div class="skeleton-bar" style="width:90px"></div></td><td><div class="skeleton-bar" style="width:220px"></div></td><td><div class="skeleton-bar" style="width:130px"></div></td><td><div class="skeleton-bar" style="width:50px"></div></td><td><div class="skeleton-bar" style="width:90px"></div></td><td><div class="skeleton-bar" style="width:80px"></div></td><td><div class="skeleton-bar" style="width:110px"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+  MODAL: Crear / Editar
+  ============================================================ -->
+<div class="modal-overlay" id="modalFormOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalFormTitulo">Nuevo Registro</h3>
+      <button class="modal-close" onclick="cerrarModalForm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Fecha que llegó el correo <span class="req">*</span></label>
+          <input type="date" id="fFechaCorreo" class="form-control"/>
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad de RUT <span class="req">*</span></label>
+          <input type="number" id="fCantidadRut" class="form-control" min="1" placeholder="Ej: 150"/>
+        </div>
+
+        <div class="form-group full">
+          <label>Asunto del correo <span class="req">*</span></label>
+          <input type="text" id="fAsunto" class="form-control" placeholder="Ej: Reagendamiento pacientes agosto 2025"/>
+        </div>
+
+        <div class="form-group">
+          <label>Área que solicita <span class="req">*</span></label>
+          <input type="text" id="fArea" class="form-control" placeholder="Ej: Gerencia de Salud"/>
+        </div>
+
+        <div class="form-group">
+          <label>Cuando se respondió el correo</label>
+          <input type="date" id="fFechaRespuesta" class="form-control"/>
+        </div>
+
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="fEstado" class="form-control">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Respondido">Respondido</option>
+            <option value="Cerrado">Cerrado</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>Notas</label>
+          <textarea id="fNotas" class="form-control" placeholder="Observaciones, comentarios adicionales..."></textarea>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModalForm()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarRegistro()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+  MODAL: Ver detalle
+  ============================================================ -->
+<div class="modal-overlay" id="modalDetalleOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📄 Detalle del Registro</h3>
+      <button class="modal-close" onclick="cerrarModalDetalle()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detalle-grid" id="detalleGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModalDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+  MODAL: Confirmar eliminación
+  ============================================================ -->
+<div class="modal-overlay" id="modalConfirmOverlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="background:linear-gradient(135deg,#b02a37,#dc3545)">
+      <h3>Confirmar Eliminación</h3>
+      <button class="modal-close" onclick="cerrarConfirm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon">🗑️</div>
+      <p class="confirm-msg">¿Estás seguro de que deseas eliminar este registro?<br><strong>Esta acción no se puede deshacer.</strong></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================
+  SCRIPT
+  ============================================================ -->
+<script>
+  // ── Config ──────────────────────────────────────────────────
+  const API_BASE = 'https://TU-API-URL.onrender.com/api/checklist-outbot';
+  // ⚠️ Reemplazar con la URL real de tu backend en Render
+
+  const ROL_ADMIN = 'Administrador';
+  const HEADERS = {
+    'Content-Type': 'application/json',
+    'x-user-rol': ROL_ADMIN
+  };
+
+  // ── Estado ──────────────────────────────────────────────────
+  let registros = [];
+  let idEditar   = null;
+  let idEliminar = null;
+
+  // ── Init ────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', cargarDatos);
+
+  // ── Cargar datos ────────────────────────────────────────────
+  async function cargarDatos() {
+    try {
+      const res = await fetch(API_BASE, { headers: HEADERS });
+      if (!res.ok) throw new Error('Error ' + res.status);
+      registros = await res.json();
+      renderTabla(registros);
+      renderResumen(registros);
+    } catch (err) {
+      console.error(err);
+      mostrarVacioConMensaje('⚠️ No se pudo conectar con el servidor.');
+    }
+  }
+
+  // ── Render tabla ────────────────────────────────────────────
+  function renderTabla(data) {
+    const tbody = document.getElementById('tbodyChecklist');
+    document.getElementById('contadorTabla').textContent = `${data.length} registro${data.length !== 1 ? 's' : ''}`;
+
+    if (!data.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No hay registros. Haz clic en <strong>+ Nuevo Registro</strong> para comenzar.</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map((r, i) => `
+      <tr>
+        <td style="color:#8096A8;font-size:0.8rem">${r.id}</td>
+        <td>${formatFecha(r.fecha_correo)}</td>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.asunto)}">${esc(r.asunto)}</td>
+        <td>${esc(r.area_solicita)}</td>
+        <td style="text-align:center;font-weight:700">${r.cantidad_rut}</td>
+        <td>${r.fecha_respuesta ? formatFecha(r.fecha_respuesta) : '<span style="color:#CCC">—</span>'}</td>
+        <td>${badgeEstado(r.estado)}</td>
+        <td>
+          <div class="acciones">
+            <button class="btn btn-outline btn-sm" title="Ver detalle" onclick="verDetalle(${r.id})">👁️</button>
+            <button class="btn btn-warning  btn-sm" title="Editar"     onclick="abrirModalEditar(${r.id})">✏️</button>
+            <button class="btn btn-danger   btn-sm" title="Eliminar"   onclick="pedirConfirmEliminar(${r.id})">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ── Resumen ─────────────────────────────────────────────────
+  function renderResumen(data) {
+    const total      = data.length;
+    const respondidos= data.filter(r => r.estado === 'Respondido').length;
+    const pendientes = data.filter(r => r.estado === 'Pendiente').length;
+    const cerrados   = data.filter(r => r.estado === 'Cerrado').length;
+
+    document.getElementById('resumenCards').innerHTML = `
+      <div class="resumen-card">        <div class="num">${total}</div>       <div class="lbl">Total registros</div></div>
+      <div class="resumen-card verde">  <div class="num">${respondidos}</div> <div class="lbl">Respondidos</div></div>
+      <div class="resumen-card amarillo"><div class="num">${pendientes}</div> <div class="lbl">Pendientes</div></div>
+      <div class="resumen-card gris">   <div class="num">${cerrados}</div>   <div class="lbl">Cerrados</div></div>
+    `;
+  }
+
+  function mostrarVacioConMensaje(msg) {
+    document.getElementById('tbodyChecklist').innerHTML = `
+      <tr><td colspan="8"><div class="empty-state"><div class="icon">⚠️</div><p>${msg}</p></div></td></tr>`;
+    document.getElementById('resumenCards').innerHTML = `
+      <div class="resumen-card"><div class="num">—</div><div class="lbl">Total registros</div></div>
+      <div class="resumen-card verde"><div class="num">—</div><div class="lbl">Respondidos</div></div>
+      <div class="resumen-card amarillo"><div class="num">—</div><div class="lbl">Pendientes</div></div>
+      <div class="resumen-card gris"><div class="num">—</div><div class="lbl">Cerrados</div></div>`;
+  }
+
+  // ── Filtro ──────────────────────────────────────────────────
+  function filtrarTabla() {
+    const texto  = document.getElementById('filtroAsunto').value.toLowerCase();
+    const estado = document.getElementById('filtroEstado').value;
+    const filtrado = registros.filter(r => {
+      const matchTexto  = !texto  || r.asunto.toLowerCase().includes(texto) || r.area_solicita.toLowerCase().includes(texto);
+      const matchEstado = !estado || r.estado === estado;
+      return matchTexto && matchEstado;
+    });
+    renderTabla(filtrado);
+  }
+
+  // ── Modal Crear ─────────────────────────────────────────────
+  function abrirModalCrear() {
+    idEditar = null;
+    document.getElementById('modalFormTitulo').textContent = 'Nuevo Registro';
+    limpiarForm();
+    document.getElementById('modalFormOverlay').classList.add('active');
+  }
+
+  // ── Modal Editar ────────────────────────────────────────────
+  function abrirModalEditar(id) {
+    const r = registros.find(x => x.id === id);
+    if (!r) return;
+    idEditar = id;
+    document.getElementById('modalFormTitulo').textContent = 'Editar Registro #' + id;
+    document.getElementById('fFechaCorreo').value   = r.fecha_correo   ? r.fecha_correo.split('T')[0]   : '';
+    document.getElementById('fCantidadRut').value  = r.cantidad_rut;
+    document.getElementById('fFechaRespuesta').value= r.fecha_respuesta ? r.fecha_respuesta.split('T')[0]: '';
+    document.getElementById('fAsunto').value        = r.asunto;
+    document.getElementById('fArea').value          = r.area_solicita;
+    document.getElementById('fNotas').value         = r.notas || '';
+    document.getElementById('fEstado').value        = r.estado;
+    document.getElementById('modalFormOverlay').classList.add('active');
+  }
+
+  function cerrarModalForm() {
+    document.getElementById('modalFormOverlay').classList.remove('active');
+    limpiarForm();
+  }
+
+  function limpiarForm() {
+    ['fFechaCorreo','fCantidadRut','fFechaRespuesta','fAsunto','fArea','fNotas'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('fEstado').value = 'Pendiente';
+  }
+
+  // ── Guardar (crear o editar) ─────────────────────────────────
+  async function guardarRegistro() {
+    const body = {
+      fecha_correo:    document.getElementById('fFechaCorreo').value,
+      cantidad_rut:    parseInt(document.getElementById('fCantidadRut').value),
+      fecha_respuesta: document.getElementById('fFechaRespuesta').value || null,
+      asunto:          document.getElementById('fAsunto').value.trim(),
+      area_solicita:   document.getElementById('fArea').value.trim(),
+      notas:           document.getElementById('fNotas').value.trim(),
+      estado:          document.getElementById('fEstado').value,
+      creado_por:      'Admin'
+    };
+
+    if (!body.fecha_correo || !body.cantidad_rut || !body.asunto || !body.area_solicita) {
+      toast('⚠️ Completa todos los campos obligatorios.', 'error'); return;
+    }
+
+    try {
+      const url    = idEditar ? `${API_BASE}/${idEditar}` : API_BASE;
+      const method = idEditar ? 'PUT' : 'POST';
+      const res    = await fetch(url, { method, headers: HEADERS, body: JSON.stringify(body) });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Error'); }
+
+      cerrarModalForm();
+      toast(idEditar ? '✅ Registro actualizado.' : '✅ Registro creado exitosamente.', 'success');
+      await cargarDatos();
+    } catch (err) {
+      toast('❌ ' + err.message, 'error');
+    }
+  }
+
+  // ── Ver detalle ─────────────────────────────────────────────
+  function verDetalle(id) {
+    const r = registros.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('detalleGrid').innerHTML = `
+      <div class="detalle-item"><div class="detalle-label">ID</div><div class="detalle-valor">#${r.id}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Estado</div><div class="detalle-valor">${badgeEstado(r.estado)}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Fecha que llegó el correo</div><div class="detalle-valor">${formatFecha(r.fecha_correo)}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Cantidad de RUT</div><div class="detalle-valor">${r.cantidad_rut}</div></div>
+      <div class="detalle-item full"><div class="detalle-label">Asunto del correo</div><div class="detalle-valor">${esc(r.asunto)}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Área que solicita</div><div class="detalle-valor">${esc(r.area_solicita)}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Cuando se respondió</div><div class="detalle-valor">${r.fecha_respuesta ? formatFecha(r.fecha_respuesta) : '—'}</div></div>
+      <div class="detalle-item full"><div class="detalle-label">Notas</div><div class="detalle-valor">${r.notas ? esc(r.notas) : '—'}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Creado por</div><div class="detalle-valor">${r.creado_por || '—'}</div></div>
+      <div class="detalle-item"><div class="detalle-label">Fecha creación</div><div class="detalle-valor">${formatFechaHora(r.fecha_creacion)}</div></div>
+    `;
+    document.getElementById('modalDetalleOverlay').classList.add('active');
+  }
+  function cerrarModalDetalle() { document.getElementById('modalDetalleOverlay').classList.remove('active'); }
+
+  // ── Eliminar ────────────────────────────────────────────────
+  function pedirConfirmEliminar(id) {
+    idEliminar = id;
+    document.getElementById('modalConfirmOverlay').classList.add('active');
+  }
+  function cerrarConfirm() {
+    idEliminar = null;
+    document.getElementById('modalConfirmOverlay').classList.remove('active');
+  }
+  async function confirmarEliminar() {
+    if (!idEliminar) return;
+    try {
+      const res = await fetch(`${API_BASE}/${idEliminar}`, { method: 'DELETE', headers: HEADERS });
+      if (!res.ok) throw new Error('Error al eliminar');
+      cerrarConfirm();
+      toast('🗑️ Registro eliminado.', 'success');
+      await cargarDatos();
+    } catch (err) {
+      toast('❌ ' + err.message, 'error');
+    }
+  }
+
+  // ── Exportar Excel ───────────────────────────────────────────
+  function exportarExcel() {
+    const datos = registros;
+    if (!datos.length) { toast('⚠️ No hay datos para exportar.', 'error'); return; }
+
+    // Usamos SheetJS (debe estar cargado en tu index.html)
+    if (typeof XLSX === 'undefined') {
+      toast('⚠️ Librería XLSX no disponible.', 'error'); return;
+    }
+
+    const filas = datos.map(r => ({
+      'ID':                    r.id,
+      'Fecha Correo':          r.fecha_correo ? r.fecha_correo.split('T')[0] : '',
+      'Asunto':                r.asunto,
+      'Área que Solicita':     r.area_solicita,
+      'Cantidad RUT':          r.cantidad_rut,
+      'Fecha Respuesta':       r.fecha_respuesta ? r.fecha_respuesta.split('T')[0] : '',
+      'Estado':                r.estado,
+      'Notas':                 r.notas || '',
+      'Creado Por':            r.creado_por || '',
+      'Fecha Creación':        formatFechaHora(r.fecha_creacion)
+    }));
+
+    const wb  = XLSX.utils.book_new();
+    const ws  = XLSX.utils.json_to_sheet(filas);
+
+    // Anchos de columna
+    ws['!cols'] = [
+      {wch:6},{wch:14},{wch:45},{wch:25},{wch:13},{wch:16},{wch:12},{wch:40},{wch:14},{wch:20}
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'CheckList OUT-BOT');
+    const fecha = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `CheckList_OUTBOT_${fecha}.xlsx`);
+    toast('✅ Excel exportado exitosamente.', 'success');
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function formatFecha(val) {
+    if (!val) return '—';
+    const d = new Date(val + 'T00:00:00');
+    return d.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+  function formatFechaHora(val) {
+    if (!val) return '—';
+    const d = new Date(val);
+    return d.toLocaleString('es-CL');
+  }
+  function esc(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function badgeEstado(estado) {
+    const cls = { Pendiente:'badge-pendiente', Respondido:'badge-respondido', Cerrado:'badge-cerrado' };
+    return `<span class="badge ${cls[estado]||''}">${estado}</span>`;
+  }
+  function toast(msg, tipo='') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + tipo;
+    el.textContent = msg;
+    document.getElementById('toastContainer').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // Cerrar modales al hacer clic fuera
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  });
+</script>
+</body>
+</html>
