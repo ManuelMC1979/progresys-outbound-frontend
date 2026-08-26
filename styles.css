@@ -145,6 +145,7 @@
   .menu-grupo--gestion { background: #2E5F9E; }
   .menu-grupo--reagendamiento { background: #A6752A; }
   .menu-grupo--checklist-snl { background: #1F8F5E; }
+  .menu-grupo--checklist-outbot { background: #127788; }
   .menu-grupo--validador-medico { background: #6B4FA0; }
   .menu-grupo--panel-contactabilidad { background: #2E7DA0; }
   .menu-grupo--control { background: #6E5CE0; box-shadow: 0 4px 14px rgba(110,92,224,0.45); }
