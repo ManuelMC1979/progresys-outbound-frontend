@@ -26,13 +26,13 @@ async function renderChecklistOutbot() {
       <tbody>
         ${checklistOutbotData.map(r => `
           <tr>
-            <td>${formatearFechaCorta(r.fecha_llegada_correo)}</td>
+            <td>${formatearFechaCorta(r.fecha_correo)}</td>
             <td>${r.cantidad_rut}</td>
-            <td>${formatearFechaCorta(r.fecha_respuesta_correo)}</td>
-            <td>${r.asunto_correo || '—'}</td>
-            <td>${r.area || '—'}</td>
+            <td>${formatearFechaCorta(r.fecha_respuesta)}</td>
+            <td>${r.asunto || '—'}</td>
+            <td>${r.area_solicita || '—'}</td>
             <td>${r.notas || ''}</td>
-            <td><button class="btn secundario" onclick="eliminarChecklistOutbot('${r.id_checklist_outbot}')">Eliminar</button></td>
+            <td><button class="btn secundario" onclick="eliminarChecklistOutbot('${r.id}')">Eliminar</button></td>
           </tr>
         `).join('')}
       </tbody>
@@ -58,7 +58,7 @@ function abrirModalNuevoChecklistOutbot() {
   document.getElementById('ckoCantidadRut').value = '';
   document.getElementById('ckoFechaRespuesta').value = '';
   document.getElementById('ckoAsunto').value = '';
-  document.getElementById('ckoArea').innerHTML = catalogos.areas.map(a => `<option value="${a.id_area}">${a.nombre}</option>`).join('');
+  document.getElementById('ckoArea').innerHTML = catalogos.areas.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
   document.getElementById('ckoNotas').value = '';
   document.getElementById('modalNuevoChecklistOutbot').classList.add('activo');
 }
@@ -72,11 +72,11 @@ async function guardarChecklistOutbot() {
   if (!asunto) { alert('El asunto del correo es obligatorio'); return; }
 
   const body = {
-    fecha_llegada_correo: fechaCorreo,
+    fecha_correo: fechaCorreo,
     cantidad_rut: Number(cantidadRut),
-    fecha_respuesta_correo: document.getElementById('ckoFechaRespuesta').value || undefined,
-    asunto_correo: asunto,
-    id_area: Number(document.getElementById('ckoArea').value),
+    fecha_respuesta: document.getElementById('ckoFechaRespuesta').value || undefined,
+    asunto,
+    area_solicita: document.getElementById('ckoArea').value,
     notas: document.getElementById('ckoNotas').value.trim() || undefined
   };
 
