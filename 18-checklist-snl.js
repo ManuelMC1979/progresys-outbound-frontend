@@ -9,8 +9,15 @@ function checklistSnlCompletadas(r) {
 
 function badgeAlertaChecklistSnl(r) {
   const completadas = checklistSnlCompletadas(r);
-  return completadas === 4
-    ? `<span style="color:#2ecc71; font-weight:600;">✓ Todo listo</span>`
+  if (completadas === 4) {
+    return `<span style="color:#2ecc71; font-weight:600;">✓ Todo listo</span>`;
+  }
+
+  const limiteSla = new Date(r.fecha).getTime() + 24 * 60 * 60 * 1000;
+  const dentroDePlazo = Date.now() <= limiteSla;
+
+  return dentroDePlazo
+    ? `<span style="color:#f0ad4e; font-weight:600;">En Proceso</span>`
     : `<span style="color:#d9534f; font-weight:600;">⚠ Hay pendientes</span>`;
 }
 
