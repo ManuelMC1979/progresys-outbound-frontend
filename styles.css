@@ -143,7 +143,6 @@
   .menu-grupo:hover { transform: translateY(-1px); }
   .menu-grupo--inicio { background: #1E8F86; }
   .menu-grupo--gestion { background: #2E5F9E; }
-  .menu-grupo--cuenta-corriente { background: #14808C; }
   .menu-grupo--reagendamiento { background: #A6752A; }
   .menu-grupo--checklist-snl { background: #1F8F5E; }
   .menu-grupo--checklist-outbot { background: #127788; }
