@@ -8,12 +8,7 @@ async function renderCorreos() {
   const puedeCrear = puedeAsignar;
 
   contenido.innerHTML = `
-    <div class="toolbar">
-      ${puedeCrear ? `<button class="btn" onclick="abrirModalNuevoCorreo()">+ Nuevo correo</button>` : ''}
-      <button class="btn secundario" onclick="abrirCuentaCorriente()">Cuenta Corriente</button>
-      <button class="btn secundario" onclick="abrirBloqueoSnl()">Bloqueo SNL</button>
-      <button class="btn secundario" onclick="abrirPension()">Pensión</button>
-    </div>
+    ${puedeCrear ? `<div class="toolbar"><button class="btn" onclick="abrirModalNuevoCorreo()">+ Nuevo correo</button></div>` : ''}
     <table>
       <thead><tr>
         <th>Folio</th><th>Recepción</th><th>Área</th><th>Tipo</th><th>Casos</th>

@@ -60,17 +60,12 @@ async function abrirCuentaCorriente() {
   renderCuentaCorriente();
 }
 
-function ccVolver() {
-  activarVista('btnCorreos');
-}
-
 function renderCuentaCorriente() {
   const contenido = document.getElementById('contenido');
   const esAdmin = ccEsAdmin();
   contenido.innerHTML = `
     <div class="cc-view">
       <div class="toolbar">
-        <button class="btn secundario" onclick="ccVolver()">← Volver a Correos</button>
         ${esAdmin ? `
           <select id="ccEjecutivoImport" style="min-width:220px; padding:8px; border:1px solid #ccc; border-radius:6px;">
             <option value="">— Ejecutivo a asignar al importar —</option>
@@ -393,7 +388,6 @@ function exportarCuentaCorriente() {
 function abrirBloqueoSnl() {
   document.getElementById('tituloVista').textContent = 'Bloqueo SNL';
   document.getElementById('contenido').innerHTML = `
-    <div class="toolbar"><button class="btn secundario" onclick="ccVolver()">← Volver a Correos</button></div>
     <p class="cc-placeholder">El módulo de <strong>Bloqueo SNL</strong> está en construcción. Primero se está terminando de probar Cuenta Corriente.</p>
   `;
 }
@@ -401,7 +395,6 @@ function abrirBloqueoSnl() {
 function abrirPension() {
   document.getElementById('tituloVista').textContent = 'Pensión';
   document.getElementById('contenido').innerHTML = `
-    <div class="toolbar"><button class="btn secundario" onclick="ccVolver()">← Volver a Correos</button></div>
     <p class="cc-placeholder">El módulo de <strong>Pensión</strong> está en construcción. Primero se está terminando de probar Cuenta Corriente.</p>
   `;
 }

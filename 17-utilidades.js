@@ -84,7 +84,7 @@ function esqueletoFicha() {
 
 // Elige la forma de esqueleto según la vista que se está cargando
 function esqueletoVista(vista) {
-  const listas = ['correos', 'casos', 'alertas', 'checklistSnl', 'auditoria', 'ejecutivos', 'usuarios', 'reagendamiento', 'reportes'];
+  const listas = ['correos', 'casos', 'cuentaCorriente', 'alertas', 'checklistSnl', 'auditoria', 'ejecutivos', 'usuarios', 'reagendamiento', 'reportes'];
   if (vista === 'dashboard') return esqueletoKPIs();
   if (listas.includes(vista)) return esqueletoTabla();
   return esqueletoFicha();
