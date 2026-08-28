@@ -24,7 +24,10 @@ const CC_ALIASES = {
   'MEDICO TIPO EXAMEN': 'medico_tipo_examen',
   'TIPO CITA CONTROL': 'tipo_cita_control',
   'TELEFONO 1': 'telefono_1',
-  'TELEFONO 2': 'telefono_2'
+  'TELEFONO 2': 'telefono_2',
+  'OBSERVACIONES DEL SERVICIO': 'observaciones_servicio',
+  'TIPO CITA': 'tipo_cita',
+  'OBSERVACIONES OUTBOUND': 'observaciones_outbound'
 };
 
 function ccNormalizarEncabezado(s) {
@@ -88,9 +91,10 @@ function renderCuentaCorriente() {
             <tr>
               <th>Fecha</th><th>Rut</th><th>Episodio</th><th>Nombre paciente</th>
               <th>Servicio atención</th><th>Médico / Tipo examen</th><th>Tipo cita/control</th>
-              <th>Teléfono 1</th><th>Teléfono 2</th><th>Ejecutiva</th>
+              <th>Teléfono 1</th><th>Teléfono 2</th><th>Observaciones del servicio</th>
+              <th>Tipo cita</th><th>Observaciones Outbound</th><th>Ejecutiva</th>
               <th>Contacto</th><th>Estado cita</th><th>Transporte</th><th>Fecha</th>
-              <th>1 intento</th><th>2 intento</th><th>Hora 2° Cont</th><th>3 intento</th><th>4 intento</th>
+              <th>1 intento</th><th>2 intento</th><th>Hora 2° Cont</th><th>3 intento</th><th>4 intento</th><th>5 intento</th>
               ${esAdmin ? '<th></th>' : ''}
             </tr>
           </thead>
@@ -118,6 +122,9 @@ function ccFilasHtml() {
       <td>${r.tipo_cita_control || '—'}</td>
       <td>${r.telefono_1 || '—'}</td>
       <td>${r.telefono_2 || '—'}</td>
+      <td>${r.observaciones_servicio || '—'}</td>
+      <td>${r.tipo_cita || '—'}</td>
+      <td>${r.observaciones_outbound || '—'}</td>
       <td>${esAdmin ? ccSelectorEjecutivo(r) : (r.ejecutivo || '—')}</td>
       <td>${esAdmin ? ccSoloLectura(r.contacto) : ccChipsHtml(r.id_cuenta_corriente, 'contacto', r.contacto, ['CONTACTADO', 'NO CONTACTADO'])}</td>
       <td>${esAdmin ? ccSoloLectura(r.estado_cita) : ccChipsHtml(r.id_cuenta_corriente, 'estado_cita', r.estado_cita, ['SI CONFIRMA', 'NO CONFIRMA'])}</td>
@@ -128,6 +135,7 @@ function ccFilasHtml() {
       <td>${esAdmin ? (r.hora_segundo_contacto || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'hora_segundo_contacto', r.hora_segundo_contacto)}</td>
       <td>${esAdmin ? (r.intento_3 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_3', r.intento_3)}</td>
       <td>${esAdmin ? (r.intento_4 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_4', r.intento_4)}</td>
+      <td>${esAdmin ? (r.intento_5 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_5', r.intento_5)}</td>
       ${esAdmin ? `<td><button class="btn secundario" onclick="ccEliminarFila('${r.id_cuenta_corriente}')">✕</button></td>` : ''}
     </tr>
   `).join('');
@@ -249,29 +257,58 @@ async function ccManejarArchivoExcel(e) {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
   const hoja = workbook.Sheets[workbook.SheetNames[0]];
-  const filas = XLSX.utils.sheet_to_json(hoja, { defval: null });
 
-  ccFilasImportacion = filas
-    .map(f => {
-      const obj = {};
-      for (const [k, v] of Object.entries(f)) {
-        const campo = CC_ALIASES[ccNormalizarEncabezado(k)];
-        if (campo) obj[campo] = v;
-      }
-      return obj;
+  // Algunas planillas traen filas de título/vacías antes del encabezado real,
+  // así que se busca la fila que contiene la columna RUT en vez de asumir
+  // que el encabezado está en la primera fila.
+  const filasCrudas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: null });
+  const indiceEncabezados = filasCrudas.findIndex(fila => (fila || []).some(c => ccNormalizarEncabezado(c) === 'RUT'));
+  if (indiceEncabezados === -1) {
+    document.getElementById('ccResultadoImportacion').innerHTML =
+      '<p style="color:var(--rojo);">No se encontró una columna "Rut" en el archivo. Revisa que la planilla tenga esa columna.</p>';
+    e.target.value = '';
+    return;
+  }
+  const encabezados = filasCrudas[indiceEncabezados];
+
+  // La planilla real repite "Fecha" (fecha de la cita y, más adelante, fecha
+  // de contacto) y otras columnas de gestión que no se importan: se toma solo
+  // la primera columna que calce con cada alias conocido.
+  const indicePorCampo = {};
+  encabezados.forEach((encabezado, idx) => {
+    const campo = CC_ALIASES[ccNormalizarEncabezado(encabezado)];
+    if (campo && indicePorCampo[campo] === undefined) indicePorCampo[campo] = idx;
+  });
+  const leerCampo = (fila, campo) => {
+    const idx = indicePorCampo[campo];
+    return idx === undefined ? null : fila[idx];
+  };
+
+  const filasDatos = filasCrudas
+    .slice(indiceEncabezados + 1)
+    .filter(fila => (fila || []).some(c => c !== null && c !== undefined && c !== ''));
+
+  ccFilasImportacion = filasDatos
+    .map(fila => {
+      const rut = (leerCampo(fila, 'rut') || '').toString().trim();
+      if (!rut) return null;
+      const fechaCita = leerCampo(fila, 'fecha_cita');
+      return {
+        fecha_cita: fechaCita instanceof Date ? fechaCita.toISOString().slice(0, 10) : (fechaCita || null),
+        rut,
+        episodio: (leerCampo(fila, 'episodio') || '').toString().trim(),
+        nombre_paciente: (leerCampo(fila, 'nombre_paciente') || '').toString().trim(),
+        servicio_atencion: (leerCampo(fila, 'servicio_atencion') || '').toString().trim(),
+        medico_tipo_examen: (leerCampo(fila, 'medico_tipo_examen') || '').toString().trim(),
+        tipo_cita_control: (leerCampo(fila, 'tipo_cita_control') || '').toString().trim(),
+        telefono_1: (leerCampo(fila, 'telefono_1') || '').toString().trim(),
+        telefono_2: (leerCampo(fila, 'telefono_2') || '').toString().trim(),
+        observaciones_servicio: (leerCampo(fila, 'observaciones_servicio') || '').toString().trim(),
+        tipo_cita: (leerCampo(fila, 'tipo_cita') || '').toString().trim(),
+        observaciones_outbound: (leerCampo(fila, 'observaciones_outbound') || '').toString().trim()
+      };
     })
-    .filter(f => f.rut)
-    .map(f => ({
-      fecha_cita: f.fecha_cita instanceof Date ? f.fecha_cita.toISOString().slice(0, 10) : (f.fecha_cita || null),
-      rut: (f.rut || '').toString().trim(),
-      episodio: (f.episodio || '').toString().trim(),
-      nombre_paciente: (f.nombre_paciente || '').toString().trim(),
-      servicio_atencion: (f.servicio_atencion || '').toString().trim(),
-      medico_tipo_examen: (f.medico_tipo_examen || '').toString().trim(),
-      tipo_cita_control: (f.tipo_cita_control || '').toString().trim(),
-      telefono_1: (f.telefono_1 || '').toString().trim(),
-      telefono_2: (f.telefono_2 || '').toString().trim()
-    }));
+    .filter(Boolean);
 
   renderPreviewImportacionCC();
 }
@@ -317,7 +354,7 @@ async function ccConfirmarImportacion() {
 
 /* ---------------- Exportar Excel ---------------- */
 function exportarCuentaCorriente() {
-  const encabezados = ['Fecha', 'Rut', 'Episodio', 'Nombre Paciente', 'Servicio Atencion', 'Medico / Tipo Examen', 'Tipo Cita/Control', 'Telefono 1', 'Telefono 2', 'Ejecutiva', 'Contacto', 'Estado Cita', 'Transporte', 'Fecha Contacto', '1 intento', '2 intento', 'Hora 2° Cont', '3 intento', '4 intento'];
+  const encabezados = ['Fecha', 'Rut', 'Episodio', 'Nombre Paciente', 'Servicio Atencion', 'Medico / Tipo Examen', 'Tipo Cita/Control', 'Telefono 1', 'Telefono 2', 'Observaciones del Servicio', 'Tipo Cita', 'Observaciones Outbound', 'Ejecutiva', 'Contacto', 'Estado Cita', 'Transporte', 'Fecha Contacto', '1 intento', '2 intento', 'Hora 2° Cont', '3 intento', '4 intento', '5 intento'];
   const filas = ccDatos.map(r => ({
     'Fecha': r.fecha_cita ? ccFormatFechaCorta(r.fecha_cita) : '',
     'Rut': r.rut || '',
@@ -328,6 +365,9 @@ function exportarCuentaCorriente() {
     'Tipo Cita/Control': r.tipo_cita_control || '',
     'Telefono 1': r.telefono_1 || '',
     'Telefono 2': r.telefono_2 || '',
+    'Observaciones del Servicio': r.observaciones_servicio || '',
+    'Tipo Cita': r.tipo_cita || '',
+    'Observaciones Outbound': r.observaciones_outbound || '',
     'Ejecutiva': r.ejecutivo || '',
     'Contacto': r.contacto || '',
     'Estado Cita': r.estado_cita || '',
@@ -337,7 +377,8 @@ function exportarCuentaCorriente() {
     '2 intento': r.intento_2 || '',
     'Hora 2° Cont': r.hora_segundo_contacto || '',
     '3 intento': r.intento_3 || '',
-    '4 intento': r.intento_4 || ''
+    '4 intento': r.intento_4 || '',
+    '5 intento': r.intento_5 || ''
   }));
   const hoja = XLSX.utils.json_to_sheet(filas, { header: encabezados });
   const libro = XLSX.utils.book_new();
