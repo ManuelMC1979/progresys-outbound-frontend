@@ -89,7 +89,7 @@ function renderCuentaCorriente() {
               <th>Teléfono 1</th><th>Teléfono 2</th><th>Observaciones del servicio</th>
               <th>Tipo cita</th><th>Observaciones Outbound</th><th>Ejecutiva</th>
               <th>Contacto</th><th>Estado cita</th><th>Transporte</th><th>Fecha</th>
-              <th>1 intento</th><th>2 intento</th><th>Hora 2° Cont</th><th>3 intento</th><th>4 intento</th><th>5 intento</th>
+              <th>1 intento</th><th>2 intento</th><th>3 intento</th><th>4 intento</th><th>5 intento</th>
               ${esAdmin ? '<th></th>' : ''}
             </tr>
           </thead>
@@ -127,7 +127,6 @@ function ccFilasHtml() {
       <td>${esAdmin ? ccFormatFechaCorta(r.fecha_contacto) : ccCeldaFecha(r.id_cuenta_corriente, r.fecha_contacto)}</td>
       <td>${esAdmin ? (r.intento_1 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_1', r.intento_1)}</td>
       <td>${esAdmin ? (r.intento_2 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_2', r.intento_2)}</td>
-      <td>${esAdmin ? (r.hora_segundo_contacto || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'hora_segundo_contacto', r.hora_segundo_contacto)}</td>
       <td>${esAdmin ? (r.intento_3 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_3', r.intento_3)}</td>
       <td>${esAdmin ? (r.intento_4 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_4', r.intento_4)}</td>
       <td>${esAdmin ? (r.intento_5 || '—') : ccCeldaIntento(r.id_cuenta_corriente, 'intento_5', r.intento_5)}</td>
@@ -349,7 +348,7 @@ async function ccConfirmarImportacion() {
 
 /* ---------------- Exportar Excel ---------------- */
 function exportarCuentaCorriente() {
-  const encabezados = ['Fecha', 'Rut', 'Episodio', 'Nombre Paciente', 'Servicio Atencion', 'Medico / Tipo Examen', 'Tipo Cita/Control', 'Telefono 1', 'Telefono 2', 'Observaciones del Servicio', 'Tipo Cita', 'Observaciones Outbound', 'Ejecutiva', 'Contacto', 'Estado Cita', 'Transporte', 'Fecha Contacto', '1 intento', '2 intento', 'Hora 2° Cont', '3 intento', '4 intento', '5 intento'];
+  const encabezados = ['Fecha', 'Rut', 'Episodio', 'Nombre Paciente', 'Servicio Atencion', 'Medico / Tipo Examen', 'Tipo Cita/Control', 'Telefono 1', 'Telefono 2', 'Observaciones del Servicio', 'Tipo Cita', 'Observaciones Outbound', 'Ejecutiva', 'Contacto', 'Estado Cita', 'Transporte', 'Fecha Contacto', '1 intento', '2 intento', '3 intento', '4 intento', '5 intento'];
   const filas = ccDatos.map(r => ({
     'Fecha': r.fecha_cita ? ccFormatFechaCorta(r.fecha_cita) : '',
     'Rut': r.rut || '',
@@ -370,7 +369,6 @@ function exportarCuentaCorriente() {
     'Fecha Contacto': r.fecha_contacto ? ccFormatFechaCorta(r.fecha_contacto) : '',
     '1 intento': r.intento_1 || '',
     '2 intento': r.intento_2 || '',
-    'Hora 2° Cont': r.hora_segundo_contacto || '',
     '3 intento': r.intento_3 || '',
     '4 intento': r.intento_4 || '',
     '5 intento': r.intento_5 || ''
