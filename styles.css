@@ -857,4 +857,33 @@
   .pc-view .bulk-bar-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
   .pc-view input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex-shrink:0}
   .pc-view th input[type=checkbox]{display:block;margin:0 auto}
+
+  /* ==================== CUENTA CORRIENTE / MÓDULOS DE GESTIÓN ==================== */
+  .cc-view table { font-size: 12px; }
+  .cc-view th { white-space: nowrap; font-size: 11px; }
+  .cc-toggle-cell { display: flex; gap: 4px; flex-wrap: nowrap; }
+  .cc-chip {
+    padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+    cursor: pointer; border: 1px solid #d5dae0; background: #f4f6f8; color: #8a929c;
+    white-space: nowrap; transition: all 0.12s ease;
+  }
+  .cc-chip:hover { filter: brightness(0.96); }
+  .cc-chip.cc-activo-si { background: var(--verde); color: white; border-color: var(--verde); }
+  .cc-chip.cc-activo-no { background: var(--rojo); color: white; border-color: var(--rojo); }
+  .cc-chip.cc-solo-lectura { cursor: default; }
+  .cc-chip.cc-solo-lectura:hover { filter: none; }
+  .cc-marcar-cell { cursor: pointer; color: var(--turquesa); font-weight: 600; white-space: nowrap; min-width: 70px; }
+  .cc-marcar-cell.vacio { color: #b5bcc4; font-style: italic; font-weight: 400; }
+  .cc-marcar-cell.vacio:hover { color: var(--turquesa); }
+  .cc-marcar-valor { display: inline-flex; align-items: center; gap: 6px; }
+  .cc-limpiar { color: #b5bcc4; cursor: pointer; font-size: 11px; }
+  .cc-limpiar:hover { color: var(--rojo); }
+  .cc-import-label {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px;
+    background: var(--verde); color: white; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: filter 0.12s ease;
+  }
+  .cc-import-label:hover { filter: brightness(1.08); }
+  .cc-import-label input[type=file] { display: none; }
+  .cc-placeholder { max-width: 560px; color: #666; line-height: 1.6; }
   .vm-view #vm-export-panel{display:none;}
