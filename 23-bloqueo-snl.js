@@ -1,11 +1,14 @@
 /* ============================================================
    BLOQUEO SNL
-   Hoja de trabajo compartida (Administrador y Ejecutivo por igual,
-   sin restricción de vista) para gestionar las citas bloqueadas que
-   exporta el sistema de agendamiento (Centro, Profesional, Paciente,
-   etc.) — se importa el CSV/Excel exportado, se completa en pantalla
-   (plan de salud, motivo del bloqueo, estado de llamada, fecha de
-   gestión, 5 intentos y observación) y se exporta de vuelta a Excel.
+   Hoja de trabajo para gestionar las citas bloqueadas que exporta el
+   sistema de agendamiento (Centro, Profesional, Paciente, etc.).
+
+   Mismo modelo de acceso que Cuenta Corriente: Administrador/Supervisor
+   importan el CSV/Excel exportado y lo asignan a un ejecutivo (o
+   reasignan filas sueltas); pueden ver todo el trabajo pero en modo
+   solo vista. El ejecutivo asignado a cada fila es el único que puede
+   gestionarla (plan de salud, motivo del bloqueo, estado de llamada,
+   fecha de gestión, 5 intentos y observación).
 
    Formato portado de la herramienta standalone SNLBLOQUEOV5_5.html.
    Backend: GET/POST/PATCH/DELETE /api/bloqueo-snl (ver
@@ -13,6 +16,7 @@
    ============================================================ */
 let bsDatos = [];
 let bsFilasImportacion = [];
+let bsIdEjecutivoImportacion = '';
 let bsFiltroActivo = 'todos';
 let bsBusqueda = '';
 
@@ -43,10 +47,17 @@ function bsNormalizarEncabezado(s) {
     .toUpperCase();
 }
 
+function bsEsAdmin() {
+  return usuarioActual.rol === 'ADMINISTRADOR' || usuarioActual.rol === 'SUPERVISOR';
+}
+
 async function abrirBloqueoSnl() {
   document.getElementById('tituloVista').textContent = 'Bloqueo SNL';
   const contenido = document.getElementById('contenido');
   contenido.innerHTML = esqueletoTabla();
+  if (bsEsAdmin() && !catalogos) {
+    try { await cargarCatalogos(); } catch (err) { /* si falla, el selector de ejecutivo saldrá vacío */ }
+  }
   try {
     bsDatos = await api('/bloqueo-snl');
   } catch (err) {
@@ -69,6 +80,7 @@ function bsFilasFiltradas() {
 
 function renderBloqueoSnl() {
   const contenido = document.getElementById('contenido');
+  const esAdmin = bsEsAdmin();
   const total = bsDatos.length;
   const contactados = bsDatos.filter(r => r.estado_llamada === 'CONTACTADO').length;
   const noContactados = bsDatos.filter(r => r.estado_llamada === 'NO CONTACTADO').length;
@@ -77,16 +89,23 @@ function renderBloqueoSnl() {
   contenido.innerHTML = `
     <div class="cc-view">
       <div class="toolbar">
-        <label class="cc-import-label">
-          ⬆ Importar planilla
-          <input type="file" id="bsArchivo" accept=".xlsx,.xls,.csv">
-        </label>
+        ${esAdmin ? `
+          <select id="bsEjecutivoImport" style="min-width:220px; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <option value="">— Ejecutivo a asignar al importar —</option>
+            ${(catalogos?.ejecutivos || []).map(e => `<option value="${e.id_ejecutivo}">${e.nombre}</option>`).join('')}
+          </select>
+          <label class="cc-import-label">
+            ⬆ Importar planilla
+            <input type="file" id="bsArchivo" accept=".xlsx,.xls,.csv">
+          </label>
+          <button class="btn secundario" onclick="bsLimpiarTodo()">🗑 Limpiar todo</button>
+        ` : ''}
         <button class="btn" onclick="exportarBloqueoSnl()">↓ Exportar Excel</button>
-        <button class="btn secundario" onclick="bsLimpiarTodo()">🗑 Limpiar todo</button>
         <input type="text" id="bsBuscar" placeholder="Buscar en cualquier columna..." value="${bsBusqueda}"
                style="flex:1; min-width:200px; max-width:340px; padding:8px 14px; border:1px solid #ccc; border-radius:20px;"
                oninput="bsBusqueda = this.value; bsRenderTabla();">
       </div>
+      ${esAdmin ? '<p class="cc-placeholder">Estás viendo el trabajo de todos los ejecutivos. Este perfil es de <strong>solo vista</strong>: la gestión (plan de salud, motivo, estado de llamada, intentos) la realiza el ejecutivo asignado a cada fila.</p>' : ''}
       <div class="toolbar">
         <span class="badge celeste">Total: ${total}</span>
         <span class="badge gestionado">✅ Contactado: ${contactados}</span>
@@ -108,9 +127,11 @@ function renderBloqueoSnl() {
               <th>Centro</th><th>Área</th><th>Profesional/Recurso</th><th>No. Doc. Profesional</th>
               <th>Especialidad</th><th>Servicio</th><th>Fecha desde</th><th>Hora desde</th>
               <th>Estado</th><th>No. Doc. Paciente</th><th>Paciente</th><th>Tel. Principal</th>
+              <th>Ejecutiva</th>
               <th>Plan de Salud</th><th>Motivo del Bloqueo</th><th>Fecha de Gestión</th>
               <th>Estado de Llamada</th><th>1er Intento</th><th>2do Intento</th><th>3er Intento</th>
-              <th>4to Intento</th><th>5to Intento</th><th>Observación</th><th></th>
+              <th>4to Intento</th><th>5to Intento</th><th>Observación</th>
+              ${esAdmin ? '<th></th>' : ''}
             </tr>
           </thead>
           <tbody id="bsTbody"></tbody>
@@ -119,7 +140,9 @@ function renderBloqueoSnl() {
       <p id="bsSinRegistros" style="margin-top:16px;color:#999;"></p>
     </div>
   `;
-  document.getElementById('bsArchivo').addEventListener('change', bsManejarArchivo);
+  if (esAdmin) {
+    document.getElementById('bsArchivo').addEventListener('change', bsManejarArchivo);
+  }
   bsRenderTabla();
 }
 
@@ -133,12 +156,13 @@ function bsRenderTabla() {
   document.getElementById('bsTbody').innerHTML = filas.map(bsFilaHtml).join('');
   const sinRegistros = document.getElementById('bsSinRegistros');
   sinRegistros.textContent = bsDatos.length === 0
-    ? 'No hay registros. Importa la planilla del sistema de citas para comenzar.'
+    ? (bsEsAdmin() ? 'No hay registros. Importa la planilla del sistema de citas para comenzar a asignar trabajo.' : 'No tienes filas de Bloqueo SNL asignadas por el momento.')
     : (filas.length === 0 ? 'Ningún registro coincide con el filtro/búsqueda actual.' : '');
 }
 
 function bsFilaHtml(r) {
   const id = r.id_bloqueo_snl;
+  const esAdmin = bsEsAdmin();
   return `
     <tr>
       <td>${r.centro || '—'}</td>
@@ -153,19 +177,46 @@ function bsFilaHtml(r) {
       <td>${r.no_doc_paciente || '—'}</td>
       <td>${r.paciente || '—'}</td>
       <td>${r.tel_principal || '—'}</td>
-      <td>${bsCeldaTexto(id, 'plan_salud', r.plan_salud)}</td>
-      <td>${bsCeldaTexto(id, 'motivo_bloqueo', r.motivo_bloqueo)}</td>
-      <td>${bsCeldaFecha(id, r.fecha_gestion)}</td>
-      <td>${bsChipsHtml(id, r.estado_llamada)}</td>
-      <td>${bsCeldaIntento(id, 'intento_1', r.intento_1)}</td>
-      <td>${bsCeldaIntento(id, 'intento_2', r.intento_2)}</td>
-      <td>${bsCeldaIntento(id, 'intento_3', r.intento_3)}</td>
-      <td>${bsCeldaIntento(id, 'intento_4', r.intento_4)}</td>
-      <td>${bsCeldaIntento(id, 'intento_5', r.intento_5)}</td>
-      <td>${bsCeldaTexto(id, 'observacion', r.observacion)}</td>
-      <td><button class="btn secundario" onclick="bsEliminarFila('${id}')">✕</button></td>
+      <td>${esAdmin ? bsSelectorEjecutivo(r) : (r.ejecutivo || '—')}</td>
+      <td>${esAdmin ? (r.plan_salud || '—') : bsCeldaTexto(id, 'plan_salud', r.plan_salud)}</td>
+      <td>${esAdmin ? (r.motivo_bloqueo || '—') : bsCeldaTexto(id, 'motivo_bloqueo', r.motivo_bloqueo)}</td>
+      <td>${esAdmin ? ccFormatFechaCorta(r.fecha_gestion) : bsCeldaFecha(id, r.fecha_gestion)}</td>
+      <td>${esAdmin ? bsSoloLectura(r.estado_llamada) : bsChipsHtml(id, r.estado_llamada)}</td>
+      <td>${esAdmin ? (r.intento_1 || '—') : bsCeldaIntento(id, 'intento_1', r.intento_1)}</td>
+      <td>${esAdmin ? (r.intento_2 || '—') : bsCeldaIntento(id, 'intento_2', r.intento_2)}</td>
+      <td>${esAdmin ? (r.intento_3 || '—') : bsCeldaIntento(id, 'intento_3', r.intento_3)}</td>
+      <td>${esAdmin ? (r.intento_4 || '—') : bsCeldaIntento(id, 'intento_4', r.intento_4)}</td>
+      <td>${esAdmin ? (r.intento_5 || '—') : bsCeldaIntento(id, 'intento_5', r.intento_5)}</td>
+      <td>${esAdmin ? (r.observacion || '—') : bsCeldaTexto(id, 'observacion', r.observacion)}</td>
+      ${esAdmin ? `<td><button class="btn secundario" onclick="bsEliminarFila('${id}')">✕</button></td>` : ''}
     </tr>
   `;
+}
+
+function bsSoloLectura(valor) {
+  if (!valor) return '—';
+  const clase = valor.startsWith('NO') ? 'cc-activo-no' : 'cc-activo-si';
+  return `<span class="cc-chip cc-solo-lectura ${clase}">${valor}</span>`;
+}
+
+function bsSelectorEjecutivo(r) {
+  const opciones = (catalogos?.ejecutivos || []).map(e =>
+    `<option value="${e.id_ejecutivo}" ${e.id_ejecutivo === r.id_ejecutivo ? 'selected' : ''}>${e.nombre}</option>`
+  ).join('');
+  return `<select onchange="bsReasignarEjecutivo('${r.id_bloqueo_snl}', this.value)" style="max-width:170px; padding:4px;">${opciones}</select>`;
+}
+
+async function bsReasignarEjecutivo(id, idEjecutivo) {
+  if (!idEjecutivo) return;
+  try {
+    const actualizado = await api(`/bloqueo-snl/${id}/asignar`, { method: 'POST', body: JSON.stringify({ id_ejecutivo: idEjecutivo }) });
+    const idx = bsDatos.findIndex(r => String(r.id_bloqueo_snl) === String(id));
+    if (idx !== -1) bsDatos[idx] = actualizado;
+    bsRenderTabla();
+  } catch (err) {
+    alert('Error al reasignar: ' + err.message);
+    renderBloqueoSnl();
+  }
 }
 
 function bsCeldaTexto(id, campo, valor) {
@@ -197,6 +248,7 @@ function bsCeldaIntento(id, campo, valor) {
 }
 
 async function bsActualizarCampo(id, campo, valor) {
+  if (bsEsAdmin()) return; // el perfil admin es de solo vista, no debería llegar aquí
   const fila = bsDatos.find(r => String(r.id_bloqueo_snl) === String(id));
   if (!fila) return;
   const anterior = fila[campo];
@@ -237,7 +289,7 @@ async function bsLimpiarTodo() {
   }
 }
 
-/* ---------------- Importar CSV / Excel ---------------- */
+/* ---------------- Importar CSV / Excel (solo Administrador/Supervisor) ---------------- */
 async function bsDecodificarCsv(buffer) {
   const bytes = new Uint8Array(buffer);
   if (bytes[0] === 0xFF && bytes[1] === 0xFE) return new TextDecoder('utf-16le').decode(buffer.slice(2));
@@ -275,6 +327,15 @@ function bsHoraDesdeCsv(valor) {
 async function bsManejarArchivo(e) {
   const file = e.target.files[0];
   if (!file) return;
+
+  const idEjecutivo = document.getElementById('bsEjecutivoImport').value;
+  if (!idEjecutivo) {
+    alert('Selecciona primero el ejecutivo al que se le asignará esta planilla.');
+    e.target.value = '';
+    return;
+  }
+  bsIdEjecutivoImportacion = idEjecutivo;
+
   const resultadoDiv = document.getElementById('bsResultadoImportacion');
   resultadoDiv.innerHTML = '<div class="cargando">Leyendo archivo...</div>';
 
@@ -342,9 +403,10 @@ function bsRenderPreviewImportacion() {
     resultadoDiv.innerHTML = '<p style="color:var(--rojo);">No se encontraron filas válidas (se requiere al menos la columna "No. Documento").</p>';
     return;
   }
+  const nombreEjecutivo = (catalogos?.ejecutivos || []).find(e => e.id_ejecutivo === bsIdEjecutivoImportacion)?.nombre || '—';
   resultadoDiv.innerHTML = `
     <div class="toolbar">
-      <button class="btn" onclick="bsConfirmarImportacion()">Confirmar importación (${bsFilasImportacion.length} filas)</button>
+      <button class="btn" onclick="bsConfirmarImportacion()">Confirmar importación (${bsFilasImportacion.length} filas → ${nombreEjecutivo})</button>
       <button class="btn secundario" onclick="document.getElementById('bsResultadoImportacion').innerHTML=''">Cancelar</button>
     </div>
     <table>
@@ -357,13 +419,17 @@ function bsRenderPreviewImportacion() {
 }
 
 async function bsConfirmarImportacion() {
-  if (bsFilasImportacion.length === 0) return;
+  if (bsFilasImportacion.length === 0 || !bsIdEjecutivoImportacion) return;
   const resultadoDiv = document.getElementById('bsResultadoImportacion');
   resultadoDiv.innerHTML = '<div class="cargando">Importando...</div>';
   try {
-    const creadas = await api('/bloqueo-snl/importar', { method: 'POST', body: JSON.stringify({ filas: bsFilasImportacion }) });
+    const creadas = await api('/bloqueo-snl/importar', {
+      method: 'POST',
+      body: JSON.stringify({ id_ejecutivo: bsIdEjecutivoImportacion, filas: bsFilasImportacion })
+    });
     bsDatos = bsDatos.concat(Array.isArray(creadas) ? creadas : []);
     bsFilasImportacion = [];
+    bsIdEjecutivoImportacion = '';
     renderBloqueoSnl();
   } catch (err) {
     resultadoDiv.innerHTML = `<p style="color:var(--rojo);">Error al importar: ${err.message}</p>`;
@@ -373,7 +439,7 @@ async function bsConfirmarImportacion() {
 /* ---------------- Exportar Excel ---------------- */
 function exportarBloqueoSnl() {
   if (bsDatos.length === 0) { alert('No hay datos para exportar.'); return; }
-  const encabezados = ['Centro', 'Área', 'Profesional/Recurso', 'No. Doc. Profesional', 'Especialidad', 'Servicio', 'Fecha desde', 'Hora desde', 'Estado', 'No. Doc. Paciente', 'Paciente', 'Tel. Principal', 'Plan de Salud', 'Motivo del Bloqueo', 'Fecha de Gestión', 'Estado de Llamada', 'Hora 1er Intento', 'Hora 2do Intento', 'Hora 3er Intento', 'Hora 4to Intento', 'Hora 5to Intento', 'Observación'];
+  const encabezados = ['Centro', 'Área', 'Profesional/Recurso', 'No. Doc. Profesional', 'Especialidad', 'Servicio', 'Fecha desde', 'Hora desde', 'Estado', 'No. Doc. Paciente', 'Paciente', 'Tel. Principal', 'Ejecutiva', 'Plan de Salud', 'Motivo del Bloqueo', 'Fecha de Gestión', 'Estado de Llamada', 'Hora 1er Intento', 'Hora 2do Intento', 'Hora 3er Intento', 'Hora 4to Intento', 'Hora 5to Intento', 'Observación'];
   const filas = bsDatos.map(r => ({
     'Centro': r.centro || '',
     'Área': r.area || '',
@@ -387,6 +453,7 @@ function exportarBloqueoSnl() {
     'No. Doc. Paciente': r.no_doc_paciente || '',
     'Paciente': r.paciente || '',
     'Tel. Principal': r.tel_principal || '',
+    'Ejecutiva': r.ejecutivo || '',
     'Plan de Salud': r.plan_salud || '',
     'Motivo del Bloqueo': r.motivo_bloqueo || '',
     'Fecha de Gestión': r.fecha_gestion ? ccFormatFechaCorta(r.fecha_gestion) : '',
