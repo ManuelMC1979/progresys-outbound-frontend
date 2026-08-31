@@ -379,15 +379,5 @@ function exportarCuentaCorriente() {
   XLSX.writeFile(libro, `Cuenta_Corriente_${ccFechaHoyISO()}.xlsx`);
 }
 
-/* Bloqueo SNL ahora vive en 23-bloqueo-snl.js (abrirBloqueoSnl). */
-
-/* ---------------- Pensión ----------------
-   Próximo módulo, mismo patrón que Cuenta Corriente / Bloqueo SNL.
-   Por ahora queda como placeholder a la espera de definir su propio
-   formato de planilla. */
-function abrirPension() {
-  document.getElementById('tituloVista').textContent = 'Pensión';
-  document.getElementById('contenido').innerHTML = `
-    <p class="cc-placeholder">El módulo de <strong>Pensión</strong> está en construcción. Primero se está terminando de probar Cuenta Corriente.</p>
-  `;
-}
+/* Bloqueo SNL ahora vive en 23-bloqueo-snl.js (abrirBloqueoSnl).
+   Pensión ahora vive en 24-pension.js (abrirPension). */
